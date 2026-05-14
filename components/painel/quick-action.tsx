@@ -45,7 +45,7 @@ export function QuickAction({
         <span className="text-xs text-[var(--color-fg-muted)]">{sub}</span>
       </span>
       {typeof count === "number" && count > 0 && (
-        <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[var(--brand-accent-500)] px-1.5 text-xs font-semibold text-white">
+        <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-[var(--brand-accent-500)] px-1.5 text-xs font-semibold text-white">
           {count}
         </span>
       )}

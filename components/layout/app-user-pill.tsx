@@ -33,7 +33,7 @@ export function AppUserPill({ firstName, initials }: AppUserPillProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="inline-flex items-center gap-2 rounded-full bg-muted px-2 py-1 text-sm hover:bg-muted/80 data-[popup-open]:bg-muted/80"
+        className="inline-flex items-center gap-2 rounded-md bg-muted px-2 py-1 text-sm hover:bg-muted/80 data-[popup-open]:bg-muted/80"
         aria-label={`Menu de ${firstName}`}
       >
         <Avatar size="sm">
