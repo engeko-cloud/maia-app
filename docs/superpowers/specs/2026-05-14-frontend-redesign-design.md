@@ -427,6 +427,7 @@ lib/
 Five phases. Each independently testable and shippable.
 
 ### Phase 1 — Foundation
+**Status:** ✅ Complete (commit range: 05ff84d..210341c)
 
 No user-visible UI yet. Every later phase consumes a stable design layer.
 
