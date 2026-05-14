@@ -21,7 +21,7 @@ test("private shell + /painel render after login", async ({ page }) => {
   await expect(hero).toContainText(/(Nada pendente|aprovaç)/);
 
   // Quick-action grid: at least the Aprovações card
-  await expect(page.getByRole("link", { name: /Aprovações.*Revisar/s })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Aprovações.*Revisar/ })).toBeVisible();
 
   // Activity feed section heading
   await expect(page.getByRole("heading", { name: "Atividade recente" })).toBeVisible();
