@@ -1,34 +1,131 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { AuthCard } from "@/components/auth/auth-card";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
+import {
+  updatePasswordSchema,
+  type UpdatePasswordInput,
+} from "@/lib/auth-schemas";
+import { translateAuthError } from "@/lib/auth-errors";
+
+const SESSION_EXPIRED_MESSAGE = "Sua sessão expirou. Solicite um novo link.";
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const form = useForm<UpdatePasswordInput>({
+    resolver: zodResolver(updatePasswordSchema),
+    defaultValues: { password: "", confirm: "" },
+  });
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
+  async function onSubmit(values: UpdatePasswordInput) {
+    setErrorMessage(null);
     const supabase = getSupabaseBrowser();
-    const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    const { error } = await supabase.auth.updateUser({
+      password: values.password,
+    });
+    if (error) {
+      setErrorMessage(translateAuthError(error));
+      return;
+    }
     toast.success("Senha atualizada.");
     router.push("/painel");
   }
 
+  const sessionExpired = errorMessage === SESSION_EXPIRED_MESSAGE;
+
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <form onSubmit={onSubmit} className="w-full max-w-sm space-y-4">
-        <h1 className="text-2xl font-semibold">Definir senha</h1>
-        <input className="w-full border rounded px-3 py-2" type="password" placeholder="Nova senha"
-               value={password} onChange={e => setPassword(e.target.value)} required minLength={8} />
-        <button className="w-full bg-primary text-primary-foreground rounded px-3 py-2"
-                disabled={loading}>{loading ? "Salvando..." : "Salvar"}</button>
-      </form>
-    </main>
+    <AuthCard
+      title="Nova senha"
+      lead="Defina uma senha que só você conhece."
+      pitch={{
+        headingWords: ["Senhas", "fortes,", "dados", "protegidos."],
+        accentIndex: 1,
+        sub: "Mínimo de 8 caracteres. Use uma combinação que você lembre — letras, números e símbolos.",
+      }}
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {errorMessage && (
+            <div
+              role="alert"
+              className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+            >
+              {errorMessage}
+              {sessionExpired && (
+                <>
+                  {" "}
+                  <Link
+                    href="/forgot-password"
+                    className="underline underline-offset-2"
+                  >
+                    Solicitar novo link
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nova senha</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    autoComplete="new-password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>Mínimo de 8 caracteres.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="confirm"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirmar senha</FormLabel>
+                <FormControl>
+                  <Input
+                    type="password"
+                    autoComplete="new-password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button
+            type="submit"
+            className="w-full border-b-[3px] border-[var(--brand-accent-500)]"
+            disabled={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting ? "Salvando…" : "Atualizar senha"}
+          </Button>
+        </form>
+      </Form>
+    </AuthCard>
   );
 }
