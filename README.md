@@ -7,9 +7,9 @@ Especificação canônica: [`../old-maia/BUILD-SPEC.md`](../old-maia/BUILD-SPEC.
 ## Desenvolvimento
 
 ```bash
-pnpm install
+npm install
 cp .env.example .env.local   # preencher os valores
-pnpm dev
+npm run dev
 ```
 
 Stack: Next.js 16 (App Router), React 19, TypeScript estrito, Tailwind 4, shadcn/ui, `@supabase/ssr`, Resend.
