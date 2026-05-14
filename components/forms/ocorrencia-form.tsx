@@ -72,7 +72,7 @@ export function OcorrenciaForm({ lookups }: { lookups: { empresas: { id: string;
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="empresa_id">Empresa</Label>
-            <Select value={form.watch("empresa_id") ?? ""} onValueChange={(v) => form.setValue("empresa_id", v as string)}>
+            <Select value={form.watch("empresa_id") ?? ""} onValueChange={(v) => form.setValue("empresa_id", v as string, { shouldValidate: true })}>
               <SelectTrigger id="empresa_id" className="w-full"><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {lookups.empresas.map((e) => <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>)}
@@ -81,7 +81,7 @@ export function OcorrenciaForm({ lookups }: { lookups: { empresas: { id: string;
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="unidade_id">Unidade</Label>
-            <Select value={form.watch("unidade_id") ?? ""} onValueChange={(v) => form.setValue("unidade_id", v as string)}>
+            <Select value={form.watch("unidade_id") ?? ""} onValueChange={(v) => form.setValue("unidade_id", v as string, { shouldValidate: true })}>
               <SelectTrigger id="unidade_id" className="w-full"><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {lookups.unidades.map((u) => <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>)}
@@ -90,7 +90,7 @@ export function OcorrenciaForm({ lookups }: { lookups: { empresas: { id: string;
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="tipo">Tipo</Label>
-            <Select value={form.watch("tipo") ?? ""} onValueChange={(v) => form.setValue("tipo", v as string)}>
+            <Select value={form.watch("tipo") ?? ""} onValueChange={(v) => form.setValue("tipo", v as string, { shouldValidate: true })}>
               <SelectTrigger id="tipo" className="w-full"><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {(TIPOS as string[]).map((t) => <SelectItem key={t} value={t}>{ocorrenciaTipoLabel(t)}</SelectItem>)}

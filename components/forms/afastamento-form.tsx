@@ -90,7 +90,7 @@ export function AfastamentoForm({
           <Label htmlFor="empresa_id">Empresa</Label>
           <Select
             value={form.watch("empresa_id") ?? ""}
-            onValueChange={(v) => form.setValue("empresa_id", v as string)}
+            onValueChange={(v) => form.setValue("empresa_id", v as string, { shouldValidate: true })}
           >
             <SelectTrigger id="empresa_id" className="w-full">
               <SelectValue placeholder="Selecione" />
@@ -108,7 +108,7 @@ export function AfastamentoForm({
           <Label htmlFor="unidade_id">Unidade</Label>
           <Select
             value={form.watch("unidade_id") ?? ""}
-            onValueChange={(v) => form.setValue("unidade_id", v as string)}
+            onValueChange={(v) => form.setValue("unidade_id", v as string, { shouldValidate: true })}
           >
             <SelectTrigger id="unidade_id" className="w-full">
               <SelectValue placeholder="Selecione" />
@@ -128,7 +128,7 @@ export function AfastamentoForm({
         <Label htmlFor="tipo_id">Tipo de afastamento</Label>
         <Select
           value={form.watch("tipo_id") ?? ""}
-          onValueChange={(v) => form.setValue("tipo_id", v as string)}
+          onValueChange={(v) => form.setValue("tipo_id", v as string, { shouldValidate: true })}
         >
           <SelectTrigger id="tipo_id" className="w-full">
             <SelectValue placeholder="Selecione" />
