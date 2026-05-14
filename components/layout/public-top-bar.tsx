@@ -61,7 +61,7 @@ export async function PublicTopBar() {
           ) : (
             <>
               <Link
-                href="#inicio"
+                href="/#inicio"
                 className="rounded-md px-3 py-1.5 text-sm font-medium text-[var(--color-fg-muted)] hover:bg-muted hover:text-foreground"
               >
                 Sobre
