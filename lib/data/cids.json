@@ -1,0 +1,5 @@
+[
+  {"codigo": "Z00", "descricao": "Exame médico geral"},
+  {"codigo": "M54", "descricao": "Dorsalgia"},
+  {"codigo": "J00", "descricao": "Nasofaringite aguda (resfriado comum)"}
+]
