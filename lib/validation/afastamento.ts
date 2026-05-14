@@ -1,15 +1,9 @@
 import { z } from "zod";
 
-// Regex UUID para compatibilidade com zod v4 (que usa RFC 4122 estrito)
-const uuidLike = z.string().regex(
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-  "UUID inválido",
-);
-
 export const AfastamentoInputSchema = z.object({
-  empresa_id:  uuidLike,
-  unidade_id:  uuidLike,
-  tipo_id:     uuidLike,
+  empresa_id:  z.string().uuid(),
+  unidade_id:  z.string().uuid(),
+  tipo_id:     z.string().uuid(),
   cpf:         z.string().regex(/^\d{11}$/),
   colaborador_nome:       z.string().min(2),
   colaborador_setor:      z.string().optional(),

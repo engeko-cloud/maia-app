@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import { AfastamentoInputSchema } from "@/lib/validation/afastamento";
 
 const base = {
-  empresa_id: "11111111-1111-1111-1111-111111111111",
-  unidade_id: "22222222-2222-2222-2222-222222222222",
-  tipo_id:    "33333333-3333-3333-3333-333333333333",
+  empresa_id: "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+  unidade_id: "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+  tipo_id:    "c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f",
   cpf:        "12345678900",
   colaborador_nome: "João Silva",
   data_inicio: "2026-05-13",
