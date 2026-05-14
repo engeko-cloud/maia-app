@@ -31,8 +31,8 @@ export function ApprovalBar({ afastamentoId }: ApprovalBarProps) {
   async function aprovar() {
     setBusy(true);
     const r = await fetch(`/api/afastamentos/${afastamentoId}/aprovar`, { method: "POST" });
-    setBusy(false);
     if (!r.ok) {
+      setBusy(false);
       const j = await r.json().catch(() => ({}));
       toast.error(j.error ?? "Erro ao aprovar.");
       return;
@@ -52,8 +52,8 @@ export function ApprovalBar({ afastamentoId }: ApprovalBarProps) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ motivo }),
     });
-    setBusy(false);
     if (!r.ok) {
+      setBusy(false);
       const j = await r.json().catch(() => ({}));
       toast.error(j.error ?? "Erro ao rejeitar.");
       return;
