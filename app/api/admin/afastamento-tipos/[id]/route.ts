@@ -1,13 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireAdminUser } from "@/lib/admin-auth";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 const Patch = z.object({
-  nome: z.string().optional(),
-  sobrenome: z.string().optional(),
-  administrador: z.boolean().optional(),
-  ativo: z.boolean().optional(),
+  codigo:           z.string().min(1).optional(),
+  rotulo:           z.string().min(2).optional(),
+  requer_aprovacao: z.boolean().optional(),
+  ordem:            z.number().int().min(0).optional(),
+  ativo:            z.boolean().optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -16,7 +17,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const parsed = Patch.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: "validation" }, { status: 400 });
   const admin = getSupabaseAdmin();
-  const { error } = await admin.from("usuarios").update(parsed.data).eq("id", id);
+  const { error } = await admin.from("afastamento_tipos").update(parsed.data).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

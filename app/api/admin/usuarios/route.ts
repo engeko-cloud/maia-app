@@ -1,18 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { getSupabaseServer } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-
-async function requireAdmin() {
-  const supabase = await getSupabaseServer();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data: u } = await supabase.from("usuarios").select("administrador").eq("id", user.id).single();
-  return u?.administrador ? user : null;
-}
+import { requireAdminUser } from "@/lib/admin-auth";
 
 export async function GET() {
-  if (!await requireAdmin()) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  if (!await requireAdminUser()) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const admin = getSupabaseAdmin();
   const { data } = await admin.from("usuarios")
     .select("id, nome, sobrenome, email, administrador, ativo, criado_em")
@@ -28,7 +20,7 @@ const Body = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const me = await requireAdmin();
+  const me = await requireAdminUser();
   if (!me) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const parsed = Body.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: "validation" }, { status: 400 });
