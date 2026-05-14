@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/brand/logo";
-import { AppNavMenu } from "@/components/layout/app-nav-menu";
+import { AppNavRow } from "@/components/layout/app-nav-row";
 import { AppUserPill } from "@/components/layout/app-user-pill";
 import { AppNotificationBell } from "@/components/layout/app-notification-bell";
 import { appNav } from "@/lib/nav";
@@ -39,21 +39,7 @@ export async function AppTopNav() {
           <Logo size="md" />
         </Link>
 
-        <nav aria-label="Navegação principal" className="hidden items-center gap-1 md:flex">
-          {groups.map((group) =>
-            group.items.length === 0 ? (
-              <Link
-                key={group.id}
-                href={group.href}
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-[var(--color-fg-muted)] transition-colors hover:bg-muted hover:text-foreground"
-              >
-                {group.label}
-              </Link>
-            ) : (
-              <AppNavMenu key={group.id} group={group} active={false} />
-            ),
-          )}
-        </nav>
+        <AppNavRow groups={groups} />
 
         <div className="ml-auto flex items-center gap-2">
           <AppNotificationBell />
