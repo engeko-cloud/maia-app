@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { AfastamentoForm } from "@/components/forms/afastamento-form";
+import { PublicFormShell } from "@/components/forms/public-form-shell";
 
 export default async function EditarPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -8,21 +9,21 @@ export default async function EditarPage({ params }: { params: Promise<{ token: 
 
   const { data: a } = await supabase
     .from("afastamentos")
-    .select(`*,
-      empresas!inner(id, nome),
-      unidades!inner(id, nome),
-      afastamento_tipos!inner(id, codigo, rotulo)`)
-    .eq("token_edicao", token).single();
+    .select("*, empresas!inner(id, nome), unidades!inner(id, nome), afastamento_tipos!inner(id, codigo, rotulo)")
+    .eq("token_edicao", token)
+    .single();
   if (!a) notFound();
 
   if (a.situacao !== "rejeitado") {
     return (
-      <main className="p-6 max-w-2xl mx-auto">
-        <h1 className="text-2xl font-semibold">Link indisponível</h1>
-        <p className="text-muted-foreground mt-2">
-          Este link só pode ser usado enquanto o registro estiver rejeitado.
+      <PublicFormShell
+        title="Link indisponível"
+        banner="Este link só pode ser usado enquanto o registro estiver rejeitado."
+      >
+        <p className="text-sm text-[var(--color-fg-muted)]">
+          Se você acredita que está vendo esta mensagem por engano, entre em contato com o RH.
         </p>
-      </main>
+      </PublicFormShell>
     );
   }
 
@@ -33,10 +34,16 @@ export default async function EditarPage({ params }: { params: Promise<{ token: 
   ]);
 
   return (
-    <main className="p-6">
-      <div className="max-w-2xl mx-auto mb-4 p-3 bg-amber-50 border border-amber-200 rounded">
-        <strong>Motivo da rejeição:</strong> {a.motivo_rejeicao}
-      </div>
+    <PublicFormShell
+      title="Corrigir afastamento"
+      banner="Seu envio foi rejeitado. Corrija as informações abaixo e reenvie."
+      callout={
+        <div className="rounded-md border border-[var(--brand-accent-500)]/40 bg-[var(--color-accent-soft)] px-4 py-3 text-sm">
+          <strong className="text-[var(--brand-accent-600)]">Motivo da rejeição:</strong>{" "}
+          <span className="text-foreground">{a.motivo_rejeicao}</span>
+        </div>
+      }
+    >
       <AfastamentoForm
         lookups={{ empresas: empresas ?? [], unidades: unidades ?? [], tipos: tipos ?? [] }}
         initial={{
@@ -49,6 +56,6 @@ export default async function EditarPage({ params }: { params: Promise<{ token: 
           arquivo_url: a.arquivo_url ?? undefined, token: token,
         }}
       />
-    </main>
+    </PublicFormShell>
   );
 }
