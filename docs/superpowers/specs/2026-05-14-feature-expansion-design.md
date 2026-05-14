@@ -36,7 +36,7 @@ Concretely:
 
 ### Phase 6 — Ishikawa investigation (DB-backed template)
 
-**Status:** spec-ready (full sub-spec at `2026-05-14-phase-6-investigacao-ishikawa-design.md`).
+**Status:** ✅ Complete (maia-app: `479d4e7..5efe41b`; maia-db: `70312bb6`).
 
 - New tables: `investigacao_categorias`, `investigacao_graus` (admin-editable; seeded with 6Ms and 3 severity levels).
 - Rewrite `/ocorrencias/[id]/investigacao` as a 4-step stepper form: Ishikawa branches → Plano de Ação → Participantes → Fotos. Driven by the DB-backed templates.
