@@ -30,6 +30,8 @@ export const appNav: AppNavGroup[] = [
     href: "/painel",
     items: [],
   },
+  // TODO (Phase 5): add "Novo" submenu under afastamentos and
+  // "Investigações" + "Nova" under ocorrencias once their routes exist.
   {
     id: "afastamentos",
     label: "Afastamentos",
