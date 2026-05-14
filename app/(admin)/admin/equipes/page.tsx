@@ -50,25 +50,33 @@ export default function EquipesPage() {
   React.useEffect(() => { load(); }, [load]);
 
   async function add(equipeId: string, usuarioId: string) {
-    const r = await fetch(`/api/admin/equipes/${equipeId}/membros`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ usuario_id: usuarioId }),
-    });
-    if (!r.ok) {
-      toast.error("Erro ao adicionar.");
-      return;
+    try {
+      const r = await fetch(`/api/admin/equipes/${equipeId}/membros`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usuario_id: usuarioId }),
+      });
+      if (!r.ok) {
+        toast.error("Erro ao adicionar.");
+        return;
+      }
+      load();
+    } catch {
+      toast.error("Erro de rede.");
     }
-    load();
   }
 
   async function remove(equipeId: string, usuarioId: string) {
-    const r = await fetch(`/api/admin/equipes/${equipeId}/membros?usuario_id=${usuarioId}`, { method: "DELETE" });
-    if (!r.ok) {
-      toast.error("Erro ao remover.");
-      return;
+    try {
+      const r = await fetch(`/api/admin/equipes/${equipeId}/membros?usuario_id=${usuarioId}`, { method: "DELETE" });
+      if (!r.ok) {
+        toast.error("Erro ao remover.");
+        return;
+      }
+      load();
+    } catch {
+      toast.error("Erro de rede.");
     }
-    load();
   }
 
   return (

@@ -58,35 +58,43 @@ export default function UsuariosPage() {
   async function invite(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const r = await fetch("/api/admin/usuarios", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    if (!r.ok) {
+    try {
+      const r = await fetch("/api/admin/usuarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        toast.error((j as { error?: string }).error ?? "Erro");
+        return;
+      }
+      toast.success("Convite enviado.");
+      setForm({ email: "", nome: "", sobrenome: "", administrador: false });
+      setOpen(false);
+      await load();
+    } catch {
+      toast.error("Erro de rede.");
+    } finally {
       setBusy(false);
-      const j = await r.json().catch(() => ({}));
-      toast.error((j as { error?: string }).error ?? "Erro");
-      return;
     }
-    toast.success("Convite enviado.");
-    setForm({ email: "", nome: "", sobrenome: "", administrador: false });
-    setOpen(false);
-    await load();
-    setBusy(false);
   }
 
   async function toggle(id: string, field: "administrador" | "ativo", value: boolean) {
-    const r = await fetch(`/api/admin/usuarios/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ [field]: value }),
-    });
-    if (!r.ok) {
-      toast.error("Erro ao atualizar.");
-      return;
+    try {
+      const r = await fetch(`/api/admin/usuarios/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: value }),
+      });
+      if (!r.ok) {
+        toast.error("Erro ao atualizar.");
+        return;
+      }
+      load();
+    } catch {
+      toast.error("Erro de rede.");
     }
-    load();
   }
 
   return (
@@ -153,10 +161,18 @@ export default function UsuariosPage() {
                   <TableCell className="text-sm">{[r.nome, r.sobrenome].filter(Boolean).join(" ") || "—"}</TableCell>
                   <TableCell className="text-sm font-mono">{r.email}</TableCell>
                   <TableCell className="text-center">
-                    <Checkbox checked={r.administrador} onCheckedChange={(v) => toggle(r.id, "administrador", Boolean(v))} />
+                    <Checkbox
+                      checked={r.administrador}
+                      onCheckedChange={(v) => toggle(r.id, "administrador", Boolean(v))}
+                      aria-label={`Administrador: ${r.nome ?? r.email}`}
+                    />
                   </TableCell>
                   <TableCell className="text-center">
-                    <Checkbox checked={r.ativo} onCheckedChange={(v) => toggle(r.id, "ativo", Boolean(v))} />
+                    <Checkbox
+                      checked={r.ativo}
+                      onCheckedChange={(v) => toggle(r.id, "ativo", Boolean(v))}
+                      aria-label={`Ativo: ${r.nome ?? r.email}`}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

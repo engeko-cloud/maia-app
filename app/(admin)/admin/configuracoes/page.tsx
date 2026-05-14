@@ -20,17 +20,22 @@ export default function ConfiguracoesPage() {
 
   async function save() {
     setBusy(true);
-    const r = await fetch("/api/admin/configuracoes", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email_folha: emailFolha }),
-    });
-    setBusy(false);
-    if (!r.ok) {
-      toast.error("Erro ao salvar.");
-      return;
+    try {
+      const r = await fetch("/api/admin/configuracoes", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email_folha: emailFolha }),
+      });
+      if (!r.ok) {
+        toast.error("Erro ao salvar.");
+        return;
+      }
+      toast.success("Salvo.");
+    } catch {
+      toast.error("Erro de rede.");
+    } finally {
+      setBusy(false);
     }
-    toast.success("Salvo.");
   }
 
   return (
