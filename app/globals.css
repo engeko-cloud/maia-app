@@ -10,13 +10,14 @@
   --color-foreground: var(--color-fg);
   --color-primary:    var(--color-primary);
   --color-primary-foreground: var(--color-primary-fg);
+  --color-accent:     var(--color-accent);
+  --color-accent-foreground: var(--color-accent-fg);
   --color-border:     var(--color-border);
-  --color-muted:      var(--color-bg-subtle);
+  --color-muted:      var(--color-bg-muted);
   --color-muted-foreground: var(--color-fg-muted);
   --color-destructive: var(--color-danger);
   --font-sans: var(--font-sans);
   --radius:    var(--radius-md);
-  /* shadcn @layer base uses border-border and outline-ring/50 — map them */
   --color-ring:       var(--color-primary);
   --color-input:      var(--color-border);
 }
