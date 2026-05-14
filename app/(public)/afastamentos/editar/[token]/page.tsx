@@ -41,12 +41,12 @@ export default async function EditarPage({ params }: { params: Promise<{ token: 
         lookups={{ empresas: empresas ?? [], unidades: unidades ?? [], tipos: tipos ?? [] }}
         initial={{
           empresa_id: a.empresa_id, unidade_id: a.unidade_id, tipo_id: a.tipo_id,
-          cpf: a.cpf, colaborador_nome: a.colaborador_nome,
-          colaborador_setor: a.colaborador_setor, colaborador_cargo: a.colaborador_cargo,
-          colaborador_codigo_soc: a.colaborador_codigo_soc,
-          data_inicio: a.data_inicio, data_fim: a.data_fim, duracao: a.duracao,
-          cid: a.cid, email_remetente: a.email_remetente,
-          arquivo_url: a.arquivo_url, token: token,
+          cpf: a.cpf, colaborador_nome: a.colaborador_nome ?? "",
+          colaborador_setor: a.colaborador_setor ?? undefined, colaborador_cargo: a.colaborador_cargo ?? undefined,
+          colaborador_codigo_soc: a.colaborador_codigo_soc ?? undefined,
+          data_inicio: a.data_inicio, data_fim: a.data_fim ?? undefined, duracao: a.duracao ?? undefined,
+          cid: a.cid ?? undefined, email_remetente: a.email_remetente,
+          arquivo_url: a.arquivo_url ?? undefined, token: token,
         }}
       />
     </main>

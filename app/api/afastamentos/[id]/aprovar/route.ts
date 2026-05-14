@@ -47,7 +47,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
         afastamento_id: id,
         tipo_codigo:    (full.afastamento_tipos as any).codigo,
         cpf:            full.cpf,
-        colaborador_nome:       full.colaborador_nome,
+        colaborador_nome:       full.colaborador_nome ?? "",
         colaborador_codigo_soc: full.colaborador_codigo_soc,
         empresa_codigo_fluig:   (full.empresas as any).codigo_fluig ?? "",
         data_inicio: full.data_inicio,
