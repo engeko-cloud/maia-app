@@ -471,6 +471,7 @@ The operational landing.
 - Verify: logged-in users see the new shell + painel; admins see the Admin tab.
 
 ### Phase 5 — Operational pages
+**Status:** ✅ Complete (commit range: c75bed6..685257c)
 
 Every remaining page reaches the design quality bar.
 
