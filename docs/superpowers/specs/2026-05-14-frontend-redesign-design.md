@@ -460,6 +460,7 @@ Polished login funnel.
 - Verify: login → painel; forgot-password email round-trip; update-password from email link.
 
 ### Phase 4 — Private app shell + `/painel`
+**Status:** ✅ Complete (commit range: 7c26124..bf9a987)
 
 The operational landing.
 
