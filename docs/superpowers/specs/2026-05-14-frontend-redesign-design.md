@@ -439,6 +439,7 @@ No user-visible UI yet. Every later phase consumes a stable design layer.
 - Verify: `npm run build` passes; existing pages keep their current bare look.
 
 ### Phase 2 — Public surface
+**Status:** ✅ Complete (commit range: 8d15784..8ea7040)
 
 The surface employees and the world hit. Highest-impact first.
 
