@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale/pt-BR";
+import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import {
   eventoDotTone,
@@ -32,7 +32,7 @@ const DOT_CLASS: Record<EventoTone, string> = {
   muted:    "bg-[var(--color-fg-subtle)]",
 };
 
-export function TimelineEvents({ rows, tipoEntidade: _tipoEntidade }: TimelineEventsProps) {
+export function TimelineEvents({ rows }: TimelineEventsProps) {
   if (rows.length === 0) {
     return <EmptyState icon={ClockIcon} title="Sem eventos ainda." />;
   }
