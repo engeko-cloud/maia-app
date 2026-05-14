@@ -450,6 +450,7 @@ The surface employees and the world hit. Highest-impact first.
 - Verify: `/` renders linktree (logged-out + logged-in states). `/forms/*` and `/afastamentos/editar/[token]` inherit the new public shell automatically.
 
 ### Phase 3 — Auth surface
+**Status:** ✅ Complete (commit range: 152258d..a05080e)
 
 Polished login funnel.
 
