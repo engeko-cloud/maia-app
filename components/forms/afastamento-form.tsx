@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { AfastamentoInputSchema, type AfastamentoInput } from "@/lib/validation/afastamento";
 import { FileUpload } from "./file-upload";
+import { CpfLookup } from "./cpf-lookup";
 
 type Lookups = {
   empresas: { id: string; nome: string }[];
@@ -64,8 +65,16 @@ export function AfastamentoForm({ lookups, initial }: { lookups: Lookups; initia
       </label>
 
       <label className="block">
-        <span>CPF (apenas dígitos)</span>
-        <input {...form.register("cpf")} className="w-full border rounded px-3 py-2" />
+        <span>CPF</span>
+        <CpfLookup onResolved={(data) => {
+          form.setValue("cpf", data.cpf);
+          form.setValue("colaborador_nome", data.nome);
+          form.setValue("colaborador_setor", data.setor);
+          form.setValue("colaborador_cargo", data.cargo);
+          form.setValue("colaborador_codigo_soc", data.codigo_soc);
+          if (data.empresa_id) form.setValue("empresa_id", data.empresa_id);
+          if (data.unidade_id) form.setValue("unidade_id", data.unidade_id);
+        }} />
       </label>
 
       <label className="block">
