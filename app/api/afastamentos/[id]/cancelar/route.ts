@@ -36,9 +36,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   // Atualiza situação para cancelado
-  await admin.from("afastamentos")
+  const { error: upErr } = await admin.from("afastamentos")
     .update({ situacao: "cancelado", decidido_por: user.id, decidido_em: new Date().toISOString() })
     .eq("id", id);
+  if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
 
   // Registra evento de auditoria, incluindo motivo se fornecido
   await writeEvento(admin, {

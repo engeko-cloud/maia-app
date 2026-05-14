@@ -38,7 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   // Atualiza situação para rejeitado com motivo de rejeição
-  await admin.from("afastamentos")
+  const { error: upErr } = await admin.from("afastamentos")
     .update({
       situacao:         "rejeitado",
       decidido_por:     user.id,
@@ -46,6 +46,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       motivo_rejeicao:  parsed.data.motivo,
     })
     .eq("id", id);
+  if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
 
   // Registra evento de auditoria com o motivo
   await writeEvento(admin, {
