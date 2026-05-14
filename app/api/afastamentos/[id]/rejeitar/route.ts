@@ -4,6 +4,7 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { writeEvento } from "@/lib/eventos";
 import { canTransition } from "@/lib/afastamento-state";
+import { sendMail } from "@/lib/mail/send";
 
 // Corpo da requisição exige motivo com no mínimo 3 caracteres
 const Body = z.object({ motivo: z.string().min(3) });
@@ -54,6 +55,37 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     autorId: user.id, dados: { motivo: parsed.data.motivo },
   });
 
-  // E-mail de rejeição com token de edição adicionado na Task 15
+  const { data: full } = await admin
+    .from("afastamentos")
+    .select(`*, empresas!inner(nome), unidades!inner(nome), afastamento_tipos!inner(rotulo)`)
+    .eq("id", id).single();
+
+  if (full?.email_remetente) {
+    const base = process.env.NEXT_PUBLIC_APP_BASE_URL ?? "http://localhost:3000";
+    const editUrl = `${base}/afastamentos/editar/${full.token_edicao}`;
+
+    const emailA = {
+      colaborador_nome: full.colaborador_nome,
+      cpf:              full.cpf,
+      tipo_rotulo:      (full.afastamento_tipos as any).rotulo,
+      data_inicio:      full.data_inicio,
+      data_fim:         full.data_fim,
+      empresa_nome:     (full.empresas as any).nome,
+      unidade_nome:     (full.unidades as any).nome,
+      situacao:         "rejeitado",
+      cid:              full.cid,
+    };
+
+    try {
+      await sendMail({ template: "afastamento-rejected", to: full.email_remetente,
+        data: { a: emailA, motivo: parsed.data.motivo, editUrl } });
+      await writeEvento(admin, { tipoEntidade: "afastamento", entidadeId: id,
+        evento: "email_enviado", autorId: user.id, dados: { template: "afastamento-rejected" } });
+    } catch (err: any) {
+      await writeEvento(admin, { tipoEntidade: "afastamento", entidadeId: id,
+        evento: "email_enviado", autorId: user.id, dados: { template: "afastamento-rejected", error: err.message } });
+    }
+  }
+
   return NextResponse.json({ ok: true });
 }

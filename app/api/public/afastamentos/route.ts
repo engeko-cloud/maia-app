@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { AfastamentoInputSchema } from "@/lib/validation/afastamento";
 import { writeEvento } from "@/lib/eventos";
+import { sendMail } from "@/lib/mail/send";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -33,6 +34,52 @@ export async function POST(request: NextRequest) {
     dados:        { situacao_inicial: situacao },
   });
 
-  // Envio de e-mail adicionado em tarefa posterior.
+  // Carrega detalhes completos para o email
+  const { data: full } = await supabase
+    .from("afastamentos")
+    .select(`*,
+      empresas!inner(nome),
+      unidades!inner(nome),
+      afastamento_tipos!inner(rotulo)`)
+    .eq("id", data.id).single();
+
+  if (full) {
+    const emailA = {
+      colaborador_nome: full.colaborador_nome,
+      cpf:              full.cpf,
+      tipo_rotulo:      (full.afastamento_tipos as any).rotulo,
+      data_inicio:      full.data_inicio,
+      data_fim:         full.data_fim,
+      empresa_nome:     (full.empresas as any).nome,
+      unidade_nome:     (full.unidades as any).nome,
+      situacao:         full.situacao,
+      cid:              full.cid,
+    };
+
+    try {
+      await sendMail({ template: "afastamento-receipt", to: input.email_remetente, data: { a: emailA } });
+      await writeEvento(supabase, { tipoEntidade: "afastamento", entidadeId: data.id,
+        evento: "email_enviado", dados: { template: "afastamento-receipt", to: input.email_remetente } });
+    } catch (err: any) {
+      await writeEvento(supabase, { tipoEntidade: "afastamento", entidadeId: data.id,
+        evento: "email_enviado", dados: { template: "afastamento-receipt", error: err.message } });
+    }
+
+    if (situacao === "finalizado") {
+      // Tipo não-médico: notifica folha automaticamente
+      const { data: cfg } = await supabase.from("configuracoes").select("email_folha").eq("id", 1).single();
+      if (cfg?.email_folha) {
+        try {
+          await sendMail({ template: "folha-auto-accept", to: cfg.email_folha, data: { a: emailA } });
+          await writeEvento(supabase, { tipoEntidade: "afastamento", entidadeId: data.id,
+            evento: "email_enviado", dados: { template: "folha-auto-accept", to: cfg.email_folha } });
+        } catch (err: any) {
+          await writeEvento(supabase, { tipoEntidade: "afastamento", entidadeId: data.id,
+            evento: "email_enviado", dados: { template: "folha-auto-accept", error: err.message } });
+        }
+      }
+    }
+  }
+
   return NextResponse.json({ id: data.id, token_edicao: data.token_edicao });
 }

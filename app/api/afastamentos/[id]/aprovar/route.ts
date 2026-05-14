@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { writeEvento } from "@/lib/eventos";
 import { canTransition } from "@/lib/afastamento-state";
 import { pushToFluig } from "@/lib/fluig";
+import { sendMail } from "@/lib/mail/send";
 
 export async function POST(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -24,9 +25,10 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
   const { data: full, error: fullErr } = await admin
     .from("afastamentos")
     .select(`id, situacao, cpf, colaborador_nome, colaborador_codigo_soc,
-             data_inicio, data_fim, duracao, cid, arquivo_url, tipo_id,
-             empresas!inner(codigo_fluig),
-             afastamento_tipos!inner(codigo, requer_aprovacao)`)
+             data_inicio, data_fim, duracao, cid, arquivo_url, tipo_id, email_remetente,
+             empresas!inner(nome, codigo_fluig),
+             unidades!inner(nome),
+             afastamento_tipos!inner(codigo, rotulo, requer_aprovacao)`)
     .eq("id", id)
     .single();
   if (fullErr || !full) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -98,6 +100,40 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     tipoEntidade: "afastamento", entidadeId: id, evento: "aprovado", autorId: user.id,
   });
 
-  // Envio de e-mail adicionado na Task 15
+  const emailA = {
+    colaborador_nome: full.colaborador_nome,
+    cpf:              full.cpf,
+    tipo_rotulo:      (full.afastamento_tipos as any).rotulo,
+    data_inicio:      full.data_inicio,
+    data_fim:         full.data_fim,
+    empresa_nome:     (full.empresas as any).nome,
+    unidade_nome:     (full.unidades as any).nome,
+    situacao:         "finalizado",
+    cid:              full.cid,
+  };
+
+  if (full.email_remetente) {
+    try {
+      await sendMail({ template: "afastamento-approved", to: full.email_remetente, data: { a: emailA } });
+      await writeEvento(admin, { tipoEntidade: "afastamento", entidadeId: id,
+        evento: "email_enviado", autorId: user.id, dados: { template: "afastamento-approved" } });
+    } catch (err: any) {
+      await writeEvento(admin, { tipoEntidade: "afastamento", entidadeId: id,
+        evento: "email_enviado", autorId: user.id, dados: { template: "afastamento-approved", error: err.message } });
+    }
+  }
+
+  const { data: cfg } = await admin.from("configuracoes").select("email_folha").eq("id", 1).single();
+  if (cfg?.email_folha) {
+    try {
+      await sendMail({ template: "folha-approved-medical", to: cfg.email_folha, data: { a: emailA } });
+      await writeEvento(admin, { tipoEntidade: "afastamento", entidadeId: id,
+        evento: "email_enviado", autorId: user.id, dados: { template: "folha-approved-medical" } });
+    } catch (err: any) {
+      await writeEvento(admin, { tipoEntidade: "afastamento", entidadeId: id,
+        evento: "email_enviado", autorId: user.id, dados: { template: "folha-approved-medical", error: err.message } });
+    }
+  }
+
   return NextResponse.json({ ok: true });
 }
