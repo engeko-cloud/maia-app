@@ -1,74 +1,295 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import * as React from "react";
 import { toast } from "sonner";
+import { PencilIcon, PlusIcon, Trash2Icon, DatabaseIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { EmptyState } from "@/components/data/empty-state";
 
-type Column = { key: string; label: string; type?: "text" | "checkbox" | "number"; readonly?: boolean };
+export type Column = {
+  key: string;
+  label: string;
+  type?: "text" | "checkbox" | "number";
+  readonly?: boolean;
+};
 
-export function AdminCrudTable({ endpoint, columns, initial }: {
+interface AdminCrudTableProps {
   endpoint: string;
   columns: Column[];
-  initial: Record<string, any>;
-}) {
-  const [rows, setRows] = useState<any[]>([]);
-  const [form, setForm] = useState(initial);
-  const load = () => fetch(endpoint).then(r => r.json()).then(setRows);
-  useEffect(() => { load(); }, []);
+  initial: Record<string, unknown>;
+  /** Resource label used in Sheet/Dialog copy. Defaults to "registro". */
+  resourceLabel?: string;
+}
 
-  async function create(e: React.FormEvent) {
-    e.preventDefault();
-    const r = await fetch(endpoint, {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form),
-    });
-    if (!r.ok) { const j = await r.json(); toast.error(j.error ?? "Erro"); return; }
-    toast.success("Criado.");
+export function AdminCrudTable({
+  endpoint,
+  columns,
+  initial,
+  resourceLabel = "registro",
+}: AdminCrudTableProps) {
+  const [rows, setRows] = React.useState<
+    Array<Record<string, unknown> & { id: string }>
+  >([]);
+  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [formOpen, setFormOpen] = React.useState(false);
+  const [form, setForm] = React.useState<Record<string, unknown>>(initial);
+  const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(
+    null
+  );
+  const [busy, setBusy] = React.useState(false);
+
+  const load = React.useCallback(async () => {
+    const data = await fetch(endpoint).then((r) => r.json());
+    setRows(data);
+  }, [endpoint]);
+
+  React.useEffect(() => {
+    load();
+  }, [load]);
+
+  function openCreate() {
+    setEditingId(null);
     setForm(initial);
+    setFormOpen(true);
+  }
+
+  function openEdit(row: Record<string, unknown> & { id: string }) {
+    setEditingId(row.id);
+    setForm({ ...initial, ...row });
+    setFormOpen(true);
+  }
+
+  async function submitForm(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const url = editingId ? `${endpoint}/${editingId}` : endpoint;
+    const method = editingId ? "PATCH" : "POST";
+    const r = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    setBusy(false);
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      toast.error((j as { error?: string }).error ?? "Erro");
+      return;
+    }
+    toast.success(editingId ? "Atualizado." : "Criado.");
+    setFormOpen(false);
     load();
   }
 
-  async function patch(id: string, payload: Record<string, any>) {
-    const r = await fetch(`${endpoint}/${id}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+  async function confirmDelete() {
+    if (!confirmDeleteId) return;
+    setBusy(true);
+    const r = await fetch(`${endpoint}/${confirmDeleteId}`, {
+      method: "DELETE",
     });
-    if (!r.ok) { toast.error("Erro"); return; }
+    setBusy(false);
+    if (!r.ok) {
+      toast.error("Erro ao excluir.");
+      return;
+    }
+    toast.success("Excluído.");
+    setConfirmDeleteId(null);
     load();
   }
 
   return (
     <>
-      <form onSubmit={create} className="border rounded p-4 mb-6 grid grid-cols-3 gap-2">
-        {columns.filter(c => !c.readonly).map(c => (
-          c.type === "checkbox"
-            ? <label key={c.key} className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={!!form[c.key]}
-                       onChange={e => setForm({ ...form, [c.key]: e.target.checked })} />
-                {c.label}
-              </label>
-            : <input key={c.key} className="border rounded px-2 py-1" placeholder={c.label}
-                     type={c.type ?? "text"}
-                     value={form[c.key] ?? ""}
-                     onChange={e => setForm({ ...form, [c.key]: c.type === "number" ? Number(e.target.value) : e.target.value })} />
-        ))}
-        <button className="bg-primary text-primary-foreground rounded">Adicionar</button>
-      </form>
+      <div className="mb-4 flex justify-end">
+        <Sheet open={formOpen} onOpenChange={setFormOpen}>
+          <SheetTrigger
+            render={
+              <Button onClick={openCreate}>
+                <PlusIcon className="size-4" aria-hidden="true" />
+                Novo {resourceLabel}
+              </Button>
+            }
+          />
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>
+                {editingId ? `Editar ${resourceLabel}` : `Novo ${resourceLabel}`}
+              </SheetTitle>
+              <SheetDescription>
+                Preencha os campos abaixo. Mudanças entram em vigor imediatamente.
+              </SheetDescription>
+            </SheetHeader>
+            <form onSubmit={submitForm} className="flex flex-col gap-4 p-4">
+              {columns
+                .filter((c) => !c.readonly)
+                .map((c) => (
+                  <div key={c.key} className="flex flex-col gap-1.5">
+                    <Label htmlFor={c.key}>{c.label}</Label>
+                    {c.type === "checkbox" ? (
+                      <Checkbox
+                        id={c.key}
+                        checked={Boolean(form[c.key])}
+                        onCheckedChange={(v) =>
+                          setForm({ ...form, [c.key]: Boolean(v) })
+                        }
+                      />
+                    ) : (
+                      <Input
+                        id={c.key}
+                        type={c.type ?? "text"}
+                        value={
+                          (form[c.key] as string | number | undefined) ?? ""
+                        }
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            [c.key]:
+                              c.type === "number"
+                                ? Number(e.target.value)
+                                : e.target.value,
+                          })
+                        }
+                      />
+                    )}
+                  </div>
+                ))}
+              <SheetFooter>
+                <SheetClose
+                  render={
+                    <Button variant="outline" type="button">
+                      Cancelar
+                    </Button>
+                  }
+                />
+                <Button type="submit" disabled={busy}>
+                  {editingId ? "Salvar alterações" : "Adicionar"}
+                </Button>
+              </SheetFooter>
+            </form>
+          </SheetContent>
+        </Sheet>
+      </div>
 
-      <table className="w-full text-sm">
-        <thead className="bg-muted/30"><tr>{columns.map(c => <th key={c.key} className="text-left p-2">{c.label}</th>)}</tr></thead>
-        <tbody>
-          {rows.map(r => (
-            <tr key={r.id} className="border-t">
-              {columns.map(c => (
-                <td key={c.key} className="p-2">
-                  {c.type === "checkbox"
-                    ? <input type="checkbox" checked={!!r[c.key]} onChange={e => patch(r.id, { [c.key]: e.target.checked })} />
-                    : <input className="bg-transparent w-full" value={r[c.key] ?? ""}
-                             onBlur={e => e.target.value !== (r[c.key] ?? "") ? patch(r.id, { [c.key]: c.type === "number" ? Number(e.target.value) : e.target.value }) : null}
-                             onChange={e => { r[c.key] = e.target.value; setRows([...rows]); }} />}
-                </td>
+      {rows.length === 0 ? (
+        <EmptyState
+          icon={DatabaseIcon}
+          title={`Nenhum ${resourceLabel} cadastrado.`}
+          hint={`Clique em "Novo ${resourceLabel}" para começar.`}
+        />
+      ) : (
+        <div className="overflow-hidden rounded-md border border-[var(--color-border)] bg-white">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[var(--color-bg-subtle)]">
+                {columns.map((c) => (
+                  <TableHead
+                    key={c.key}
+                    className="text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]"
+                  >
+                    {c.label}
+                  </TableHead>
+                ))}
+                <TableHead className="w-24 text-right text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
+                  Ações
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className="hover:bg-[var(--color-bg-subtle)]"
+                >
+                  {columns.map((c) => (
+                    <TableCell key={c.key} className="text-sm">
+                      {c.type === "checkbox"
+                        ? row[c.key]
+                          ? "Sim"
+                          : "Não"
+                        : String(row[c.key] ?? "—")}
+                    </TableCell>
+                  ))}
+                  <TableCell className="text-right">
+                    <div className="inline-flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEdit(row)}
+                        aria-label="Editar"
+                      >
+                        <PencilIcon className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setConfirmDeleteId(row.id)}
+                        aria-label="Excluir"
+                        className="text-[var(--color-danger)] hover:bg-[var(--color-danger-soft)]"
+                      >
+                        <Trash2Icon className="size-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      <Dialog
+        open={Boolean(confirmDeleteId)}
+        onOpenChange={(o) => !o && setConfirmDeleteId(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir {resourceLabel}?</DialogTitle>
+            <DialogDescription>
+              Essa ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose
+              render={<Button variant="outline">Cancelar</Button>}
+            />
+            <Button
+              onClick={confirmDelete}
+              disabled={busy}
+              className="bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger)]/90"
+            >
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
