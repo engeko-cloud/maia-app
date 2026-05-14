@@ -4,11 +4,12 @@ import { DetailHeader } from "@/components/detail/detail-header";
 import { StatusPill } from "@/components/data/status-pill";
 import { TimelineEvents, type TimelineEventRow } from "@/components/detail/timeline-events";
 import { OcorrenciaDetailCard, type OcorrenciaFull } from "@/components/ocorrencias/ocorrencia-detail-card";
-import { InvestigationStarter } from "@/components/ocorrencias/investigation-starter";
+import { InvestigationStatus } from "@/components/investigacoes/investigation-status";
 import { ocorrenciaTipoLabel } from "@/lib/ocorrencia-state";
+import type { InvestigacaoDados } from "@/lib/investigacao-dados";
 
 type OcorrenciaWithInvestigacoes = OcorrenciaFull & {
-  investigacoes: { id: string; situacao: string }[] | null;
+  investigacoes: { id: string; situacao: "em_andamento" | "finalizada"; dados: InvestigacaoDados | null }[] | null;
 };
 
 export default async function OcorrenciaDetailPage({
@@ -21,7 +22,7 @@ export default async function OcorrenciaDetailPage({
   const [{ data: rawRow }, { data: timelineData }] = await Promise.all([
     supabase
       .from("ocorrencias")
-      .select("*, empresas!inner(nome), unidades!inner(nome), investigacoes(id, situacao)")
+      .select("*, empresas!inner(nome), unidades!inner(nome), investigacoes(id, situacao, dados)")
       .eq("id", id)
       .single(),
     supabase
@@ -34,8 +35,6 @@ export default async function OcorrenciaDetailPage({
   ]);
   if (!rawRow) notFound();
   const row = rawRow as unknown as OcorrenciaWithInvestigacoes;
-
-  const hasInvestigation = (row.investigacoes ?? []).length > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -55,9 +54,10 @@ export default async function OcorrenciaDetailPage({
         }
       />
 
-      {(row.situacao === "aberta" || row.situacao === "em_investigacao") && (
-        <InvestigationStarter ocorrenciaId={row.id} hasInvestigation={hasInvestigation} />
-      )}
+      <InvestigationStatus
+        ocorrenciaId={row.id}
+        investigacao={row.investigacoes?.[0] ?? null}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <OcorrenciaDetailCard o={row} />

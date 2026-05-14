@@ -3,16 +3,19 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 import { DetailHeader } from "@/components/detail/detail-header";
 import { StatusPill } from "@/components/data/status-pill";
 import { TimelineEvents, type TimelineEventRow } from "@/components/detail/timeline-events";
-import { InvestigacaoForm } from "@/components/ocorrencias/investigacao-form";
+import { InvestigacaoForm } from "@/components/investigacoes/investigacao-form";
 import { ocorrenciaTipoLabel } from "@/lib/ocorrencia-state";
+import type { InvestigacaoDados } from "@/lib/investigacao-dados";
 
 interface OcorrenciaSummary {
   id: string;
   tipo: string;
   situacao: string;
   data_ocorrencia: string;
-  investigacoes: { id: string; situacao: string; dados: Record<string, unknown> | null }[] | null;
+  investigacoes: { id: string; situacao: "em_andamento" | "finalizada"; dados: InvestigacaoDados | null }[] | null;
 }
+
+const EMPTY_DADOS: InvestigacaoDados = { ishikawa: [], plano_acao: [], participantes: [], fotos: [] };
 
 export default async function InvestigacaoPage({
   params,
@@ -21,7 +24,13 @@ export default async function InvestigacaoPage({
 }) {
   const { id } = await params;
   const supabase = await getSupabaseServer();
-  const [{ data: rawRow }, { data: timelineData }] = await Promise.all([
+
+  const [
+    { data: rawRow },
+    { data: timelineData },
+    { data: categorias },
+    { data: graus },
+  ] = await Promise.all([
     supabase
       .from("ocorrencias")
       .select("id, tipo, situacao, data_ocorrencia, investigacoes(id, situacao, dados)")
@@ -30,17 +39,19 @@ export default async function InvestigacaoPage({
     supabase
       .from("eventos")
       .select("id, evento, ocorrido_em, usuarios:autor_id(nome)")
-      .eq("tipo_entidade", "ocorrencia")
+      .in("tipo_entidade", ["ocorrencia", "investigacao"])
       .eq("entidade_id", id)
       .order("ocorrido_em", { ascending: false })
       .returns<TimelineEventRow[]>(),
+    supabase.from("investigacao_categorias").select("id, codigo, rotulo, ativo, ordem").order("ordem"),
+    supabase.from("investigacao_graus").select("id, codigo, rotulo, ativo, ordem").order("ordem"),
   ]);
   if (!rawRow) notFound();
   const row = rawRow as unknown as OcorrenciaSummary;
 
-  const initialDados = (row.investigacoes?.[0]?.dados ?? {}) as {
-    contexto?: string; causas?: string; acoes?: string; conclusao?: string;
-  };
+  const inv = row.investigacoes?.[0];
+  const initialDados: InvestigacaoDados = (inv?.dados ?? EMPTY_DADOS) as InvestigacaoDados;
+  const initialSituacao = inv?.situacao ?? "em_andamento";
 
   return (
     <div className="flex flex-col gap-6">
@@ -62,7 +73,13 @@ export default async function InvestigacaoPage({
       />
 
       <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        <InvestigacaoForm ocorrenciaId={row.id} initialDados={initialDados} />
+        <InvestigacaoForm
+          ocorrenciaId={row.id}
+          initialDados={initialDados}
+          initialSituacao={initialSituacao}
+          categorias={categorias ?? []}
+          graus={graus ?? []}
+        />
         <aside className="flex flex-col gap-6">
           <section className="rounded-md border border-[var(--color-border)] bg-white p-6">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
