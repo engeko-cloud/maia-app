@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { AfastamentoInputSchema } from "@/lib/validation/afastamento";
+import { writeEvento } from "@/lib/eventos";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -25,11 +26,11 @@ export async function POST(request: NextRequest) {
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await supabase.from("eventos").insert({
-    tipo_entidade: "afastamento",
-    entidade_id:   data.id,
-    evento:        "criado",
-    dados:         { situacao_inicial: situacao },
+  await writeEvento(supabase, {
+    tipoEntidade: "afastamento",
+    entidadeId:   data.id,
+    evento:       "criado",
+    dados:        { situacao_inicial: situacao },
   });
 
   // Envio de e-mail adicionado em tarefa posterior.
