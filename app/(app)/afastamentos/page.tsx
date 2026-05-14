@@ -35,7 +35,7 @@ export default async function AfastamentosListPage({
     .limit(200);
   if (status) query = query.eq("situacao", status);
   if (q) {
-    const safe = q.replace(/[%_]/g, "\\$&");
+    const safe = q.replace(/[%_,]/g, "");
     query = query.or(`colaborador_nome.ilike.%${safe}%,cpf.ilike.%${safe}%`);
   }
   const { data } = await query.returns<AfastamentoRow[]>();
@@ -84,7 +84,7 @@ export default async function AfastamentosListPage({
               Painel
             </Link>
             <span className="mx-1 text-[var(--color-fg-subtle)]">/</span>
-            <span className="text-foreground">Afastamentos</span>
+            <span aria-current="page" className="text-foreground">Afastamentos</span>
           </nav>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">
             Afastamentos
