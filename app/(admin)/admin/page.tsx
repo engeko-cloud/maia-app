@@ -6,6 +6,8 @@ import {
   UserCogIcon,
   ListTreeIcon,
   SettingsIcon,
+  NetworkIcon,
+  GaugeIcon,
 } from "lucide-react";
 
 const ITEMS = [
@@ -38,6 +40,18 @@ const ITEMS = [
     title: "Tipos de afastamento",
     desc: "Catálogo de tipos com regras de aprovação.",
     icon: ListTreeIcon,
+  },
+  {
+    href: "/admin/investigacao/categorias",
+    title: "Categorias de Ishikawa",
+    desc: "Os 6Ms usados na investigação de ocorrências.",
+    icon: NetworkIcon,
+  },
+  {
+    href: "/admin/investigacao/graus",
+    title: "Graus de severidade",
+    desc: "Escala usada para classificar causas na Ishikawa.",
+    icon: GaugeIcon,
   },
   {
     href: "/admin/configuracoes",
