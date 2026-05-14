@@ -15,7 +15,7 @@ export default async function PublicLanding() {
       .select("nome")
       .eq("id", authUser.id)
       .single();
-    const nome = row?.nome?.trim();
+    const nome = row?.nome?.trim() ?? "";
     if (nome) {
       user = { firstName: nome.split(/\s+/)[0]! };
     }
