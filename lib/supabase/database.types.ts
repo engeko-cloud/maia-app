@@ -337,6 +337,66 @@ export type Database = {
           },
         ]
       }
+      investigacao_categorias: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          codigo: string
+          criado_em: string
+          id: string
+          ordem: number
+          rotulo: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          codigo: string
+          criado_em?: string
+          id?: string
+          ordem?: number
+          rotulo: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          codigo?: string
+          criado_em?: string
+          id?: string
+          ordem?: number
+          rotulo?: string
+        }
+        Relationships: []
+      }
+      investigacao_graus: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          codigo: string
+          criado_em: string
+          id: string
+          ordem: number
+          rotulo: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          codigo: string
+          criado_em?: string
+          id?: string
+          ordem?: number
+          rotulo: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          codigo?: string
+          criado_em?: string
+          id?: string
+          ordem?: number
+          rotulo?: string
+        }
+        Relationships: []
+      }
       investigacoes: {
         Row: {
           atualizado_em: string
@@ -636,3 +696,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
