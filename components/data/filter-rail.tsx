@@ -22,7 +22,7 @@ interface FilterRailProps {
   searchPlaceholder?: string;
 }
 
-export function FilterRail({ basePath, chips, searchPlaceholder = "Buscar…" }: FilterRailProps) {
+function FilterRailInner({ basePath, chips, searchPlaceholder = "Buscar…" }: FilterRailProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const current = parseFilterParams(Object.fromEntries(searchParams.entries()));
@@ -80,5 +80,42 @@ export function FilterRail({ basePath, chips, searchPlaceholder = "Buscar…" }:
         })}
       </div>
     </div>
+  );
+}
+
+function FilterRailFallback({ chips, searchPlaceholder = "Buscar…" }: Pick<FilterRailProps, "chips" | "searchPlaceholder">) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="relative w-full max-w-sm">
+        <SearchIcon
+          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--color-fg-muted)]"
+          aria-hidden="true"
+        />
+        <input
+          type="search"
+          disabled
+          placeholder={searchPlaceholder}
+          className="w-full rounded-md border border-[var(--color-border)] bg-white py-1.5 pl-9 pr-3 text-sm placeholder:text-[var(--color-fg-subtle)]"
+        />
+      </div>
+      <div role="tablist" aria-label="Filtro de situação" className="flex flex-wrap items-center gap-1.5">
+        {chips.map((chip) => (
+          <span
+            key={chip.value || "__all"}
+            className="rounded-md px-3 py-1.5 text-xs font-medium text-[var(--color-fg-muted)]"
+          >
+            {chip.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function FilterRail(props: FilterRailProps) {
+  return (
+    <React.Suspense fallback={<FilterRailFallback chips={props.chips} searchPlaceholder={props.searchPlaceholder} />}>
+      <FilterRailInner {...props} />
+    </React.Suspense>
   );
 }
