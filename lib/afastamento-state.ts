@@ -13,3 +13,8 @@ const ALLOWED: Record<Situacao, Situacao[]> = {
 export function canTransition(from: Situacao, to: Situacao): boolean {
   return ALLOWED[from]?.includes(to) ?? false;
 }
+
+// Verifica se o afastamento pode ser editado via token (apenas quando rejeitado)
+export function isEditAllowed(situacao: Situacao): boolean {
+  return situacao === "rejeitado";
+}
