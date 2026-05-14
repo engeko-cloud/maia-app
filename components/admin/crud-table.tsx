@@ -69,8 +69,14 @@ export function AdminCrudTable({
   const [busy, setBusy] = React.useState(false);
 
   const load = React.useCallback(async () => {
-    const data = await fetch(endpoint).then((r) => r.json());
-    setRows(data);
+    try {
+      const r = await fetch(endpoint);
+      if (!r.ok) throw new Error(r.statusText);
+      const data = await r.json();
+      setRows(Array.isArray(data) ? data : []);
+    } catch {
+      toast.error("Erro ao carregar dados.");
+    }
   }, [endpoint]);
 
   React.useEffect(() => {
@@ -99,15 +105,16 @@ export function AdminCrudTable({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
-    setBusy(false);
     if (!r.ok) {
+      setBusy(false);
       const j = await r.json().catch(() => ({}));
       toast.error((j as { error?: string }).error ?? "Erro");
       return;
     }
     toast.success(editingId ? "Atualizado." : "Criado.");
     setFormOpen(false);
-    load();
+    await load();
+    setBusy(false);
   }
 
   async function confirmDelete() {
@@ -116,14 +123,15 @@ export function AdminCrudTable({
     const r = await fetch(`${endpoint}/${confirmDeleteId}`, {
       method: "DELETE",
     });
-    setBusy(false);
     if (!r.ok) {
+      setBusy(false);
       toast.error("Erro ao excluir.");
       return;
     }
     toast.success("Excluído.");
     setConfirmDeleteId(null);
-    load();
+    await load();
+    setBusy(false);
   }
 
   return (
