@@ -18,7 +18,11 @@ export function Stepper({ steps, current }: StepperProps) {
         const done = i < current;
         const active = i === current;
         return (
-          <li key={s.label} className="flex flex-1 items-center gap-2">
+          <li
+            key={s.label}
+            className="flex flex-1 items-center gap-2"
+            aria-current={active ? "step" : undefined}
+          >
             <span
               className={cn(
                 "grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold",
@@ -26,7 +30,6 @@ export function Stepper({ steps, current }: StepperProps) {
                 active && "bg-[var(--brand-primary-600)] text-white",
                 !done && !active && "bg-[var(--color-bg-muted)] text-[var(--color-fg-muted)]",
               )}
-              aria-current={active ? "step" : undefined}
             >
               {done ? <CheckIcon className="size-4" aria-hidden="true" /> : i + 1}
             </span>
