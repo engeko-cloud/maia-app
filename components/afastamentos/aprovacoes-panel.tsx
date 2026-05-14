@@ -1,39 +1,77 @@
-"use client";
-import { useState } from "react";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { AfastamentoDetail } from "./afastamento-detail";
-import { AprovarRejeitarActions } from "./aprovar-rejeitar-actions";
+import Link from "next/link";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { ArrowRightIcon, FileTextIcon } from "lucide-react";
+import { ApprovalBar } from "@/components/detail/approval-bar";
+import { EmptyState } from "@/components/data/empty-state";
+import { cn } from "@/lib/utils";
 
-export function AprovacoesPanel({ pendentes }: { pendentes: any[] }) {
-  const [selectedId, setSelectedId] = useState(pendentes[0]?.id);
-  const selected = pendentes.find(p => p.id === selectedId);
+export interface PendenteRow {
+  id: string;
+  colaborador_nome: string;
+  cpf: string;
+  data_inicio: string;
+  data_fim: string | null;
+  criado_em: string;
+  email_remetente: string;
+  arquivo_url: string | null;
+  afastamento_tipos: { rotulo: string } | null;
+}
 
+interface AprovacoesPanelProps {
+  pendentes: PendenteRow[];
+}
+
+export function AprovacoesPanel({ pendentes }: AprovacoesPanelProps) {
+  if (pendentes.length === 0) {
+    return (
+      <EmptyState
+        icon={FileTextIcon}
+        title="Sem pendências."
+        hint="Quando colaboradores enviarem afastamentos, eles aparecerão aqui."
+      />
+    );
+  }
   return (
-    <ResizablePanelGroup orientation="horizontal" className="min-h-[calc(100vh-4rem)]">
-      <ResizablePanel defaultSize={30} minSize={20}>
-        <ul className="divide-y">
-          {pendentes.map(p => (
-            <li key={p.id}
-                onClick={() => setSelectedId(p.id)}
-                className={`p-3 cursor-pointer ${p.id === selectedId ? "bg-muted" : ""}`}>
-              <div className="font-medium">{p.colaborador_nome}</div>
-              <div className="text-xs text-muted-foreground">
-                {p.cpf} · {p.data_inicio} · {p.tipo_codigo}
+    <ul className="flex flex-col gap-4">
+      {pendentes.map((p) => {
+        const isUrgent = false;
+        const since = formatDistanceToNow(new Date(p.criado_em), { addSuffix: true, locale: ptBR });
+        return (
+          <li
+            key={p.id}
+            className={cn(
+              "relative rounded-md border border-[var(--color-border)] bg-white shadow-[var(--shadow-xs)]",
+              isUrgent && "border-l-[3px] border-l-[var(--brand-accent-500)]",
+            )}
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--color-border)] p-4">
+              <div className="flex flex-col">
+                <p className="text-base font-semibold text-foreground">{p.colaborador_nome}</p>
+                <p className="font-mono text-xs text-[var(--color-fg-muted)]">{p.cpf}</p>
+                <p className="mt-1 text-sm text-[var(--color-fg-muted)]">
+                  {p.afastamento_tipos?.rotulo ?? "—"} · {p.data_inicio}
+                  {p.data_fim ? ` → ${p.data_fim}` : ""}
+                </p>
               </div>
-            </li>
-          ))}
-          {!pendentes.length && <li className="p-6 text-muted-foreground">Sem pendências.</li>}
-        </ul>
-      </ResizablePanel>
-      <ResizableHandle />
-      <ResizablePanel defaultSize={70}>
-        {selected ? (
-          <div className="p-6 grid grid-cols-[1fr_280px] gap-6">
-            <AfastamentoDetail a={selected} />
-            <AprovarRejeitarActions id={selected.id} />
-          </div>
-        ) : <div className="p-6 text-muted-foreground">Selecione uma pendência.</div>}
-      </ResizablePanel>
-    </ResizablePanelGroup>
+              <div className="text-right text-xs text-[var(--color-fg-muted)]">
+                <p>Enviado {since}</p>
+                <p>{p.email_remetente}</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+              <Link
+                href={`/afastamentos/${p.id}`}
+                className="inline-flex items-center gap-1 text-sm font-medium text-[var(--brand-primary-600)] hover:underline"
+              >
+                Ver detalhes
+                <ArrowRightIcon className="size-3.5" aria-hidden="true" />
+              </Link>
+              <ApprovalBar afastamentoId={p.id} />
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
