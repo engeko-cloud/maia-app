@@ -1,34 +1,75 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSupabaseServer } from "@/lib/supabase/server";
-import { EventosTimeline } from "@/components/eventos-timeline";
+import { DetailHeader } from "@/components/detail/detail-header";
+import { StatusPill } from "@/components/data/status-pill";
+import { TimelineEvents, type TimelineEventRow } from "@/components/detail/timeline-events";
+import { OcorrenciaDetailCard, type OcorrenciaFull } from "@/components/ocorrencias/ocorrencia-detail-card";
+import { InvestigationStarter } from "@/components/ocorrencias/investigation-starter";
+import { ocorrenciaTipoLabel } from "@/lib/ocorrencia-state";
 
-export default async function OcorrenciaDetail({ params }: { params: Promise<{ id: string }> }) {
+type OcorrenciaWithInvestigacoes = OcorrenciaFull & {
+  investigacoes: { id: string; situacao: string }[] | null;
+};
+
+export default async function OcorrenciaDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const supabase = await getSupabaseServer();
-  const { data: o } = await supabase.from("ocorrencias")
-    .select(`*, empresas!inner(nome), unidades!inner(nome), investigacoes(id, situacao)`)
-    .eq("id", id).single();
-  if (!o) notFound();
+  const [{ data: rawRow }, { data: timelineData }] = await Promise.all([
+    supabase
+      .from("ocorrencias")
+      .select("*, empresas!inner(nome), unidades!inner(nome), investigacoes(id, situacao)")
+      .eq("id", id)
+      .single(),
+    supabase
+      .from("eventos")
+      .select("id, evento, ocorrido_em, usuarios:autor_id(nome)")
+      .eq("tipo_entidade", "ocorrencia")
+      .eq("entidade_id", id)
+      .order("ocorrido_em", { ascending: false })
+      .returns<TimelineEventRow[]>(),
+  ]);
+  if (!rawRow) notFound();
+  const row = rawRow as unknown as OcorrenciaWithInvestigacoes;
+
+  const hasInvestigation = (row.investigacoes ?? []).length > 0;
+
   return (
-    <main className="max-w-3xl mx-auto p-6 grid grid-cols-[1fr_240px] gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold mb-4">Ocorrência</h1>
-        <p><strong>Tipo:</strong> {o.tipo}</p>
-        <p><strong>Empresa/Unidade:</strong> {(o as any).empresas?.nome} / {(o as any).unidades?.nome}</p>
-        <p><strong>Data:</strong> {o.data_ocorrencia}</p>
-        <p><strong>Situação:</strong> {o.situacao}</p>
-        <p className="mt-4 whitespace-pre-wrap">{o.descricao}</p>
-        <div className="mt-6">
-          <Link href={`/ocorrencias/${id}/investigacao`} className="text-primary underline">
-            {(o as any).investigacoes?.length ? "Ver investigação" : "Iniciar investigação"}
-          </Link>
-        </div>
+    <div className="flex flex-col gap-6">
+      <DetailHeader
+        breadcrumbs={[
+          { label: "Painel", href: "/painel" },
+          { label: "Ocorrências", href: "/ocorrencias" },
+          { label: ocorrenciaTipoLabel(row.tipo) },
+        ]}
+        title={ocorrenciaTipoLabel(row.tipo)}
+        meta={
+          <>
+            <StatusPill domain="ocorrencia" situacao={row.situacao} />
+            <span>{row.empresas?.nome ?? "—"}</span>
+            <span className="font-mono">{new Date(row.data_ocorrencia).toLocaleString("pt-BR")}</span>
+          </>
+        }
+      />
+
+      {(row.situacao === "aberta" || row.situacao === "em_investigacao") && (
+        <InvestigationStarter ocorrenciaId={row.id} hasInvestigation={hasInvestigation} />
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <OcorrenciaDetailCard o={row} />
+        <aside className="flex flex-col gap-6">
+          <section className="rounded-md border border-[var(--color-border)] bg-white p-6">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
+              Histórico
+            </h2>
+            <TimelineEvents rows={timelineData ?? []} tipoEntidade="ocorrencia" />
+          </section>
+        </aside>
       </div>
-      <aside>
-        <h2 className="text-sm font-semibold mb-2">Histórico</h2>
-        <EventosTimeline entityType="ocorrencia" entityId={id} />
-      </aside>
-    </main>
+    </div>
   );
 }
