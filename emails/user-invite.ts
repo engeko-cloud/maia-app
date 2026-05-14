@@ -1,3 +1,7 @@
+// Template usado apenas para gerar HTML (em scripts/output/user-invite.html)
+// e colar no Supabase Dashboard → Auth → Email Templates → Invite user.
+// Não é despachado via lib/mail/send.ts: o envio é feito pelo Supabase quando
+// admin.auth.admin.inviteUserByEmail() é chamado em app/api/admin/usuarios/route.ts.
 import { layout } from "./_layout";
 import { EMAIL_COLORS } from "./tokens";
 import { escapeHtml } from "./_escape";

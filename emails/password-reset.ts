@@ -1,3 +1,7 @@
+// Template usado apenas para gerar HTML (em scripts/output/password-reset.html)
+// e colar no Supabase Dashboard → Auth → Email Templates → Reset password.
+// Não é despachado via lib/mail/send.ts: o envio é feito pelo Supabase quando
+// auth.resetPasswordForEmail() é chamado em app/(auth)/forgot-password/page.tsx.
 import { layout } from "./_layout";
 import { EMAIL_COLORS } from "./tokens";
 import { escapeHtml } from "./_escape";
