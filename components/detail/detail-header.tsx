@@ -29,7 +29,7 @@ export function DetailHeader({ breadcrumbs, title, titleSuffix, meta, actions }:
               {b.href && !last ? (
                 <Link href={b.href} className="hover:text-foreground">{b.label}</Link>
               ) : (
-                <span className={cn(last && "text-foreground")}>{b.label}</span>
+                <span aria-current={last ? "page" : undefined} className={cn(last && "text-foreground")}>{b.label}</span>
               )}
               {!last && <ChevronRightIcon className="size-3 text-[var(--color-fg-subtle)]" aria-hidden="true" />}
             </span>
