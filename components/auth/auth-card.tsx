@@ -95,7 +95,7 @@ export function AuthCard({ title, lead, pitch, children }: AuthCardProps) {
           />
           <div className="relative flex h-full flex-col">
             <PitchHeading pitch={pitch} />
-            <div className="mt-3 h-[3px] w-12 rounded-full bg-[var(--brand-accent-500)]" />
+            <div className="mt-3 h-[3px] w-12 bg-[var(--brand-accent-500)]" />
             <p className="mt-4 text-sm text-white/80">{pitch.sub}</p>
             <p className="mt-auto pt-8 text-xs text-white/60">
               v{APP_VERSION}{" "}
