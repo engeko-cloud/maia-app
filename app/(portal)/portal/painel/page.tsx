@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/data/empty-state";
+import { KpiCard } from "@/components/painel/kpi-card";
 
 type AfastamentoRow = {
   id: string;
@@ -22,6 +23,22 @@ function fmtDate(iso: string, defaultTime: string): string {
   const [y, m, d] = datePart.split("-");
   const time = timePart ? timePart.slice(0, 5) : defaultTime;
   return `${m}/${d}/${y} ${time}`;
+}
+
+function fmtDateOnly(iso: string): string {
+  const datePart = iso.includes("T") ? iso.split("T")[0] : iso;
+  const [y, m, d] = datePart.split("-");
+  return `${m}/${d}/${y}`;
+}
+
+function nextDayFmt(iso: string): string {
+  const datePart = iso.includes("T") ? iso.split("T")[0] : iso;
+  const [y, m, d] = datePart.split("-");
+  const date = new Date(Number(y), Number(m) - 1, Number(d) + 1);
+  const ry = date.getFullYear();
+  const rm = String(date.getMonth() + 1).padStart(2, "0");
+  const rd = String(date.getDate()).padStart(2, "0");
+  return `${rm}/${rd}/${ry}`;
 }
 
 const COLUMNS: DataTableColumn<AfastamentoRow>[] = [
@@ -63,12 +80,38 @@ export default async function PortalPainelPage() {
   const banner    = config?.portal_banner ?? "";
   const textoVazio = config?.portal_vazio ?? "Nenhum afastamento registrado.";
 
+  const total = rows?.length ?? 0;
+  const last = rows?.[0];
+  const now = new Date();
+  const activeAfastamento = rows?.find(
+    (r) => r.situacao === "aprovado" && r.data_fim != null && new Date(r.data_fim) > now,
+  );
+  const isAfastado = activeAfastamento != null;
+
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold tracking-tight">{saudacao}</h1>
         {banner && <p className="text-sm text-[var(--color-fg-muted)]">{banner}</p>}
       </header>
+      {total > 0 && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <KpiCard
+            label="Total de afastamentos"
+            value={total}
+          />
+          <KpiCard
+            label="Último afastamento"
+            value={`${fmtDateOnly(last!.data_inicio)} → ${fmtDateOnly(last!.data_fim!)}`}
+          />
+          <KpiCard
+            label="Status atual"
+            value={isAfastado ? "Afastado" : "Sem afastamento ativo"}
+            delta={isAfastado ? `Retorno em ${nextDayFmt(activeAfastamento!.data_fim!)}` : undefined}
+            tone={isAfastado ? "warning" : "primary"}
+          />
+        </div>
+      )}
       <DataTable
         rows={rows ?? []}
         columns={COLUMNS}
