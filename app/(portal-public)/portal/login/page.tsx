@@ -6,20 +6,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AuthCard } from "@/components/auth/auth-card";
-import { getSupabaseBrowser } from "@/lib/supabase/client";
 
 const CredSchema = z.object({
-  cpf: z.string().regex(/^\d{11}$/, "CPF deve ter exatamente 11 dígitos"),
+  cpf:   z.string().regex(/^\d{11}$/, "CPF deve ter exatamente 11 dígitos"),
   email: z.string().trim().toLowerCase().email("Email inválido"),
 });
 const OtpSchema = z.object({
@@ -27,8 +21,8 @@ const OtpSchema = z.object({
 });
 
 type CredInput = z.infer<typeof CredSchema>;
-type OtpInput = z.infer<typeof OtpSchema>;
-type Step = "cred" | "otp";
+type OtpInput  = z.infer<typeof OtpSchema>;
+type Step      = "cred" | "otp";
 
 const PITCH = {
   headingWords: ["Seus", "afastamentos,", "sempre", "acessíveis."],
@@ -38,15 +32,14 @@ const PITCH = {
 
 export default function PortalLoginPage() {
   const router = useRouter();
-  const [step, setStep] = React.useState<Step>("cred");
-  const [email, setEmail] = React.useState("");
+  const [step,  setStep]  = React.useState<Step>("cred");
+  const [creds, setCreds] = React.useState<CredInput | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   const credForm = useForm<CredInput>({
     resolver: zodResolver(CredSchema),
     defaultValues: { cpf: "", email: "" },
   });
-
   const otpForm = useForm<OtpInput>({
     resolver: zodResolver(OtpSchema),
     defaultValues: { code: "" },
@@ -64,29 +57,21 @@ export default function PortalLoginPage() {
       setError(msg ?? "Erro inesperado.");
       return;
     }
-    const supabase = getSupabaseBrowser();
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      email: values.email,
-      options: { shouldCreateUser: true, data: { cpf: values.cpf } },
-    });
-    if (otpError) {
-      setError("Não foi possível enviar o código. Tente novamente.");
-      return;
-    }
-    setEmail(values.email);
+    setCreds(values);
     setStep("otp");
   }
 
   async function onOtpSubmit(values: OtpInput) {
     setError(null);
-    const supabase = getSupabaseBrowser();
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token: values.code,
-      type: "email",
+    if (!creds) return;
+    const res = await fetch("/api/portal/login-verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cpf: creds.cpf, email: creds.email, code: values.code }),
     });
-    if (error) {
-      setError("Código inválido ou expirado. Solicite um novo código.");
+    if (!res.ok) {
+      const { error: msg } = await res.json().catch(() => ({ error: "Erro inesperado." }));
+      setError(msg ?? "Código inválido ou expirado. Tente novamente.");
       return;
     }
     router.push("/portal/painel");
@@ -99,7 +84,7 @@ export default function PortalLoginPage() {
       lead={
         step === "cred"
           ? "Informe seu CPF e email para receber o código de acesso."
-          : `Enviamos um código de 6 dígitos para ${email}.`
+          : `Enviamos um código de 6 dígitos para ${creds?.email}.`
       }
       pitch={PITCH}
     >
@@ -107,10 +92,7 @@ export default function PortalLoginPage() {
         <Form {...credForm}>
           <form onSubmit={credForm.handleSubmit(onCredSubmit)} className="space-y-4">
             {error && (
-              <div
-                role="alert"
-                className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
-              >
+              <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -121,14 +103,7 @@ export default function PortalLoginPage() {
                 <FormItem>
                   <FormLabel>CPF</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={11}
-                      placeholder="Somente números"
-                      autoComplete="username"
-                      {...field}
-                    />
+                    <Input type="text" inputMode="numeric" maxLength={11} placeholder="Somente números" autoComplete="username" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -147,11 +122,7 @@ export default function PortalLoginPage() {
                 </FormItem>
               )}
             />
-            <Button
-              type="submit"
-              className="w-full border-b-[3px] border-[var(--brand-accent-500)]"
-              disabled={credForm.formState.isSubmitting}
-            >
+            <Button type="submit" className="w-full border-b-[3px] border-[var(--brand-accent-500)]" disabled={credForm.formState.isSubmitting}>
               {credForm.formState.isSubmitting ? "Verificando…" : "Enviar código"}
             </Button>
           </form>
@@ -160,10 +131,7 @@ export default function PortalLoginPage() {
         <Form {...otpForm}>
           <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-4">
             {error && (
-              <div
-                role="alert"
-                className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive"
-              >
+              <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
                 {error}
               </div>
             )}
@@ -174,33 +142,18 @@ export default function PortalLoginPage() {
                 <FormItem>
                   <FormLabel>Código de 6 dígitos</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={6}
-                      autoComplete="one-time-code"
-                      {...field}
-                    />
+                    <Input type="text" inputMode="numeric" maxLength={6} autoComplete="one-time-code" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button
-              type="submit"
-              className="w-full border-b-[3px] border-[var(--brand-accent-500)]"
-              disabled={otpForm.formState.isSubmitting}
-            >
+            <Button type="submit" className="w-full border-b-[3px] border-[var(--brand-accent-500)]" disabled={otpForm.formState.isSubmitting}>
               {otpForm.formState.isSubmitting ? "Verificando…" : "Entrar"}
             </Button>
             <button
               type="button"
-              onClick={() => {
-                setStep("cred");
-                setError(null);
-                setEmail("");
-                credForm.reset();
-              }}
+              onClick={() => { setStep("cred"); setError(null); setCreds(null); otpForm.reset(); }}
               className="w-full text-sm text-[var(--color-fg-muted)] hover:text-foreground"
             >
               Tentar novamente
