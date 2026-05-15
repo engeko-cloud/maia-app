@@ -10,7 +10,7 @@ export async function GET() {
     admin.from("configuracoes").select("*").eq("id", 1).single(),
     admin.from("configuracoes_dashboard").select("config").eq("id", true).single(),
   ]);
-  const aprovacao_lenta_horas: number = (dash?.config as { aprovacao_lenta_horas?: number } | null)?.aprovacao_lenta_horas ?? 48;
+  const aprovacao_lenta_horas: number = (dash?.config as { aprovacao_lenta_horas?: number } | null)?.aprovacao_lenta_horas ?? 24;
   return NextResponse.json({ ...cfg, aprovacao_lenta_horas });
 }
 
@@ -38,7 +38,7 @@ export async function PATCH(req: NextRequest) {
 
   if (aprovacao_lenta_horas !== undefined) {
     const { error } = await admin.from("configuracoes_dashboard")
-      .upsert({ id: true, config: { aprovacao_lenta_horas } }, { onConflict: "id" });
+      .upsert({ id: true, config: { aprovacao_lenta_horas }, atualizado_em: new Date().toISOString() }, { onConflict: "id" });
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
