@@ -89,7 +89,7 @@ export default function PortalLoginPage() {
       pitch={PITCH}
     >
       {step === "cred" ? (
-        <Form {...credForm}>
+        <Form key="cred" {...credForm}>
           <form onSubmit={credForm.handleSubmit(onCredSubmit)} className="space-y-4">
             {error && (
               <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
@@ -128,7 +128,7 @@ export default function PortalLoginPage() {
           </form>
         </Form>
       ) : (
-        <Form {...otpForm}>
+        <Form key="otp" {...otpForm}>
           <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-4">
             {error && (
               <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
