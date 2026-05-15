@@ -53,15 +53,7 @@ export const appNav: AppNavGroup[] = [
     href: "/admin",
     adminOnly: true,
     items: [
-      { label: "Empresas",                   href: "/admin/empresas" },
-      { label: "Unidades",                   href: "/admin/unidades" },
-      { label: "Equipes",                    href: "/admin/equipes" },
-      { label: "Usuários",                   href: "/admin/usuarios" },
-      { label: "Tipos de afastamento",       href: "/admin/afastamento-tipos" },
-      { label: "Categorias de investigação", href: "/admin/investigacao/categorias" },
-      { label: "Graus de severidade",        href: "/admin/investigacao/graus" },
-      { label: "Causas de investigação",     href: "/admin/investigacao/causas" },
-      { label: "Configurações",              href: "/admin/configuracoes" },
+      { label: "Saúde", href: "/painel/saude" },
     ],
   },
 ];

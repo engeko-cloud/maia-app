@@ -49,4 +49,11 @@ describe("appNav config", () => {
       }
     }
   });
+
+  it("admin group contains a Saúde item pointing to /painel/saude", () => {
+    const admin = appNav.find((g) => g.id === "admin")!;
+    const saude = admin.items.find((i) => i.href === "/painel/saude");
+    expect(saude).toBeDefined();
+    expect(saude!.label).toBe("Saúde");
+  });
 });
