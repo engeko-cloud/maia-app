@@ -596,6 +596,36 @@ export type Database = {
         }
         Relationships: []
       }
+      portal_otp_codes: {
+        Row: {
+          id: string
+          cpf: string
+          email: string
+          code: string
+          expires_at: string
+          used: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          cpf: string
+          email: string
+          code: string
+          expires_at: string
+          used?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          cpf?: string
+          email?: string
+          code?: string
+          expires_at?: string
+          used?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
       usuarios: {
         Row: {
           administrador: boolean
