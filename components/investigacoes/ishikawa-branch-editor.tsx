@@ -11,7 +11,7 @@ import {
 export type IshikawaBranch = {
   categoria_id: string;
   grau_id: string | null;
-  causas: string[];
+  causas: Array<{ causa_id?: string; descricao: string }>;
 };
 
 interface Props {
@@ -31,11 +31,11 @@ export function IshikawaBranchEditor({
   }
   function setCausa(idx: number, text: string) {
     const next = [...branch.causas];
-    next[idx] = text;
+    next[idx] = { descricao: text };
     onChange({ ...branch, causas: next });
   }
   function addCausa() {
-    onChange({ ...branch, causas: [...branch.causas, ""] });
+    onChange({ ...branch, causas: [...branch.causas, { descricao: "" }] });
   }
   function removeCausa(idx: number) {
     onChange({ ...branch, causas: branch.causas.filter((_, i) => i !== idx) });
@@ -74,7 +74,7 @@ export function IshikawaBranchEditor({
         {branch.causas.map((c, idx) => (
           <li key={idx} className="flex items-center gap-2">
             <Input
-              value={c}
+              value={c.descricao}
               onChange={(e) => setCausa(idx, e.target.value)}
               placeholder="Descreva a causa"
               disabled={readOnly}

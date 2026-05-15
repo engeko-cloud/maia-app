@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { InvestigacaoDadosSchema, assertFinalizable } from "@/lib/investigacao-dados";
 
+const VALID_UUID = "11111111-2222-3333-4444-555555555555";
+
 const UUID_A = "00000000-0000-0000-0000-000000000001";
 const UUID_B = "00000000-0000-0000-0000-000000000002";
 
@@ -8,7 +10,7 @@ describe("InvestigacaoDadosSchema", () => {
   it("accepts a fully populated dados", () => {
     const result = InvestigacaoDadosSchema.safeParse({
       ishikawa: [
-        { categoria_id: UUID_A, grau_id: UUID_B, causas: ["falta de treino"] },
+        { categoria_id: UUID_A, grau_id: UUID_B, causas: [{ descricao: "falta de treino" }] },
       ],
       plano_acao: [
         { acao: "treinar equipe", responsavel: "João", prazo: "2026-06-30", status: "pendente" },
@@ -28,7 +30,7 @@ describe("InvestigacaoDadosSchema", () => {
 
   it("rejects non-uuid categoria_id", () => {
     const result = InvestigacaoDadosSchema.safeParse({
-      ishikawa: [{ categoria_id: "not-a-uuid", grau_id: null, causas: ["x"] }],
+      ishikawa: [{ categoria_id: "not-a-uuid", grau_id: null, causas: [{ descricao: "x" }] }],
       plano_acao: [], participantes: [], fotos: [],
     });
     expect(result.success).toBe(false);
@@ -59,11 +61,53 @@ describe("InvestigacaoDadosSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("aceita causa_id opcional referenciando biblioteca", () => {
+    const dados = {
+      ishikawa: [{
+        categoria_id: VALID_UUID,
+        grau_id: VALID_UUID,
+        causas: [{ causa_id: VALID_UUID, descricao: "Falta de procedimento" }],
+      }],
+      plano_acao: [],
+      participantes: [],
+      fotos: [],
+    };
+    expect(InvestigacaoDadosSchema.safeParse(dados).success).toBe(true);
+  });
+
+  it("aceita causa sem causa_id (free-text)", () => {
+    const dados = {
+      ishikawa: [{
+        categoria_id: VALID_UUID,
+        grau_id: VALID_UUID,
+        causas: [{ descricao: "Causa personalizada" }],
+      }],
+      plano_acao: [],
+      participantes: [],
+      fotos: [],
+    };
+    expect(InvestigacaoDadosSchema.safeParse(dados).success).toBe(true);
+  });
+
+  it("rejeita causa_id mal formado", () => {
+    const dados = {
+      ishikawa: [{
+        categoria_id: VALID_UUID,
+        grau_id: VALID_UUID,
+        causas: [{ causa_id: "not-a-uuid", descricao: "x" }],
+      }],
+      plano_acao: [],
+      participantes: [],
+      fotos: [],
+    };
+    expect(InvestigacaoDadosSchema.safeParse(dados).success).toBe(false);
+  });
 });
 
 describe("assertFinalizable", () => {
   const valid = {
-    ishikawa: [{ categoria_id: UUID_A, grau_id: null, causas: ["c"] }],
+    ishikawa: [{ categoria_id: UUID_A, grau_id: null, causas: [{ descricao: "c" }] }],
     plano_acao: [{ acao: "a", responsavel: "r", prazo: "2026-06-30", status: "pendente" as const }],
     participantes: [], fotos: [],
   };

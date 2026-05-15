@@ -8,10 +8,17 @@ const IsoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "prazo deve ser ISO YYYY
 const UuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 const Uuid = z.string().regex(UuidRegex, "UUID inválido");
 
+export const CausaSchema = z.object({
+  causa_id:  z.string().regex(UuidRegex, "UUID inválido").optional(),
+  descricao: z.string().min(1, "descrição obrigatória"),
+});
+
+export type Causa = z.infer<typeof CausaSchema>;
+
 export const IshikawaEntrySchema = z.object({
   categoria_id: Uuid,
   grau_id:      Uuid.nullable(),
-  causas:       z.array(z.string().min(1)).min(1, "cada categoria precisa de ao menos uma causa"),
+  causas:       z.array(CausaSchema).min(1, "cada categoria precisa de ao menos uma causa"),
 });
 
 export const PlanoAcaoEntrySchema = z.object({

@@ -54,7 +54,7 @@ export function InvestigacaoForm({
     if (missing.length > 0) {
       form.setValue("ishikawa", [
         ...current,
-        ...missing.map((c) => ({ categoria_id: c.id, grau_id: null, causas: [] as string[] })),
+        ...missing.map((c) => ({ categoria_id: c.id, grau_id: null, causas: [] as Array<{ causa_id?: string; descricao: string }> })),
       ], { shouldDirty: false });
     }
   }, [activeCategorias, form]);
@@ -68,7 +68,9 @@ export function InvestigacaoForm({
       // Strip ishikawa branches with no causes (they're "empty" slots)
       const cleanDados: InvestigacaoDados = {
         ...dados,
-        ishikawa: dados.ishikawa.filter((b) => b.causas.length > 0 && b.causas.every((c) => c.trim().length > 0)),
+        ishikawa: dados.ishikawa
+          .map((b) => ({ ...b, causas: b.causas.filter((c) => c.descricao.trim().length > 0) }))
+          .filter((b) => b.causas.length > 0),
       };
       const res = await fetch(`/api/ocorrencias/${ocorrenciaId}/investigacao`, {
         method: "POST",
