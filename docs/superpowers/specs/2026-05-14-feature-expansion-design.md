@@ -58,7 +58,7 @@ Concretely:
 
 ### Phase 8 — Self-service portal (colaborador surface)
 
-**Status:** spec complete (sub-spec: `2026-05-14-phase-8-design.md`). Implementation not started.
+**Status:** Complete (maia-app: 20db7cd..a9f3bda; maia-db: b1741b1..b372fa5).
 
 - New auth class: `colaborador`. Entry via `/portal/login` (email OTP) + `/portal/cadastro` (first-time CPF linkage, CPF must match ≥1 existing afastamento).
 - Routes: `/portal/painel`, `/portal/afastamentos/[id]` — afastamentos only; ocorrências deferred (no CPF column on `ocorrencias`).
