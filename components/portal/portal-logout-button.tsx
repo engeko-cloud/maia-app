@@ -2,14 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { getSupabaseBrowser } from "@/lib/supabase/client";
 
 export function PortalLogoutButton() {
   const router = useRouter();
 
   async function handleLogout() {
-    const supabase = getSupabaseBrowser();
-    await supabase.auth.signOut();
+    await fetch("/api/portal/logout", { method: "POST" });
     router.push("/portal/login");
     router.refresh();
   }
