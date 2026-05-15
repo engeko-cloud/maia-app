@@ -17,6 +17,18 @@ describe("toCsvRow", () => {
   it("passes through plain values unchanged", () => {
     expect(toCsvRow(["Alice", "30", ""])).toBe("Alice,30,");
   });
+  it("handles null value as empty string", () => {
+    expect(toCsvRow([null as unknown as string])).toBe("");
+  });
+  it("handles undefined value as empty string", () => {
+    expect(toCsvRow([undefined as unknown as string])).toBe("");
+  });
+  it("quotes value containing only a double-quote", () => {
+    expect(toCsvRow(['"'])).toBe('""""');
+  });
+  it("quotes value containing bare carriage return", () => {
+    expect(toCsvRow(["\r"])).toBe('"\r"');
+  });
 });
 
 describe("toCsvFile", () => {
