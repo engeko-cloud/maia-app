@@ -8,7 +8,9 @@ const Schema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const parsed = Schema.safeParse(await req.json());
+  let body: unknown;
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "Dados inválidos" }, { status: 400 }); }
+  const parsed = Schema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message ?? "Dados inválidos" },
@@ -18,12 +20,13 @@ export async function POST(req: NextRequest) {
   const { cpf, email } = parsed.data;
   const admin = getSupabaseAdmin();
 
-  // Check if CPF is pre-registered by admin.
-  const { data: colab } = await admin
+  const { data: colab, error: colabError } = await admin
     .from("colaboradores")
     .select("email, auth_id")
     .eq("cpf", cpf)
-    .single();
+    .maybeSingle();
+
+  if (colabError) return NextResponse.json({ error: "Erro interno." }, { status: 500 });
 
   if (colab) {
     if (colab.email && colab.email.toLowerCase() !== email) {
@@ -35,7 +38,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // CPF not pre-registered — check afastamentos records.
   const { count, error: countError } = await admin
     .from("afastamentos")
     .select("id", { count: "exact", head: true })

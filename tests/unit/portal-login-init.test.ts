@@ -11,21 +11,33 @@ function makeColaboradoresAdmin(colab: { email: string | null; auth_id: string |
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: colab, error: null }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: colab, error: null }),
         }),
       }),
     }),
   } as unknown as ReturnType<typeof getSupabaseAdmin>;
 }
 
-function makeAfastamentosAdmin({ count, error }: { count: number; error?: unknown }) {
+function makeColaboradoresAdminWithError() {
+  return {
+    from: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: "db error" } }),
+        }),
+      }),
+    }),
+  } as unknown as ReturnType<typeof getSupabaseAdmin>;
+}
+
+function makeAfastamentosAdmin({ count, error }: { count: number | null; error?: unknown }) {
   return {
     from: vi.fn().mockImplementation((table: string) => {
       if (table === "colaboradores") {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: null, error: null }),
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
             }),
           }),
         };
@@ -85,6 +97,13 @@ describe("POST /api/portal/login-init", () => {
     expect(res.status).toBe(403);
   });
 
+  it("returns 500 when colaboradores query errors", async () => {
+    mockGetAdmin.mockReturnValue(makeColaboradoresAdminWithError());
+    const { POST } = await import("@/app/api/portal/login-init/route");
+    const res = await POST(req({ cpf: "11111111111", email: "any@email.com" }) as never);
+    expect(res.status).toBe(500);
+  });
+
   it("returns 200 when CPF not in colaboradores but has afastamentos", async () => {
     mockGetAdmin.mockReturnValue(makeAfastamentosAdmin({ count: 3 }));
     const { POST } = await import("@/app/api/portal/login-init/route");
@@ -100,7 +119,7 @@ describe("POST /api/portal/login-init", () => {
   });
 
   it("returns 500 when afastamentos query errors", async () => {
-    mockGetAdmin.mockReturnValue(makeAfastamentosAdmin({ count: 0, error: { message: "db error" } }));
+    mockGetAdmin.mockReturnValue(makeAfastamentosAdmin({ count: null, error: { message: "db error" } }));
     const { POST } = await import("@/app/api/portal/login-init/route");
     const res = await POST(req({ cpf: "11111111111", email: "new@worker.com" }) as never);
     expect(res.status).toBe(500);
