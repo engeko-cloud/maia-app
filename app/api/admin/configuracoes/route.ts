@@ -15,11 +15,20 @@ export async function GET() {
 }
 
 const Patch = z.object({
-  email_folha: z.string().email().optional(),
+  email_folha:           z.string().email().optional(),
   aprovacao_lenta_horas: z.number().int().min(1).max(720).optional(),
-}).refine((d) => d.email_folha !== undefined || d.aprovacao_lenta_horas !== undefined, {
-  message: "at least one field required",
-});
+  portal_saudacao:       z.string().min(1).optional(),
+  portal_vazio:          z.string().min(1).optional(),
+  portal_banner:         z.string().min(1).optional(),
+}).refine(
+  (d) =>
+    d.email_folha !== undefined ||
+    d.aprovacao_lenta_horas !== undefined ||
+    d.portal_saudacao !== undefined ||
+    d.portal_vazio !== undefined ||
+    d.portal_banner !== undefined,
+  { message: "at least one field required" },
+);
 
 export async function PATCH(req: NextRequest) {
   const me = await requireAdminUser();
@@ -27,11 +36,17 @@ export async function PATCH(req: NextRequest) {
   const parsed = Patch.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: "validation" }, { status: 400 });
   const admin = getSupabaseAdmin();
-  const { email_folha, aprovacao_lenta_horas } = parsed.data;
+  const { email_folha, aprovacao_lenta_horas, portal_saudacao, portal_vazio, portal_banner } = parsed.data;
 
-  if (email_folha !== undefined) {
+  const cfgFields: Record<string, unknown> = {};
+  if (email_folha !== undefined)    cfgFields.email_folha = email_folha;
+  if (portal_saudacao !== undefined) cfgFields.portal_saudacao = portal_saudacao;
+  if (portal_vazio !== undefined)    cfgFields.portal_vazio = portal_vazio;
+  if (portal_banner !== undefined)   cfgFields.portal_banner = portal_banner;
+
+  if (Object.keys(cfgFields).length > 0) {
     const { error } = await admin.from("configuracoes")
-      .update({ email_folha, atualizado_em: new Date().toISOString(), atualizado_por: me.id })
+      .update({ ...cfgFields, atualizado_em: new Date().toISOString(), atualizado_por: me.id })
       .eq("id", 1);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
