@@ -25,12 +25,13 @@ interface Props {
   initialSituacao: "em_andamento" | "finalizada";
   categorias: Categoria[];
   graus:      Grau[];
+  causasByCategoria: Record<string, Array<{ id: string; texto: string }>>;
 }
 
 const STEPS = ["Ishikawa", "Plano de ação", "Participantes", "Fotos"] as const;
 
 export function InvestigacaoForm({
-  ocorrenciaId, initialDados, initialSituacao, categorias, graus,
+  ocorrenciaId, initialDados, initialSituacao, categorias, graus, causasByCategoria,
 }: Props) {
   const router = useRouter();
   const [step, setStep] = React.useState(0);

@@ -30,6 +30,7 @@ export default async function InvestigacaoPage({
     { data: timelineData },
     { data: categorias },
     { data: graus },
+    causasRes,
   ] = await Promise.all([
     supabase
       .from("ocorrencias")
@@ -45,9 +46,15 @@ export default async function InvestigacaoPage({
       .returns<TimelineEventRow[]>(),
     supabase.from("investigacao_categorias").select("id, codigo, rotulo, ativo, ordem").order("ordem"),
     supabase.from("investigacao_graus").select("id, codigo, rotulo, ativo, ordem").order("ordem"),
+    supabase.from("investigacao_causas").select("id, categoria_id, texto").eq("ativo", true).order("ordem"),
   ]);
   if (!rawRow) notFound();
   const row = rawRow as unknown as OcorrenciaSummary;
+
+  const causasByCategoria: Record<string, Array<{ id: string; texto: string }>> = {};
+  for (const c of (causasRes.data ?? [])) {
+    (causasByCategoria[c.categoria_id] ??= []).push({ id: c.id, texto: c.texto });
+  }
 
   const inv = row.investigacoes?.[0];
   const initialDados: InvestigacaoDados = (inv?.dados ?? EMPTY_DADOS) as InvestigacaoDados;
@@ -79,6 +86,7 @@ export default async function InvestigacaoPage({
           initialSituacao={initialSituacao}
           categorias={categorias ?? []}
           graus={graus ?? []}
+          causasByCategoria={causasByCategoria}
         />
         <aside className="flex flex-col gap-6">
           <section className="rounded-md border border-[var(--color-border)] bg-white p-6">
