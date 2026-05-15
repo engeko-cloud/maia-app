@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, ExternalLinkIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,10 +10,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import type { AppNavGroup } from "@/lib/nav";
+
+interface AppNavMenuItem {
+  label: string;
+  href: string;
+  external?: boolean;
+}
+
+interface AppNavMenuGroup {
+  id: string;
+  label: string;
+  items: AppNavMenuItem[];
+}
 
 interface AppNavMenuProps {
-  group: AppNavGroup;
+  group: AppNavMenuGroup;
   /** True when current pathname starts with the group's `href`. */
   active: boolean;
 }
@@ -33,11 +44,25 @@ export function AppNavMenu({ group, active }: AppNavMenuProps) {
         <ChevronDownIcon className="size-4 opacity-60" aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" sideOffset={6} className="min-w-[200px]">
-        {group.items.map((item) => (
-          <DropdownMenuItem key={item.href} render={<Link href={item.href} />}>
-            {item.label}
-          </DropdownMenuItem>
-        ))}
+        {group.items.map((item) =>
+          item.external ? (
+            <DropdownMenuItem
+              key={item.href}
+              render={
+                <a href={item.href} target="_blank" rel="noreferrer noopener" />
+              }
+            >
+              <span className="flex w-full items-center justify-between gap-2">
+                {item.label}
+                <ExternalLinkIcon className="size-3.5 opacity-60" aria-hidden="true" />
+              </span>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem key={item.href} render={<Link href={item.href} />}>
+              {item.label}
+            </DropdownMenuItem>
+          ),
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
