@@ -65,6 +65,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const editUrl = `${base}/afastamentos/editar/${full.token_edicao}`;
 
     const emailA = {
+      serial_id:        full.serial_id,
       colaborador_nome: full.colaborador_nome,
       cpf:              full.cpf,
       tipo_rotulo:      (full.afastamento_tipos as any).rotulo,
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       unidade_nome:     (full.unidades as any).nome,
       situacao:         "rejeitado",
       cid:              full.cid,
+      status_url:       `${base}/afastamentos/status/${full.token_edicao}`,
     };
 
     try {

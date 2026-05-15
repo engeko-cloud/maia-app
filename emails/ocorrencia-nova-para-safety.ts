@@ -3,6 +3,7 @@ import { recordTable } from "./_record-table";
 
 export type OcorrenciaParaSafetyEmail = {
   ocorrencia_id:   string;
+  serial_id?:      number | null;
   tipo:            string;
   data_ocorrencia: string;
   empresa_nome:    string;
@@ -14,9 +15,11 @@ export type OcorrenciaParaSafetyEmail = {
 export function ocorrenciaNovaParaSafety(data: { o: OcorrenciaParaSafetyEmail }): string {
   const { o } = data;
   const link = `${o.base_url}/ocorrencias/${o.ocorrencia_id}/investigacao`;
+  const idLabel = o.serial_id != null ? `#${o.serial_id}` : "";
   const body = `
-    <p style="margin:16px 0;">Uma nova ocorrência foi registrada e a investigação está pendente.</p>
+    <p style="margin:16px 0;">Uma nova ocorrência <strong>${idLabel}</strong> foi registrada e a investigação está pendente.</p>
     ${recordTable([
+      { label: "Identificador", value: idLabel || "—" },
       { label: "Tipo",      value: o.tipo },
       { label: "Data",      value: o.data_ocorrencia },
       { label: "Empresa",   value: o.empresa_nome },

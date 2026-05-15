@@ -11,7 +11,7 @@ export default async function OcorrenciaPublicForm() {
   return (
     <PublicFormShell
       title="Registrar ocorrência"
-      banner="Use este formulário para reportar quase-acidentes, acidentes, doenças ocupacionais ou outros eventos. A equipe de segurança será notificada."
+      banner="Use este formulário para reportar acidentes, incidentes, doenças ocupacionais, ocorrências de trajeto ou ambientais. A equipe de segurança será notificada."
     >
       <OcorrenciaForm lookups={{ empresas: empresas ?? [], unidades: unidades ?? [] }} />
     </PublicFormShell>

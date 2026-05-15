@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,14 +17,47 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AfastamentoInputSchema, type AfastamentoInput } from "@/lib/validation/afastamento";
+import {
+  calcDataFim,
+  duracaoFixa,
+  tipoGrupo,
+  type TipoGrupo,
+} from "@/lib/afastamento-tipo-rules";
 import { FileUpload } from "./file-upload";
 import { CpfLookup } from "./cpf-lookup";
+import { FormErrors } from "./form-errors";
+
+const FIELD_LABELS: Record<string, string> = {
+  empresa_id:       "Empresa",
+  unidade_id:       "Unidade",
+  tipo_id:          "Tipo de afastamento",
+  cpf:              "CPF",
+  colaborador_nome: "Nome do colaborador",
+  data_inicio:      "Data início",
+  data_fim:         "Data fim",
+  hora_inicio:      "Hora início",
+  hora_fim:         "Hora fim",
+  duracao:          "Duração (dias)",
+  cid:              "CID",
+  "emissor.tipo":   "Emissor (tipo)",
+  "emissor.no":     "Emissor (nº)",
+  "emissor.uf":     "Emissor (UF)",
+  email_remetente:  "Email para retorno",
+  ocorrencia_id:    "Ocorrência vinculada",
+  arquivo_url:      "Anexo",
+};
 
 type Lookups = {
   empresas: { id: string; nome: string }[];
   unidades: { id: string; nome: string }[];
   tipos:    { id: string; codigo: string; rotulo: string }[];
 };
+
+const CALCULATED_TIPO_CODIGOS = new Set(["prev_31", "prev_91"]);
+const EMISSOR_TIPOS = [
+  { value: "CRM", label: "CRM" },
+  { value: "CRO", label: "CRO" },
+];
 
 export function AfastamentoForm({
   lookups,
@@ -33,14 +67,146 @@ export function AfastamentoForm({
   initial?: Partial<AfastamentoInput> & { token?: string };
 }) {
   const router = useRouter();
+  const defaultTipoId = React.useMemo(
+    () => lookups.tipos.find((t) => t.codigo === "doenca")?.id,
+    [lookups.tipos],
+  );
   const form = useForm<AfastamentoInput>({
     resolver: zodResolver(AfastamentoInputSchema),
-    defaultValues: initial as AfastamentoInput | undefined,
+    defaultValues: {
+      ...(initial as Partial<AfastamentoInput> | undefined),
+      tipo_id: initial?.tipo_id ?? defaultTipoId,
+    } as AfastamentoInput,
   });
   const [arquivoUrl, setArquivoUrl] = React.useState<string | undefined>(initial?.arquivo_url);
 
+  const empresaId = form.watch("empresa_id");
+  const unidadeId = form.watch("unidade_id");
+  const tipoId = form.watch("tipo_id");
+  const colaboradorNome = form.watch("colaborador_nome");
+  const cpf = form.watch("cpf");
+  const dataInicio = form.watch("data_inicio");
+  const duracao = form.watch("duracao");
+  const emissorTipo = form.watch("emissor.tipo");
+  const internacao = form.watch("internacao");
+  const ocorrenciaId = form.watch("ocorrencia_id");
+
+  const empresaItems = React.useMemo(
+    () => lookups.empresas.map((e) => ({ value: e.id, label: e.nome })),
+    [lookups.empresas],
+  );
+  // prev_31 / prev_91 são tipos previdenciários calculados pelo sistema e não
+  // devem aparecer no dropdown. Mantemos visível apenas se já estiverem
+  // selecionados no registro (form de edição), para o rótulo continuar válido.
+  const tipoItems = React.useMemo(
+    () =>
+      lookups.tipos
+        .filter((t) => !CALCULATED_TIPO_CODIGOS.has(t.codigo) || t.id === tipoId)
+        .map((t) => ({ value: t.id, label: t.rotulo })),
+    [lookups.tipos, tipoId],
+  );
+
+  const unidadeNome = React.useMemo(
+    () => lookups.unidades.find((u) => u.id === unidadeId)?.nome ?? "",
+    [lookups.unidades, unidadeId],
+  );
+
+  const tipoCodigo = React.useMemo(
+    () => lookups.tipos.find((t) => t.id === tipoId)?.codigo,
+    [lookups.tipos, tipoId],
+  );
+  const grupo: TipoGrupo = tipoGrupo(tipoCodigo);
+  const fixa = duracaoFixa(tipoCodigo);
+
+  // Ocorrências disponíveis para vincular (apenas codigo=acidente).
+  type OcorrenciaOption = { id: string; tipo: string; data_ocorrencia: string; descricao: string | null };
+  const [ocorrenciasDisp, setOcorrenciasDisp] = React.useState<OcorrenciaOption[]>([]);
+  React.useEffect(() => {
+    if (tipoCodigo !== "acidente" || !empresaId || !cpf || !/^\d{11}$/.test(cpf)) {
+      setOcorrenciasDisp([]);
+      return;
+    }
+    let aborted = false;
+    (async () => {
+      try {
+        const qs = new URLSearchParams({ empresa_id: empresaId, cpf });
+        const res = await fetch(`/api/public/afastamentos/ocorrencias-disponiveis?${qs}`);
+        if (!res.ok) return;
+        const data = (await res.json()) as OcorrenciaOption[];
+        if (!aborted) setOcorrenciasDisp(data);
+      } catch {
+        if (!aborted) setOcorrenciasDisp([]);
+      }
+    })();
+    return () => { aborted = true; };
+  }, [tipoCodigo, empresaId, cpf]);
+
+  const ocorrenciaItems = React.useMemo(
+    () =>
+      ocorrenciasDisp.map((o) => ({
+        value: o.id,
+        label: `${o.data_ocorrencia.slice(0, 10)} • ${o.tipo}${o.descricao ? ` — ${o.descricao.slice(0, 60)}` : ""}`,
+      })),
+    [ocorrenciasDisp],
+  );
+
+  // Para declaração fixa, a duração é definida pelo código do tipo.
+  // Para médico, a duração é digitada e a data_fim é derivada.
+  const dataFimDerivada = React.useMemo(() => {
+    if (grupo === "medico" && dataInicio && duracao && duracao > 0) {
+      return calcDataFim(dataInicio, duracao);
+    }
+    if (grupo === "declaracao_fixa" && dataInicio && fixa) {
+      return calcDataFim(dataInicio, fixa);
+    }
+    if (grupo === "declaracao_hora" && dataInicio) {
+      return dataInicio;
+    }
+    return undefined;
+  }, [grupo, dataInicio, duracao, fixa]);
+
+  const duracaoEfetiva = React.useMemo(() => {
+    if (grupo === "declaracao_fixa") return fixa;
+    if (grupo === "declaracao_hora") return 0;
+    return duracao;
+  }, [grupo, fixa, duracao]);
+
   async function onSubmit(values: AfastamentoInput) {
-    const payload = { ...values, arquivo_url: arquivoUrl };
+    if (!arquivoUrl) {
+      form.setError("arquivo_url", {
+        type: "required",
+        message: "Anexo obrigatório (atestado, declaração ou documento equivalente).",
+      });
+      toast.error("Anexe o documento antes de enviar.");
+      return;
+    }
+    const codigo = lookups.tipos.find((t) => t.id === values.tipo_id)?.codigo;
+    const g = tipoGrupo(codigo);
+
+    let finalDuracao = values.duracao;
+    let finalDataFim = values.data_fim;
+
+    if (g === "declaracao_fixa") {
+      const dur = duracaoFixa(codigo);
+      finalDuracao = dur;
+      finalDataFim = dur && values.data_inicio ? calcDataFim(values.data_inicio, dur) : undefined;
+    } else if (g === "declaracao_hora") {
+      finalDuracao = 0;
+      finalDataFim = values.data_inicio;
+    } else if (g === "medico") {
+      finalDataFim = values.duracao && values.data_inicio
+        ? calcDataFim(values.data_inicio, values.duracao)
+        : undefined;
+    }
+
+    const payload: AfastamentoInput = {
+      ...values,
+      duracao: finalDuracao,
+      data_fim: finalDataFim,
+      acidente: codigo === "acidente" ? true : values.acidente ?? false,
+      arquivo_url: arquivoUrl,
+    };
+
     const url = initial?.token
       ? `/api/public/afastamentos/${initial.token}`
       : "/api/public/afastamentos";
@@ -63,96 +229,280 @@ export function AfastamentoForm({
     }
   }
 
+  function onInvalid() {
+    toast.error("Verifique os campos destacados.");
+  }
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1.5">
-        <Label>CPF</Label>
-        <CpfLookup
-          onResolved={(data) => {
-            form.setValue("cpf", data.cpf);
-            form.setValue("colaborador_nome", data.nome);
-            form.setValue("colaborador_setor", data.setor);
-            form.setValue("colaborador_cargo", data.cargo);
-            form.setValue("colaborador_codigo_soc", data.codigo_soc);
-            if (data.empresa_id) form.setValue("empresa_id", data.empresa_id);
-            if (data.unidade_id) form.setValue("unidade_id", data.unidade_id);
-          }}
-        />
-      </div>
+    <form
+      onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+      className="flex flex-col gap-5"
+    >
+      <FormErrors errors={form.formState.errors} labels={FIELD_LABELS} />
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="colaborador_nome">Nome do colaborador</Label>
-        <Input id="colaborador_nome" {...form.register("colaborador_nome")} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="empresa_id">Empresa</Label>
-          <Select
-            value={form.watch("empresa_id") ?? ""}
-            onValueChange={(v) => form.setValue("empresa_id", v as string, { shouldValidate: true })}
-          >
-            <SelectTrigger id="empresa_id" className="w-full">
-              <SelectValue placeholder="Selecione" />
-            </SelectTrigger>
-            <SelectContent>
-              {lookups.empresas.map((e) => (
-                <SelectItem key={e.id} value={e.id}>
-                  {e.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="unidade_id">Unidade</Label>
-          <Select
-            value={form.watch("unidade_id") ?? ""}
-            onValueChange={(v) => form.setValue("unidade_id", v as string, { shouldValidate: true })}
-          >
-            <SelectTrigger id="unidade_id" className="w-full">
-              <SelectValue placeholder="Selecione" />
-            </SelectTrigger>
-            <SelectContent>
-              {lookups.unidades.map((u) => (
-                <SelectItem key={u.id} value={u.id}>
-                  {u.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="tipo_id">Tipo de afastamento</Label>
+        <Label htmlFor="empresa_id">Empresa</Label>
         <Select
-          value={form.watch("tipo_id") ?? ""}
-          onValueChange={(v) => form.setValue("tipo_id", v as string, { shouldValidate: true })}
+          items={empresaItems}
+          value={empresaId ?? ""}
+          onValueChange={(v) => form.setValue("empresa_id", v as string, { shouldValidate: true })}
         >
-          <SelectTrigger id="tipo_id" className="w-full">
+          <SelectTrigger id="empresa_id" className="w-full">
             <SelectValue placeholder="Selecione" />
           </SelectTrigger>
           <SelectContent>
-            {lookups.tipos.map((t) => (
-              <SelectItem key={t.id} value={t.id}>
-                {t.rotulo}
+            {empresaItems.map((e) => (
+              <SelectItem key={e.value} value={e.value}>
+                {e.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="data_inicio">Data início</Label>
-          <Input id="data_inicio" type="date" {...form.register("data_inicio")} />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="data_fim">Data fim</Label>
-          <Input id="data_fim" type="date" {...form.register("data_fim")} />
-        </div>
+      <div className="flex flex-col gap-1.5">
+        <Label>CPF</Label>
+        <CpfLookup
+          empresaId={empresaId}
+          onResolved={(data) => {
+            form.setValue("cpf", data.cpf);
+            form.setValue("colaborador_nome", data.nome, { shouldValidate: true });
+            form.setValue("colaborador_setor", data.setor);
+            form.setValue("colaborador_cargo", data.cargo);
+            form.setValue("colaborador_codigo_soc", data.codigo_soc);
+            if (data.unidade_id) form.setValue("unidade_id", data.unidade_id, { shouldValidate: true });
+          }}
+        />
       </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="colaborador_nome">Nome do colaborador</Label>
+        <Input
+          id="colaborador_nome"
+          value={colaboradorNome ?? ""}
+          readOnly
+          tabIndex={-1}
+          placeholder="Preenchido pela busca do CPF"
+          className="bg-muted/40 text-muted-foreground"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="unidade_nome">Unidade</Label>
+        <Input
+          id="unidade_nome"
+          value={unidadeNome}
+          readOnly
+          tabIndex={-1}
+          placeholder="Resolvida pela busca do CPF"
+          className="bg-muted/40 text-muted-foreground"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="tipo_id">Tipo de afastamento</Label>
+        <Select
+          items={tipoItems}
+          value={tipoId ?? ""}
+          onValueChange={(v) => form.setValue("tipo_id", v as string, { shouldValidate: true })}
+        >
+          <SelectTrigger id="tipo_id" className="w-full">
+            <SelectValue placeholder="Selecione" />
+          </SelectTrigger>
+          <SelectContent>
+            {tipoItems.map((t) => (
+              <SelectItem key={t.value} value={t.value}>
+                {t.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {grupo === "medico" && (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="data_inicio">Data início</Label>
+              <Input id="data_inicio" type="date" {...form.register("data_inicio")} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="duracao">Duração (dias)</Label>
+              <Input
+                id="duracao"
+                type="number"
+                min={1}
+                inputMode="numeric"
+                {...form.register("duracao", { valueAsNumber: true })}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="data_fim">Data fim</Label>
+              <Input
+                id="data_fim"
+                type="date"
+                value={dataFimDerivada ?? ""}
+                readOnly
+                tabIndex={-1}
+                placeholder="Calculada"
+                className="bg-muted/40 text-muted-foreground"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="cid">CID (opcional)</Label>
+            <Input
+              id="cid"
+              placeholder="X00"
+              maxLength={3}
+              className="font-mono uppercase"
+              {...form.register("cid")}
+            />
+          </div>
+
+          <fieldset className="flex flex-col gap-3 rounded-md border border-[var(--color-border)] p-3">
+            <legend className="px-1 text-sm font-medium">Emissor</legend>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="emissor_tipo">Tipo</Label>
+                <Select
+                  items={EMISSOR_TIPOS}
+                  value={emissorTipo ?? ""}
+                  onValueChange={(v) =>
+                    form.setValue("emissor.tipo", v as "CRM" | "CRO", { shouldValidate: true })
+                  }
+                >
+                  <SelectTrigger id="emissor_tipo" className="w-full">
+                    <SelectValue placeholder="CRM/CRO" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EMISSOR_TIPOS.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>
+                        {t.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="emissor_no">Nº</Label>
+                <Input id="emissor_no" {...form.register("emissor.no")} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="emissor_uf">UF</Label>
+                <Input
+                  id="emissor_uf"
+                  maxLength={2}
+                  className="uppercase"
+                  {...form.register("emissor.uf")}
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={!!internacao}
+              onCheckedChange={(v) =>
+                form.setValue("internacao", Boolean(v), { shouldDirty: true })
+              }
+            />
+            Internação hospitalar
+          </label>
+
+          {tipoCodigo === "acidente" && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="ocorrencia_id">Ocorrência vinculada</Label>
+              {ocorrenciaItems.length === 0 ? (
+                <p className="text-xs text-[var(--color-fg-muted)]">
+                  Nenhuma ocorrência disponível para vincular. Registre a ocorrência primeiro.
+                </p>
+              ) : (
+                <Select
+                  items={ocorrenciaItems}
+                  value={ocorrenciaId ?? ""}
+                  onValueChange={(v) =>
+                    form.setValue("ocorrencia_id", v as string, { shouldValidate: true })
+                  }
+                >
+                  <SelectTrigger id="ocorrencia_id" className="w-full">
+                    <SelectValue placeholder="Selecione a ocorrência relacionada" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ocorrenciaItems.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {grupo === "declaracao_hora" && (
+        <>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="data_inicio">Data do documento</Label>
+            <Input id="data_inicio" type="date" {...form.register("data_inicio")} />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="hora_inicio">Hora início</Label>
+              <Input id="hora_inicio" type="time" {...form.register("hora_inicio")} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="hora_fim">Hora fim</Label>
+              <Input id="hora_fim" type="time" {...form.register("hora_fim")} />
+            </div>
+          </div>
+        </>
+      )}
+
+      {grupo === "declaracao_fixa" && (
+        <>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="data_inicio">Data do documento</Label>
+            <Input id="data_inicio" type="date" {...form.register("data_inicio")} />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label>Duração (dias)</Label>
+              <Input
+                value={duracaoEfetiva ?? ""}
+                readOnly
+                tabIndex={-1}
+                className="bg-muted/40 text-muted-foreground"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label>Data fim</Label>
+              <Input
+                value={dataFimDerivada ?? ""}
+                readOnly
+                tabIndex={-1}
+                className="bg-muted/40 text-muted-foreground"
+              />
+            </div>
+          </div>
+        </>
+      )}
+
+      {grupo === "outro" && tipoId && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="data_inicio">Data início</Label>
+            <Input id="data_inicio" type="date" {...form.register("data_inicio")} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="data_fim">Data fim</Label>
+            <Input id="data_fim" type="date" {...form.register("data_fim")} />
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="email_remetente">Email para retorno</Label>
@@ -160,8 +510,13 @@ export function AfastamentoForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label>Anexo</Label>
-        <FileUpload onUploaded={setArquivoUrl} />
+        <Label>Anexo *</Label>
+        <FileUpload
+          onUploaded={(url) => {
+            setArquivoUrl(url);
+            form.clearErrors("arquivo_url");
+          }}
+        />
         {arquivoUrl && (
           <p className="text-xs text-[var(--color-fg-muted)]">Anexo carregado.</p>
         )}

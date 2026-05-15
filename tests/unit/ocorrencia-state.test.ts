@@ -3,11 +3,11 @@ import { ocorrenciaTipoLabel, OCORRENCIA_SITUACOES } from "@/lib/ocorrencia-stat
 
 describe("ocorrenciaTipoLabel", () => {
   it("maps each enum value to a Portuguese label", () => {
-    expect(ocorrenciaTipoLabel("quase_acidente")).toBe("Quase-acidente");
-    expect(ocorrenciaTipoLabel("acidente_leve")).toBe("Acidente leve");
-    expect(ocorrenciaTipoLabel("acidente_grave")).toBe("Acidente grave");
-    expect(ocorrenciaTipoLabel("doenca_ocupacional")).toBe("Doença ocupacional");
-    expect(ocorrenciaTipoLabel("outro")).toBe("Outro");
+    expect(ocorrenciaTipoLabel("acidente")).toBe("Acidente de Trabalho");
+    expect(ocorrenciaTipoLabel("incidente")).toBe("Incidente");
+    expect(ocorrenciaTipoLabel("doenca")).toBe("Doença Ocupacional");
+    expect(ocorrenciaTipoLabel("trajeto")).toBe("Acidente de Trajeto");
+    expect(ocorrenciaTipoLabel("ambiental")).toBe("Ocorrência Ambiental");
   });
   it("falls back to the raw value for unknown tipos", () => {
     expect(ocorrenciaTipoLabel("misc")).toBe("misc");

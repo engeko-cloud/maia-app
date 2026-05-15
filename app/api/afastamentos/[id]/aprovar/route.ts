@@ -24,7 +24,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
   const admin = getSupabaseAdmin();
   const { data: full, error: fullErr } = await admin
     .from("afastamentos")
-    .select(`id, situacao, cpf, colaborador_nome, colaborador_codigo_soc,
+    .select(`id, serial_id, token_edicao, situacao, cpf, colaborador_nome, colaborador_codigo_soc,
              data_inicio, data_fim, duracao, cid, arquivo_url, tipo_id, email_remetente,
              empresas!inner(nome, codigo_fluig),
              unidades!inner(nome),
@@ -100,7 +100,9 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     tipoEntidade: "afastamento", entidadeId: id, evento: "aprovado", autorId: user.id,
   });
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL ?? process.env.APP_URL ?? "";
   const emailA = {
+    serial_id:        full.serial_id,
     colaborador_nome: full.colaborador_nome,
     cpf:              full.cpf,
     tipo_rotulo:      (full.afastamento_tipos as any).rotulo,
@@ -110,6 +112,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     unidade_nome:     (full.unidades as any).nome,
     situacao:         "finalizado",
     cid:              full.cid,
+    status_url:       `${baseUrl}/afastamentos/status/${full.token_edicao}`,
   };
 
   if (full.email_remetente) {

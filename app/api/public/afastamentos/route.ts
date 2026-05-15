@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "validation", issues: parsed.error.issues }, { status: 400 });
   }
-  const input = parsed.data;
+  const { ocorrencia_id, ...input } = parsed.data;
   const supabase = getSupabaseAdmin();
 
   // Consulta o tipo de afastamento para definir a situação inicial.
@@ -23,9 +23,25 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from("afastamentos")
     .insert({ ...input, situacao })
-    .select("id, token_edicao")
+    .select("id, serial_id, token_edicao")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Vínculo opcional com ocorrência (1:1 via afastamento_ocorrencias).
+  if (ocorrencia_id) {
+    // Cast: tabela join ainda não está em database.types.ts até o usuário
+    // regerar via `supabase gen types`.
+    const { error: bindErr } = await supabase
+      .from("afastamento_ocorrencias" as never)
+      .insert({ afastamento_id: data.id, ocorrencia_id } as never);
+    if (bindErr) {
+      await writeEvento(supabase, {
+        tipoEntidade: "afastamento", entidadeId: data.id,
+        evento: "email_enviado",
+        dados: { ocorrencia_bind_failed: bindErr.message, ocorrencia_id },
+      });
+    }
+  }
 
   await writeEvento(supabase, {
     tipoEntidade: "afastamento",
@@ -44,7 +60,9 @@ export async function POST(request: NextRequest) {
     .eq("id", data.id).single();
 
   if (full) {
+    const baseUrl = process.env.APP_URL ?? "";
     const emailA = {
+      serial_id:        full.serial_id,
       colaborador_nome: full.colaborador_nome,
       cpf:              full.cpf,
       tipo_rotulo:      (full.afastamento_tipos as any).rotulo,
@@ -54,6 +72,7 @@ export async function POST(request: NextRequest) {
       unidade_nome:     (full.unidades as any).nome,
       situacao:         full.situacao,
       cid:              full.cid,
+      status_url:       `${baseUrl}/afastamentos/status/${data.token_edicao}`,
     };
 
     try {

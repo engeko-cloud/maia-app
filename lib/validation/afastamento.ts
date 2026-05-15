@@ -25,6 +25,7 @@ export const AfastamentoInputSchema = z.object({
   internacao:  z.boolean().optional(),
   email_remetente: z.string().email(),
   arquivo_url: z.string().optional(),
+  ocorrencia_id:   z.string().uuid().optional(),
 });
 
 export type AfastamentoInput = z.infer<typeof AfastamentoInputSchema>;

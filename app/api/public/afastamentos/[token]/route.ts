@@ -36,8 +36,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ to
     return NextResponse.json({ error: "invalid_transition" }, { status: 409 });
   }
 
+  // ocorrencia_id é vinculado pela tabela join — não é coluna do afastamento.
+  const { ocorrencia_id: _ocorrenciaId, ...updateFields } = parsed.data;
   const { error: upErr } = await supabase.from("afastamentos")
-    .update({ ...parsed.data, situacao: "pendente", motivo_rejeicao: null })
+    .update({ ...updateFields, situacao: "pendente", motivo_rejeicao: null })
     .eq("id", current.id);
   if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
 

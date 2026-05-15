@@ -1,7 +1,10 @@
 import { layout } from "./_layout";
 import { recordTable } from "./_record-table";
+import { EMAIL_COLORS } from "./tokens";
+import { escapeHtml } from "./_escape";
 
 export type AfastamentoEmail = {
+  serial_id?: number | null;
   colaborador_nome: string;
   cpf: string;
   tipo_rotulo: string;
@@ -11,20 +14,28 @@ export type AfastamentoEmail = {
   unidade_nome: string;
   situacao: string;
   cid?: string | null;
+  status_url?: string;
 };
 
 export function afastamentoReceipt(data: { a: AfastamentoEmail }): string {
   const { a } = data;
+  const idLabel = a.serial_id != null ? `#${a.serial_id}` : "";
   const body = `
-    <p style="margin:16px 0;">Olá, seu registro foi recebido. Quando houver atualização, avisaremos por aqui.</p>
+    <p style="margin:16px 0;">Olá, seu registro <strong>${escapeHtml(idLabel)}</strong> foi recebido. Quando houver atualização, avisaremos por aqui.</p>
     ${recordTable([
-      { label: "Colaborador", value: `${a.colaborador_nome} (${a.cpf})` },
-      { label: "Tipo",        value: a.tipo_rotulo },
-      { label: "Período",     value: `${a.data_inicio} → ${a.data_fim ?? "—"}` },
-      { label: "Empresa",     value: a.empresa_nome },
-      { label: "Unidade",     value: a.unidade_nome },
-      { label: "Situação",    value: a.situacao },
+      { label: "Identificador", value: idLabel || "—" },
+      { label: "Colaborador",   value: `${a.colaborador_nome} (${a.cpf})` },
+      { label: "Tipo",          value: a.tipo_rotulo },
+      { label: "Período",       value: `${a.data_inicio} → ${a.data_fim ?? "—"}` },
+      { label: "Empresa",       value: a.empresa_nome },
+      { label: "Unidade",       value: a.unidade_nome },
+      { label: "Situação",      value: a.situacao },
     ])}
+    ${a.status_url ? `
+    <div style="margin-top:16px;">
+      <a href="${escapeHtml(a.status_url)}" style="display:inline-block;background:${EMAIL_COLORS.primary};color:${EMAIL_COLORS.primaryFg};padding:10px 16px;border-radius:6px;text-decoration:none;">Acompanhar status</a>
+    </div>` : ""}
   `;
-  return layout("Recebemos seu afastamento", body);
+  const subjectId = idLabel ? ` ${idLabel}` : "";
+  return layout(`Recebemos seu afastamento${subjectId}`, body);
 }

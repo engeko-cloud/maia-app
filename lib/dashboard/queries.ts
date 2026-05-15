@@ -199,11 +199,3 @@ export async function getAnexosStatus(
   return { presentes, ausentes };
 }
 
-export async function getUnreadCount(admin: SupabaseClient): Promise<number> {
-  const { data } = await (admin
-    .from("eventos")
-    .select("id")
-    .in("tipo_entidade", ["afastamento", "ocorrencia"])
-    .gte("ocorrido_em", oneDayAgo()) as any);
-  return (data ?? []).length;
-}

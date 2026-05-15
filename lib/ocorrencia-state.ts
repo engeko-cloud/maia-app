@@ -2,11 +2,11 @@ export const OCORRENCIA_SITUACOES = ["aberta", "em_investigacao", "concluida"] a
 export type OcorrenciaSituacao = (typeof OCORRENCIA_SITUACOES)[number];
 
 const TIPO_LABELS: Record<string, string> = {
-  quase_acidente:      "Quase-acidente",
-  acidente_leve:       "Acidente leve",
-  acidente_grave:      "Acidente grave",
-  doenca_ocupacional:  "Doença ocupacional",
-  outro:               "Outro",
+  acidente:   "Acidente de Trabalho",
+  incidente:  "Incidente",
+  doenca:     "Doença Ocupacional",
+  trajeto:    "Acidente de Trajeto",
+  ambiental:  "Ocorrência Ambiental",
 };
 
 export function ocorrenciaTipoLabel(tipo: string): string {
