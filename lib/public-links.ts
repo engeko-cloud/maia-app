@@ -23,18 +23,6 @@ export interface PublicLinkGroup {
 
 export const publicLinks: PublicLinkGroup[] = [
   {
-    title: "Minha Área",
-    items: [
-      {
-        title: "Portal do Colaborador",
-        description: "Consulte o status dos seus atestados e afastamentos registrados.",
-        url: "/portal/login",
-        icon: "user-circle",
-        type: "internal",
-      },
-    ],
-  },
-  {
     title: "Formulários",
     items: [
       {
