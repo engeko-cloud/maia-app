@@ -7,6 +7,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const { data: profile } = await supabase
+    .from("usuarios")
+    .select("administrador, equipe_usuarios(id)")
+    .eq("id", user.id)
+    .single();
+  const isStaff =
+    profile?.administrador === true ||
+    (Array.isArray((profile as { equipe_usuarios?: unknown[] } | null)?.equipe_usuarios) &&
+      ((profile as { equipe_usuarios?: unknown[] })!.equipe_usuarios!.length ?? 0) > 0);
+  if (!isStaff) redirect("/");
+
   return (
     <div className="min-h-screen bg-[var(--color-bg-subtle)]">
       <AppTopNav />

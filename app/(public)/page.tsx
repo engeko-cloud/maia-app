@@ -12,11 +12,15 @@ export default async function PublicLanding() {
   if (authUser) {
     const { data: row } = await supabase
       .from("usuarios")
-      .select("nome")
+      .select("nome, administrador, equipe_usuarios(id)")
       .eq("id", authUser.id)
       .single();
+    const isStaff =
+      row?.administrador === true ||
+      (Array.isArray((row as { equipe_usuarios?: unknown[] } | null)?.equipe_usuarios) &&
+        ((row as { equipe_usuarios?: unknown[] })!.equipe_usuarios!.length ?? 0) > 0);
     const nome = row?.nome?.trim() ?? "";
-    if (nome) {
+    if (nome && isStaff) {
       user = { firstName: nome.split(/\s+/)[0]! };
     }
   }
