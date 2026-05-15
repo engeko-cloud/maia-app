@@ -19,7 +19,7 @@ Add three metric cards above the afastamentos table on `/portal/painel` so staff
 
 ### Card 3 — Status atual
 - **Value:** `Afastado` or `Sem afastamento ativo`
-- **Determination:** find the most recent approved afastamento where `data_fim > now`; if found → Afastado; else → Sem afastamento ativo
+- **Determination:** filter rows to `situacao === 'aprovado'` only — rejected, pending, and cancelled records are excluded — then check if any of those has `data_fim > now`; if found → Afastado; else → Sem afastamento ativo
 - **Delta when Afastado:** `Retorno em DD/MM/YYYY` (data_fim + 1 calendar day)
 - **Tone:** `warning` (amber) when Afastado; `primary` (default) when not
 
