@@ -34,12 +34,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { EmptyState } from "@/components/data/empty-state";
+
+export type ColumnOption = { value: string; label: string };
 
 export type Column = {
   key: string;
   label: string;
-  type?: "text" | "checkbox" | "number";
+  type?: "text" | "checkbox" | "number" | "select";
+  options?: ReadonlyArray<ColumnOption>;
   readonly?: boolean;
 };
 
@@ -169,6 +179,26 @@ export function AdminCrudTable({
                           setForm({ ...form, [c.key]: Boolean(v) })
                         }
                       />
+                    ) : c.type === "select" ? (
+                      <Select
+                        value={(form[c.key] as string | undefined) ?? ""}
+                        onValueChange={(v) =>
+                          setForm({ ...form, [c.key]: v })
+                        }
+                      >
+                        <SelectTrigger id={c.key}>
+                          <SelectValue
+                            placeholder={`Selecione ${c.label.toLowerCase()}`}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(c.options ?? []).map((o) => (
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     ) : (
                       <Input
                         id={c.key}
@@ -242,7 +272,11 @@ export function AdminCrudTable({
                         ? row[c.key]
                           ? "Sim"
                           : "Não"
-                        : String(row[c.key] ?? "—")}
+                        : c.type === "select"
+                          ? (c.options ?? []).find(
+                              (o) => o.value === row[c.key]
+                            )?.label ?? "—"
+                          : String(row[c.key] ?? "—")}
                     </TableCell>
                   ))}
                   <TableCell className="text-right">
