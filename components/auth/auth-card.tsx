@@ -1,7 +1,5 @@
 import * as React from "react";
 import Link from "next/link";
-import { LogoMark } from "@/components/brand/logo-mark";
-import { APP_VERSION } from "@/lib/version";
 
 export interface AuthCardPitch {
   /** Heading words; the word at `accentIndex` renders in the brand accent color. */
@@ -48,7 +46,6 @@ function BrandStamp({ tone }: { tone: "light" | "dark" }) {
       : "text-sm font-semibold tracking-tight text-white";
   return (
     <Link href="/" className="inline-flex items-center gap-2">
-      <LogoMark size="sm" />
       <span className={wordmarkClass}>
         MAIA <span className="text-[var(--brand-accent-500)]">·</span> ENGEKO
       </span>
@@ -60,7 +57,7 @@ export function AuthCard({ title, lead, pitch, children }: AuthCardProps) {
   return (
     <div className="w-full max-w-[720px] overflow-hidden rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white shadow-[var(--shadow-lg)]">
       <div className="grid grid-cols-1 md:grid-cols-[1.05fr_1fr]">
-        {/* Mobile-only brand banner (stacks above the form below md) */}
+        {/* Mobile-only brand banner */}
         <div className="relative flex items-center gap-3 bg-gradient-to-br from-[var(--brand-primary-600)] to-[var(--brand-primary-900)] p-5 md:hidden">
           <div
             aria-hidden="true"
@@ -75,7 +72,7 @@ export function AuthCard({ title, lead, pitch, children }: AuthCardProps) {
           </div>
         </div>
 
-        {/* Form panel (left on desktop, below the banner on mobile) */}
+        {/* Form panel */}
         <div className="p-6 md:p-8">
           <BrandStamp tone="light" />
           <h1 className="mt-6 text-2xl font-semibold tracking-tight">{title}</h1>
@@ -83,7 +80,7 @@ export function AuthCard({ title, lead, pitch, children }: AuthCardProps) {
           <div className="mt-6">{children}</div>
         </div>
 
-        {/* Brand panel (desktop only — md and up) */}
+        {/* Brand panel (desktop only) */}
         <div className="relative hidden flex-col bg-gradient-to-br from-[var(--brand-primary-600)] to-[var(--brand-primary-900)] p-8 text-white md:flex">
           <div
             aria-hidden="true"
@@ -97,11 +94,6 @@ export function AuthCard({ title, lead, pitch, children }: AuthCardProps) {
             <PitchHeading pitch={pitch} />
             <div className="mt-3 h-[3px] w-12 bg-[var(--brand-accent-500)]" />
             <p className="mt-4 text-sm text-white/80">{pitch.sub}</p>
-            <p className="mt-auto pt-8 text-xs text-white/60">
-              v{APP_VERSION}{" "}
-              <span className="text-[var(--brand-accent-500)]">·</span> © 2026
-              ENGEKO
-            </p>
           </div>
         </div>
       </div>
