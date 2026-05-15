@@ -191,19 +191,22 @@ export type Database = {
       }
       colaboradores: {
         Row: {
+          auth_id: string | null
           cpf: string
           criado_em: string
-          id: string
+          email: string | null
         }
         Insert: {
+          auth_id?: string | null
           cpf: string
           criado_em?: string
-          id: string
+          email?: string | null
         }
         Update: {
+          auth_id?: string | null
           cpf?: string
           criado_em?: string
-          id?: string
+          email?: string | null
         }
         Relationships: []
       }
