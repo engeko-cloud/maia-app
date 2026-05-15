@@ -51,15 +51,20 @@ export default function ColaboradoresPage() {
   const [formOpen, setFormOpen] = React.useState(false);
   const [confirmDeleteCpf, setConfirmDeleteCpf] = React.useState<string | null>(null);
   const [form, setForm] = React.useState({ cpf: "", email: "" });
-  const [busy, setBusy] = React.useState(false);
+  const [addBusy, setAddBusy] = React.useState(false);
+  const [deleteBusy, setDeleteBusy] = React.useState(false);
 
   const load = React.useCallback(async () => {
-    const r = await fetch(ENDPOINT);
-    if (!r.ok) {
+    try {
+      const r = await fetch(ENDPOINT);
+      if (!r.ok) {
+        toast.error("Erro ao carregar colaboradores.");
+        return;
+      }
+      setRows(await r.json());
+    } catch {
       toast.error("Erro ao carregar colaboradores.");
-      return;
     }
-    setRows(await r.json());
   }, []);
 
   React.useEffect(() => {
@@ -68,38 +73,44 @@ export default function ColaboradoresPage() {
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true);
-    const r = await fetch(ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cpf: form.cpf, email: form.email || null }),
-    });
-    setBusy(false);
-    if (!r.ok) {
-      const j = await r.json().catch(() => ({}));
-      toast.error((j as { error?: string }).error ?? "Erro");
-      return;
+    setAddBusy(true);
+    try {
+      const r = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cpf: form.cpf.trim(), email: form.email.trim() || null }),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        toast.error((j as { error?: string }).error ?? "Erro");
+        return;
+      }
+      toast.success("Colaborador adicionado.");
+      setFormOpen(false);
+      setForm({ cpf: "", email: "" });
+      await load();
+    } finally {
+      setAddBusy(false);
     }
-    toast.success("Colaborador adicionado.");
-    setFormOpen(false);
-    setForm({ cpf: "", email: "" });
-    await load();
   }
 
   async function handleDelete() {
     if (!confirmDeleteCpf) return;
-    setBusy(true);
-    const r = await fetch(`${ENDPOINT}/${encodeURIComponent(confirmDeleteCpf)}`, {
-      method: "DELETE",
-    });
-    setBusy(false);
-    if (!r.ok) {
-      toast.error("Erro ao remover colaborador.");
-      return;
+    setDeleteBusy(true);
+    try {
+      const r = await fetch(`${ENDPOINT}/${encodeURIComponent(confirmDeleteCpf)}`, {
+        method: "DELETE",
+      });
+      if (!r.ok) {
+        toast.error("Erro ao remover colaborador.");
+        return;
+      }
+      toast.success("Colaborador removido.");
+      setConfirmDeleteCpf(null);
+      await load();
+    } finally {
+      setDeleteBusy(false);
     }
-    toast.success("Colaborador removido.");
-    setConfirmDeleteCpf(null);
-    await load();
   }
 
   return (
@@ -163,8 +174,8 @@ export default function ColaboradoresPage() {
                 </div>
                 <SheetFooter>
                   <SheetClose render={<Button type="button" variant="outline">Cancelar</Button>} />
-                  <Button type="submit" disabled={busy}>
-                    {busy ? "Salvando…" : "Salvar"}
+                  <Button type="submit" disabled={addBusy}>
+                    {addBusy ? "Salvando…" : "Salvar"}
                   </Button>
                 </SheetFooter>
               </form>
@@ -231,8 +242,8 @@ export default function ColaboradoresPage() {
           </DialogHeader>
           <DialogFooter>
             <DialogClose render={<Button variant="outline">Cancelar</Button>} />
-            <Button variant="destructive" disabled={busy} onClick={handleDelete}>
-              {busy ? "Removendo…" : "Remover"}
+            <Button variant="destructive" disabled={deleteBusy} onClick={handleDelete}>
+              {deleteBusy ? "Removendo…" : "Remover"}
             </Button>
           </DialogFooter>
         </DialogContent>
