@@ -30,8 +30,6 @@ export const appNav: AppNavGroup[] = [
     href: "/painel",
     items: [],
   },
-  // TODO (Phase 5): add "Novo" submenu under afastamentos and
-  // "Investigações" + "Nova" under ocorrencias once their routes exist.
   {
     id: "afastamentos",
     label: "Afastamentos",
@@ -47,6 +45,7 @@ export const appNav: AppNavGroup[] = [
     href: "/ocorrencias",
     items: [
       { label: "Lista", href: "/ocorrencias" },
+      { label: "Nova",  href: "/forms/ocorrencias" },
     ],
   },
   {
@@ -55,12 +54,15 @@ export const appNav: AppNavGroup[] = [
     href: "/admin",
     adminOnly: true,
     items: [
-      { label: "Empresas", href: "/admin/empresas" },
-      { label: "Unidades", href: "/admin/unidades" },
-      { label: "Equipes", href: "/admin/equipes" },
-      { label: "Usuários", href: "/admin/usuarios" },
-      { label: "Tipos de afastamento", href: "/admin/afastamento-tipos" },
-      { label: "Configurações", href: "/admin/configuracoes" },
+      { label: "Empresas",                   href: "/admin/empresas" },
+      { label: "Unidades",                   href: "/admin/unidades" },
+      { label: "Equipes",                    href: "/admin/equipes" },
+      { label: "Usuários",                   href: "/admin/usuarios" },
+      { label: "Tipos de afastamento",       href: "/admin/afastamento-tipos" },
+      { label: "Categorias de investigação", href: "/admin/investigacao/categorias" },
+      { label: "Graus de severidade",        href: "/admin/investigacao/graus" },
+      { label: "Causas de investigação",     href: "/admin/investigacao/causas" },
+      { label: "Configurações",              href: "/admin/configuracoes" },
     ],
   },
 ];
