@@ -47,21 +47,43 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Generate 6-digit OTP and store it (invalidate any existing unused codes for this CPF).
-  const code = String(randomInt(100000, 999999));
-  const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  // Reuse an active OTP (same CPF+email, unused, not yet expired) — refresh its expiry and resend.
+  const now = new Date();
+  const newExpiry = new Date(now.getTime() + 10 * 60 * 1000).toISOString();
 
-  // Mark all previous unused codes for this CPF as used.
-  await admin
+  const { data: existing } = await admin
     .from("portal_otp_codes")
-    .update({ used: true })
+    .select("id, code")
     .eq("cpf", cpf)
-    .eq("used", false);
+    .eq("email", email)
+    .eq("used", false)
+    .gt("expires_at", now.toISOString())
+    .order("criado_em", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  const { error: insertError } = await admin
-    .from("portal_otp_codes")
-    .insert({ cpf, email, code, expires_at });
-  if (insertError) return NextResponse.json({ error: "Erro interno." }, { status: 500 });
+  let code: string;
+
+  if (existing) {
+    code = existing.code;
+    await admin
+      .from("portal_otp_codes")
+      .update({ expires_at: newExpiry })
+      .eq("id", existing.id);
+  } else {
+    // Invalidate any stale codes for this CPF, then issue a fresh one.
+    await admin
+      .from("portal_otp_codes")
+      .update({ used: true })
+      .eq("cpf", cpf)
+      .eq("used", false);
+
+    code = String(randomInt(100000, 999999));
+    const { error: insertError } = await admin
+      .from("portal_otp_codes")
+      .insert({ cpf, email, code, expires_at: newExpiry });
+    if (insertError) return NextResponse.json({ error: "Erro interno." }, { status: 500 });
+  }
 
   try {
     await sendMail({ template: "portal-otp", to: email, data: { code } });

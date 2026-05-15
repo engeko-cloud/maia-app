@@ -17,10 +17,17 @@ type AfastamentoRow = {
   empresas: { nome: string };
 };
 
+function fmtDate(iso: string, defaultTime: string): string {
+  const [datePart, timePart] = iso.includes("T") ? iso.split("T") : [iso, ""];
+  const [y, m, d] = datePart.split("-");
+  const time = timePart ? timePart.slice(0, 5) : defaultTime;
+  return `${m}/${d}/${y} ${time}`;
+}
+
 const COLUMNS: DataTableColumn<AfastamentoRow>[] = [
   { key: "tipo",     label: "Tipo",     render: (r) => r.afastamento_tipos.rotulo },
-  { key: "inicio",   label: "Início",   render: (r) => r.data_inicio, mono: true },
-  { key: "fim",      label: "Fim",      render: (r) => r.data_fim ?? "—", mono: true },
+  { key: "inicio",   label: "Início",   render: (r) => fmtDate(r.data_inicio, "00:00"), mono: true },
+  { key: "fim",      label: "Fim",      render: (r) => r.data_fim ? fmtDate(r.data_fim, "23:59") : "—", mono: true },
   { key: "duracao",  label: "Duração",  render: (r) => (r.duracao ? `${r.duracao} dias` : "—") },
   {
     key: "situacao",

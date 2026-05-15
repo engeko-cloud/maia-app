@@ -55,13 +55,21 @@ export default async function PortalAfastamentoDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1 border-b border-[var(--color-border)] pb-4">
-        <nav aria-label="Breadcrumb" className="text-xs text-[var(--color-fg-muted)]">
-          <Link href="/portal/painel" className="hover:text-foreground">Minha Área</Link>
-          <span className="mx-1 text-[var(--color-fg-subtle)]">/</span>
-          <span aria-current="page" className="text-foreground">Afastamento</span>
-        </nav>
-        <h1 className="text-2xl font-semibold tracking-tight">Detalhes do afastamento</h1>
+      <header className="flex items-start justify-between gap-4 border-b border-[var(--color-border)] pb-4">
+        <div className="flex flex-col gap-1">
+          <nav aria-label="Breadcrumb" className="text-xs text-[var(--color-fg-muted)]">
+            <Link href="/portal/painel" className="hover:text-foreground">Minha Área</Link>
+            <span className="mx-1 text-[var(--color-fg-subtle)]">/</span>
+            <span aria-current="page" className="text-foreground">Afastamento</span>
+          </nav>
+          <h1 className="text-2xl font-semibold tracking-tight">Detalhes do afastamento</h1>
+        </div>
+        <Link
+          href="/portal/painel"
+          className="shrink-0 rounded-md border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--color-fg-muted)] hover:text-foreground hover:border-[var(--color-fg-muted)] transition-colors"
+        >
+          ← Voltar à lista
+        </Link>
       </header>
       <section className="rounded-md border border-[var(--color-border)] bg-white p-6">
         <FieldGrid fields={fields} />
