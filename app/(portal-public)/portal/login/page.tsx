@@ -39,7 +39,6 @@ const PITCH = {
 export default function PortalLoginPage() {
   const router = useRouter();
   const [step, setStep] = React.useState<Step>("cred");
-  const [cpf, setCpf] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
 
@@ -66,11 +65,14 @@ export default function PortalLoginPage() {
       return;
     }
     const supabase = getSupabaseBrowser();
-    await supabase.auth.signInWithOtp({
+    const { error: otpError } = await supabase.auth.signInWithOtp({
       email: values.email,
       options: { shouldCreateUser: true, data: { cpf: values.cpf } },
     });
-    setCpf(values.cpf);
+    if (otpError) {
+      setError("Não foi possível enviar o código. Tente novamente.");
+      return;
+    }
     setEmail(values.email);
     setStep("otp");
   }
@@ -124,7 +126,7 @@ export default function PortalLoginPage() {
                       inputMode="numeric"
                       maxLength={11}
                       placeholder="Somente números"
-                      autoComplete="off"
+                      autoComplete="username"
                       {...field}
                     />
                   </FormControl>
@@ -196,7 +198,6 @@ export default function PortalLoginPage() {
               onClick={() => {
                 setStep("cred");
                 setError(null);
-                setCpf("");
                 setEmail("");
                 credForm.reset();
               }}
