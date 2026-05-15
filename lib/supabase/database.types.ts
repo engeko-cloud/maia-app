@@ -34,6 +34,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      afastamento_ocorrencias: {
+        Row: {
+          afastamento_id: string
+          criado_em: string
+          ocorrencia_id: string
+        }
+        Insert: {
+          afastamento_id: string
+          criado_em?: string
+          ocorrencia_id: string
+        }
+        Update: {
+          afastamento_id?: string
+          criado_em?: string
+          ocorrencia_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "afastamento_ocorrencias_afastamento_id_fkey"
+            columns: ["afastamento_id"]
+            isOneToOne: true
+            referencedRelation: "afastamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "afastamento_ocorrencias_ocorrencia_id_fkey"
+            columns: ["ocorrencia_id"]
+            isOneToOne: true
+            referencedRelation: "ocorrencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       afastamento_tipos: {
         Row: {
           ativo: boolean
@@ -191,19 +224,16 @@ export type Database = {
       }
       colaboradores: {
         Row: {
-          auth_id: string | null
           cpf: string
           criado_em: string
           email: string | null
         }
         Insert: {
-          auth_id?: string | null
           cpf: string
           criado_em?: string
           email?: string | null
         }
         Update: {
-          auth_id?: string | null
           cpf?: string
           criado_em?: string
           email?: string | null
@@ -385,6 +415,39 @@ export type Database = {
           },
         ]
       }
+      eventos_lidos: {
+        Row: {
+          evento_id: string
+          lido_em: string
+          usuario_id: string
+        }
+        Insert: {
+          evento_id: string
+          lido_em?: string
+          usuario_id: string
+        }
+        Update: {
+          evento_id?: string
+          lido_em?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eventos_lidos_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_lidos_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investigacao_categorias: {
         Row: {
           ativo: boolean
@@ -520,42 +583,111 @@ export type Database = {
       }
       ocorrencias: {
         Row: {
+          afastamento: boolean
           arquivo_url: string | null
+          atendimento: boolean
           atualizado_em: string
+          bo: boolean
+          cid: string | null
+          cnpj_local: string | null
+          colaborador_cargo: string | null
+          colaborador_codigo_soc: string | null
+          colaborador_nome: string | null
+          colaborador_setor: string | null
+          cpf: string | null
           criado_em: string
+          data_atendimento: string | null
           data_ocorrencia: string
           descricao: string | null
+          duracao_afastamento: number | null
+          dut: string | null
           email_remetente: string
+          emissor: Json | null
           empresa_id: string
+          hora_atendimento: string | null
+          hora_ocorrencia: string | null
           id: string
+          internacao: boolean
+          morte: boolean
+          no_bo: string | null
+          parecer_medico: string | null
+          relacao_vitima: string | null
           situacao: string
+          texto_local: string | null
           tipo: string
+          tipo_local: string | null
           unidade_id: string
         }
         Insert: {
+          afastamento?: boolean
           arquivo_url?: string | null
+          atendimento?: boolean
           atualizado_em?: string
+          bo?: boolean
+          cid?: string | null
+          cnpj_local?: string | null
+          colaborador_cargo?: string | null
+          colaborador_codigo_soc?: string | null
+          colaborador_nome?: string | null
+          colaborador_setor?: string | null
+          cpf?: string | null
           criado_em?: string
+          data_atendimento?: string | null
           data_ocorrencia: string
           descricao?: string | null
+          duracao_afastamento?: number | null
+          dut?: string | null
           email_remetente: string
+          emissor?: Json | null
           empresa_id: string
+          hora_atendimento?: string | null
+          hora_ocorrencia?: string | null
           id?: string
+          internacao?: boolean
+          morte?: boolean
+          no_bo?: string | null
+          parecer_medico?: string | null
+          relacao_vitima?: string | null
           situacao?: string
+          texto_local?: string | null
           tipo: string
+          tipo_local?: string | null
           unidade_id: string
         }
         Update: {
+          afastamento?: boolean
           arquivo_url?: string | null
+          atendimento?: boolean
           atualizado_em?: string
+          bo?: boolean
+          cid?: string | null
+          cnpj_local?: string | null
+          colaborador_cargo?: string | null
+          colaborador_codigo_soc?: string | null
+          colaborador_nome?: string | null
+          colaborador_setor?: string | null
+          cpf?: string | null
           criado_em?: string
+          data_atendimento?: string | null
           data_ocorrencia?: string
           descricao?: string | null
+          duracao_afastamento?: number | null
+          dut?: string | null
           email_remetente?: string
+          emissor?: Json | null
           empresa_id?: string
+          hora_atendimento?: string | null
+          hora_ocorrencia?: string | null
           id?: string
+          internacao?: boolean
+          morte?: boolean
+          no_bo?: string | null
+          parecer_medico?: string | null
+          relacao_vitima?: string | null
           situacao?: string
+          texto_local?: string | null
           tipo?: string
+          tipo_local?: string | null
           unidade_id?: string
         }
         Relationships: [
@@ -575,6 +707,57 @@ export type Database = {
           },
         ]
       }
+      portal_otp_codes: {
+        Row: {
+          code: string
+          cpf: string
+          criado_em: string
+          email: string
+          expires_at: string
+          id: number
+          used: boolean
+        }
+        Insert: {
+          code: string
+          cpf: string
+          criado_em?: string
+          email: string
+          expires_at: string
+          id?: never
+          used?: boolean
+        }
+        Update: {
+          code?: string
+          cpf?: string
+          criado_em?: string
+          email?: string
+          expires_at?: string
+          id?: never
+          used?: boolean
+        }
+        Relationships: []
+      }
+      portal_sessions: {
+        Row: {
+          cpf: string
+          criado_em: string
+          expires_at: string
+          token: string
+        }
+        Insert: {
+          cpf: string
+          criado_em?: string
+          expires_at: string
+          token: string
+        }
+        Update: {
+          cpf?: string
+          criado_em?: string
+          expires_at?: string
+          token?: string
+        }
+        Relationships: []
+      }
       unidades: {
         Row: {
           ativo: boolean
@@ -593,57 +776,6 @@ export type Database = {
           codigo?: string
           id?: string
           nome?: string
-        }
-        Relationships: []
-      }
-      portal_otp_codes: {
-        Row: {
-          id: number
-          cpf: string
-          email: string
-          code: string
-          expires_at: string
-          used: boolean
-          criado_em: string
-        }
-        Insert: {
-          id?: number
-          cpf: string
-          email: string
-          code: string
-          expires_at: string
-          used?: boolean
-          criado_em?: string
-        }
-        Update: {
-          id?: number
-          cpf?: string
-          email?: string
-          code?: string
-          expires_at?: string
-          used?: boolean
-          criado_em?: string
-        }
-        Relationships: []
-      }
-      portal_sessions: {
-        Row: {
-          token: string
-          cpf: string
-          expires_at: string
-          criado_em: string
-        }
-        Insert: {
-          token: string
-          cpf: string
-          expires_at: string
-          criado_em?: string
-        }
-        Update: {
-          token?: string
-          cpf?: string
-          expires_at?: string
-          criado_em?: string
         }
         Relationships: []
       }
@@ -693,7 +825,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      colaborador_cpf: { Args: { uid: string }; Returns: string }
       is_admin: { Args: { uid: string }; Returns: boolean }
       is_in_equipe: {
         Args: { eq_codigo: string; uid: string }
