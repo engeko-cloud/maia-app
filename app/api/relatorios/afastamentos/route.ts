@@ -59,6 +59,8 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  if (!user.email) return NextResponse.json({ error: "Conta sem e-mail configurado." }, { status: 422 });
+
   const today = new Date().toISOString().slice(0, 10);
   const resend = new Resend(process.env.RESEND_TEST_API_KEY!);
   const { error: mailError } = await resend.emails.send({
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest) {
     attachments: [
       {
         filename: `afastamentos-${today}.csv`,
-        content: Buffer.from(csv, "utf-8"),
+        content: Buffer.from("﻿" + csv, "utf-8"),
       },
     ],
   });
