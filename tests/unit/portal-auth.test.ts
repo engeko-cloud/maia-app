@@ -63,4 +63,24 @@ describe("requireColaborador", () => {
       expect(result.user.id).toBe("user-123");
     }
   });
+
+  it("queries colaboradores by auth_id (not id)", async () => {
+    let capturedEqColumn: unknown;
+    const client = {
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: FAKE_USER } }) },
+      from: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockImplementation((col: unknown) => {
+            capturedEqColumn = col;
+            return {
+              single: vi.fn().mockResolvedValue({ data: { cpf: "11111111111" }, error: null }),
+            };
+          }),
+        }),
+      }),
+    } as unknown as Awaited<ReturnType<typeof getSupabaseServer>>;
+    mockGetSupabaseServer.mockResolvedValue(client);
+    await requireColaborador();
+    expect(capturedEqColumn).toBe("auth_id");
+  });
 });

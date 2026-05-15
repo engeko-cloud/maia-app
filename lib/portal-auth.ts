@@ -16,7 +16,7 @@ export async function requireColaborador(): Promise<ColaboradorSession> {
   const { data } = await supabase
     .from("colaboradores")
     .select("cpf")
-    .eq("id", user.id)
+    .eq("auth_id", user.id)
     .single();
 
   if (!data) return { status: "no_profile", user };

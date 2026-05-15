@@ -29,8 +29,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Portal: /portal/login and /portal/cadastro are public; everything else requires auth.
-  const isPortalPublic =
-    path.startsWith("/portal/login") || path.startsWith("/portal/cadastro");
+  const isPortalPublic = path.startsWith("/portal/login");
   const isPortal = path === "/portal" || path.startsWith("/portal/");
 
   if (isPortal && !isPortalPublic && !user) {
