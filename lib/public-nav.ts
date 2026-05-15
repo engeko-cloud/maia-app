@@ -1,25 +1,41 @@
-/**
- * Top-nav section anchors for the public shell.
- * The landing page (/) renders <section id="..."> for each entry,
- * and the PublicNavLinks component routes through buildHref().
- */
+import { publicLinks } from "@/lib/public-links";
 
-export interface PublicNavSection {
+export interface PublicNavItem {
+  label: string;
+  href: string;
+  external?: boolean;
+}
+
+export interface PublicNavGroup {
   id: "inicio" | "formularios" | "sistemas";
   label: string;
-  anchor: `#${string}`;
+  /** Direct nav target when `items` is empty (Início → "/"); ignored otherwise. */
+  href: string;
+  items: PublicNavItem[];
 }
 
-export const publicNavSections: PublicNavSection[] = [
-  { id: "inicio", label: "Início", anchor: "#inicio" },
-  { id: "formularios", label: "Formulários", anchor: "#formularios" },
-  { id: "sistemas", label: "Sistemas", anchor: "#sistemas" },
+function deriveItems(groupTitle: string, external: boolean): PublicNavItem[] {
+  const src = publicLinks.find((g) => g.title === groupTitle);
+  if (!src) return [];
+  return src.items.map((i) => ({
+    label: i.title,
+    href: i.url,
+    ...(external ? { external: true } : {}),
+  }));
+}
+
+export const publicNav: PublicNavGroup[] = [
+  { id: "inicio", label: "Início", href: "/", items: [] },
+  {
+    id: "formularios",
+    label: "Formulários",
+    href: "/forms",
+    items: deriveItems("Formulários", false),
+  },
+  {
+    id: "sistemas",
+    label: "Sistemas",
+    href: "#",
+    items: deriveItems("Sistemas Externos", true),
+  },
 ];
-
-/**
- * On '/' the anchor is bare so the browser jumps in place.
- * Elsewhere we prefix '/' so the link navigates home first, then jumps.
- */
-export function buildHref(pathname: string, anchor: `#${string}`): string {
-  return pathname === "/" ? anchor : `/${anchor}`;
-}
