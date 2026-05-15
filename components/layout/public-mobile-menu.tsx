@@ -39,7 +39,7 @@ export function PublicMobileMenu({ user }: PublicMobileMenuProps) {
         <SheetHeader className="p-0">
           <SheetTitle>Menu</SheetTitle>
         </SheetHeader>
-        <PublicNavLinks orientation="vertical" onNavigate={close} />
+        <PublicNavLinks />
         <div className="mt-auto flex flex-col gap-2 border-t border-border pt-4">
           {user ? (
             <Link

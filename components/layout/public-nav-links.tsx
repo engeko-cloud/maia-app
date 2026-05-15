@@ -2,47 +2,45 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AppNavMenu } from "@/components/layout/app-nav-menu";
 import { cn } from "@/lib/utils";
-import { buildHref, publicNavSections } from "@/lib/public-nav";
+import { publicNav } from "@/lib/public-nav";
 
 interface PublicNavLinksProps {
-  orientation?: "horizontal" | "vertical";
   className?: string;
-  /** Called after a link is clicked — used by mobile sheet to close itself. */
-  onNavigate?: () => void;
 }
 
-export function PublicNavLinks({
-  orientation = "horizontal",
-  className,
-  onNavigate,
-}: PublicNavLinksProps) {
-  const pathname = usePathname();
+export function PublicNavLinks({ className }: PublicNavLinksProps) {
+  const pathname = usePathname() ?? "";
 
   return (
     <nav
-      aria-label="Seções da página inicial"
-      className={cn(
-        orientation === "horizontal"
-          ? "flex items-center gap-1 text-sm"
-          : "flex flex-col gap-1 text-base",
-        className,
-      )}
+      aria-label="Navegação principal"
+      className={cn("flex items-center gap-1 text-sm", className)}
     >
-      {publicNavSections.map((section) => (
-        <Link
-          key={section.id}
-          href={buildHref(pathname, section.anchor)}
-          onClick={onNavigate}
-          className={cn(
-            "rounded-md px-3 py-1.5 font-medium text-[var(--color-fg-muted)] transition-colors",
-            "hover:bg-muted hover:text-foreground",
-            orientation === "vertical" && "py-2",
-          )}
-        >
-          {section.label}
-        </Link>
-      ))}
+      {publicNav.map((group) => {
+        if (group.items.length === 0) {
+          const active = pathname === group.href;
+          return (
+            <Link
+              key={group.id}
+              href={group.href}
+              className={cn(
+                "rounded-md px-3 py-1.5 font-medium transition-colors",
+                active
+                  ? "bg-muted text-foreground"
+                  : "text-[var(--color-fg-muted)] hover:bg-muted hover:text-foreground",
+              )}
+            >
+              {group.label}
+            </Link>
+          );
+        }
+        const active = group.items.some(
+          (i) => !i.external && pathname.startsWith(i.href),
+        );
+        return <AppNavMenu key={group.id} group={group} active={active} />;
+      })}
     </nav>
   );
 }
