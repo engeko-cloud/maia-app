@@ -10,6 +10,7 @@ import {
   GaugeIcon,
   ListIcon,
   HeartPulseIcon,
+  HardHatIcon,
 } from "lucide-react";
 
 const ITEMS = [
@@ -24,6 +25,12 @@ const ITEMS = [
     title: "Usuários",
     desc: "Convidar e gerenciar usuários da plataforma.",
     icon: UserCogIcon,
+  },
+  {
+    href: "/admin/colaboradores",
+    title: "Colaboradores",
+    desc: "CPFs pré-cadastrados para acesso ao portal do colaborador.",
+    icon: HardHatIcon,
   },
   {
     href: "/admin/equipes",
