@@ -598,31 +598,52 @@ export type Database = {
       }
       portal_otp_codes: {
         Row: {
-          id: string
+          id: number
           cpf: string
           email: string
           code: string
           expires_at: string
           used: boolean
-          created_at: string
+          criado_em: string
         }
         Insert: {
-          id?: string
+          id?: number
           cpf: string
           email: string
           code: string
           expires_at: string
           used?: boolean
-          created_at?: string
+          criado_em?: string
         }
         Update: {
-          id?: string
+          id?: number
           cpf?: string
           email?: string
           code?: string
           expires_at?: string
           used?: boolean
-          created_at?: string
+          criado_em?: string
+        }
+        Relationships: []
+      }
+      portal_sessions: {
+        Row: {
+          token: string
+          cpf: string
+          expires_at: string
+          criado_em: string
+        }
+        Insert: {
+          token: string
+          cpf: string
+          expires_at: string
+          criado_em?: string
+        }
+        Update: {
+          token?: string
+          cpf?: string
+          expires_at?: string
+          criado_em?: string
         }
         Relationships: []
       }
