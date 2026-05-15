@@ -1,12 +1,12 @@
 import { PublicTopBar } from "@/components/layout/public-top-bar";
-import { PublicFooter } from "@/components/layout/public-footer";
+import { AppFooter } from "@/components/layout/app-footer";
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col pb-14">
       <PublicTopBar />
       <main className="flex-1">{children}</main>
-      <PublicFooter />
+      <AppFooter />
     </div>
   );
 }
