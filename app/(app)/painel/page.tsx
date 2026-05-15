@@ -13,6 +13,7 @@ import {
   ActivityFeed,
   type ActivityFeedRow,
 } from "@/components/painel/activity-feed";
+import { SaudeBanner } from "@/components/saude/saude-banner";
 
 interface EventoRow {
   id: string;
@@ -20,7 +21,7 @@ interface EventoRow {
   entidade_id: string;
   evento: ActivityFeedRow["evento"];
   ocorrido_em: string;
-  usuarios: { nome: string | null } | null;
+  usuarios: { nome: string | null; sobrenome: string | null } | null;
 }
 
 export default async function PainelPage() {
@@ -47,7 +48,7 @@ export default async function PainelPage() {
         .eq("situacao", "aberta"),
       supabase
         .from("eventos")
-        .select("id, tipo_entidade, entidade_id, evento, ocorrido_em, usuarios:autor_id(nome)")
+        .select("id, tipo_entidade, entidade_id, evento, ocorrido_em, usuarios:autor_id(nome, sobrenome)")
         .order("ocorrido_em", { ascending: false })
         .limit(5)
         .returns<EventoRow[]>(),
@@ -63,7 +64,7 @@ export default async function PainelPage() {
     entidade_id: row.entidade_id,
     evento: row.evento,
     ocorrido_em: row.ocorrido_em,
-    autor_nome: row.usuarios?.nome ?? null,
+    autor_nome: [row.usuarios?.nome, row.usuarios?.sobrenome].filter(Boolean).join(" ") || null,
   }));
 
   const now = new Date();
@@ -85,6 +86,7 @@ export default async function PainelPage() {
 
   return (
     <div className="space-y-6">
+      <SaudeBanner />
       <header className="flex items-end justify-between gap-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-fg-muted)]">
