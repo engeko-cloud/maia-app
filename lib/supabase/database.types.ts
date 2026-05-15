@@ -218,6 +218,24 @@ export type Database = {
           },
         ]
       }
+      configuracoes_dashboard: {
+        Row: {
+          atualizado_em: string
+          config: Json
+          id: boolean
+        }
+        Insert: {
+          atualizado_em?: string
+          config?: Json
+          id?: boolean
+        }
+        Update: {
+          atualizado_em?: string
+          config?: Json
+          id?: boolean
+        }
+        Relationships: []
+      }
       empresas: {
         Row: {
           ativo: boolean
