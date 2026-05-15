@@ -128,6 +128,7 @@ export function InvestigacaoForm({
                     branch={field.value}
                     categoriaRotulo={categoriaRotulo(b.categoria_id)}
                     graus={graus.filter((g) => g.ativo)}
+                    causas={causasByCategoria[b.categoria_id] ?? []}
                     onChange={field.onChange}
                     readOnly={!present || !active}
                     readOnlyLabel={readOnlyLabel}
