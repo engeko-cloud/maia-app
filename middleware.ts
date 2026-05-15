@@ -28,6 +28,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  // Portal: /portal/login and /portal/cadastro are public; everything else requires auth.
+  const isPortalPublic =
+    path.startsWith("/portal/login") || path.startsWith("/portal/cadastro");
+  const isPortal = path === "/portal" || path.startsWith("/portal/");
+
+  if (isPortal && !isPortalPublic && !user) {
+    return NextResponse.redirect(new URL("/portal/login", request.url));
+  }
+
   return response;
 }
 
