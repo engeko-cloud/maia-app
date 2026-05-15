@@ -33,14 +33,14 @@ export async function POST(req: NextRequest) {
   });
   if (invErr) return NextResponse.json({ error: invErr.message }, { status: 500 });
 
-  const { error: insErr } = await admin.from("usuarios").insert({
+  const { error: insErr } = await admin.from("usuarios").upsert({
     id: invite.user.id,
     email: parsed.data.email,
     nome: parsed.data.nome,
     sobrenome: parsed.data.sobrenome,
     administrador: parsed.data.administrador ?? false,
     criado_por: me.id,
-  });
+  }, { onConflict: "id" });
 
   // Se o insert falhar, remove o auth.user órfão.
   if (insErr) {

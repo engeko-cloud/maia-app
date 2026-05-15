@@ -18,10 +18,12 @@ export default function InvestigacaoCategoriasPage() {
       <AdminCrudTable
         endpoint="/api/admin/investigacao/categorias"
         resourceLabel="categoria"
-        initial={{ codigo: "", rotulo: "", ordem: 0, ativo: true }}
+        allowCreate={false}
+        allowDelete={false}
+        initial={{ ordem: 0, ativo: true }}
         columns={[
-          { key: "codigo", label: "Código" },
-          { key: "rotulo", label: "Rótulo" },
+          { key: "codigo", label: "Código", readonly: true },
+          { key: "rotulo", label: "Rótulo", readonly: true },
           { key: "ordem",  label: "Ordem", type: "number" },
           { key: "ativo",  label: "Ativo", type: "checkbox" },
         ]}

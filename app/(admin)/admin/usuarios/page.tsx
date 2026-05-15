@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { PlusIcon, UsersIcon } from "lucide-react";
+import { PlusIcon, Trash2Icon, UsersIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,15 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -42,6 +51,7 @@ export default function UsuariosPage() {
   const [form, setForm] = React.useState({ email: "", nome: "", sobrenome: "", administrador: false });
   const [open, setOpen] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     try {
@@ -72,6 +82,26 @@ export default function UsuariosPage() {
       toast.success("Convite enviado.");
       setForm({ email: "", nome: "", sobrenome: "", administrador: false });
       setOpen(false);
+      await load();
+    } catch {
+      toast.error("Erro de rede.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteUser() {
+    if (!confirmDeleteId) return;
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/admin/usuarios/${confirmDeleteId}`, { method: "DELETE" });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        toast.error((j as { error?: string }).error ?? "Erro ao excluir.");
+        return;
+      }
+      toast.success("Usuário excluído.");
+      setConfirmDeleteId(null);
       await load();
     } catch {
       toast.error("Erro de rede.");
@@ -153,6 +183,7 @@ export default function UsuariosPage() {
                 <TableHead className="text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Email</TableHead>
                 <TableHead className="w-20 text-center text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Admin</TableHead>
                 <TableHead className="w-20 text-center text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Ativo</TableHead>
+                <TableHead className="w-16 text-right text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -174,12 +205,48 @@ export default function UsuariosPage() {
                       aria-label={`Ativo: ${r.nome ?? r.email}`}
                     />
                   </TableCell>
+                  <TableCell className="text-right">
+                    {!r.administrador && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setConfirmDeleteId(r.id)}
+                        aria-label="Excluir usuário"
+                        className="text-[var(--color-danger)] hover:bg-[var(--color-danger-soft)]"
+                      >
+                        <Trash2Icon className="size-4" />
+                      </Button>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
       )}
+      <Dialog
+        open={Boolean(confirmDeleteId)}
+        onOpenChange={(o) => !o && setConfirmDeleteId(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir usuário?</DialogTitle>
+            <DialogDescription>
+              Essa ação não pode ser desfeita. O usuário perderá o acesso ao sistema.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline">Cancelar</Button>} />
+            <Button
+              onClick={deleteUser}
+              disabled={busy}
+              className="bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger)]/90"
+            >
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

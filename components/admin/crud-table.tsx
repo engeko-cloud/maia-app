@@ -59,6 +59,10 @@ interface AdminCrudTableProps {
   initial: Record<string, unknown>;
   /** Resource label used in Sheet/Dialog copy. Defaults to "registro". */
   resourceLabel?: string;
+  /** Whether to show the "New" button. Defaults to true. */
+  allowCreate?: boolean;
+  /** Whether to show the delete button per row. Defaults to true. */
+  allowDelete?: boolean;
 }
 
 export function AdminCrudTable({
@@ -66,6 +70,8 @@ export function AdminCrudTable({
   columns,
   initial,
   resourceLabel = "registro",
+  allowCreate = true,
+  allowDelete = true,
 }: AdminCrudTableProps) {
   const [rows, setRows] = React.useState<
     Array<Record<string, unknown> & { id: string }>
@@ -148,14 +154,16 @@ export function AdminCrudTable({
     <>
       <div className="mb-4 flex justify-end">
         <Sheet open={formOpen} onOpenChange={setFormOpen}>
-          <SheetTrigger
-            render={
-              <Button onClick={openCreate}>
-                <PlusIcon className="size-4" aria-hidden="true" />
-                Novo {resourceLabel}
-              </Button>
-            }
-          />
+          {allowCreate && (
+            <SheetTrigger
+              render={
+                <Button onClick={openCreate}>
+                  <PlusIcon className="size-4" aria-hidden="true" />
+                  Novo {resourceLabel}
+                </Button>
+              }
+            />
+          )}
           <SheetContent>
             <SheetHeader>
               <SheetTitle>
@@ -289,15 +297,17 @@ export function AdminCrudTable({
                       >
                         <PencilIcon className="size-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setConfirmDeleteId(row.id)}
-                        aria-label="Excluir"
-                        className="text-[var(--color-danger)] hover:bg-[var(--color-danger-soft)]"
-                      >
-                        <Trash2Icon className="size-4" />
-                      </Button>
+                      {allowDelete && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setConfirmDeleteId(row.id)}
+                          aria-label="Excluir"
+                          className="text-[var(--color-danger)] hover:bg-[var(--color-danger-soft)]"
+                        >
+                          <Trash2Icon className="size-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

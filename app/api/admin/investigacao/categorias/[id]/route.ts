@@ -6,10 +6,8 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 // equivalent psql query for the DELETE-time invariant enforced below.
 
 const Patch = z.object({
-  codigo: z.string().min(1).optional(),
-  rotulo: z.string().min(2).optional(),
-  ordem:  z.number().int().min(0).optional(),
-  ativo:  z.boolean().optional(),
+  ordem: z.number().int().min(0).optional(),
+  ativo: z.boolean().optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

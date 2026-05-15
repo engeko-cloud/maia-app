@@ -22,16 +22,16 @@ export default function AfastamentoTiposPage() {
       <AdminCrudTable
         endpoint="/api/admin/afastamento-tipos"
         resourceLabel="tipo"
+        allowCreate={false}
+        allowDelete={false}
         initial={{
-          codigo: "",
-          rotulo: "",
           requer_aprovacao: false,
           ordem: 0,
           ativo: true,
         }}
         columns={[
-          { key: "codigo", label: "Código" },
-          { key: "rotulo", label: "Rótulo" },
+          { key: "codigo", label: "Código", readonly: true },
+          { key: "rotulo", label: "Rótulo", readonly: true },
           { key: "requer_aprovacao", label: "Requer aprovação", type: "checkbox" },
           { key: "ordem", label: "Ordem", type: "number" },
           { key: "ativo", label: "Ativo", type: "checkbox" },

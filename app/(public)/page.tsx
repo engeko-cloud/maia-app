@@ -2,6 +2,7 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 import { publicLinks } from "@/lib/public-links";
 import { LinktreeHero } from "@/components/home/linktree-hero";
 import { PrivateShortcuts } from "@/components/home/private-shortcuts";
+import { PortalEntryCard } from "@/components/home/portal-entry-card";
 import { LinkGroup } from "@/components/home/link-group";
 
 export default async function PublicLanding() {
@@ -37,6 +38,10 @@ export default async function PublicLanding() {
       </section>
 
       <PrivateShortcuts user={user} />
+
+      <section id="portal">
+        <PortalEntryCard />
+      </section>
 
       {publicLinks.map((group) => (
         <section
