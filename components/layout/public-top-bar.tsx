@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CircleUserRoundIcon } from "lucide-react";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,15 @@ export async function PublicTopBar() {
         <div className="hidden flex-1 justify-center md:flex">
           <PublicNavLinks />
         </div>
-        <div className="ml-auto hidden items-center gap-2 md:flex">
+        <div className="ml-auto hidden items-center gap-1.5 md:flex">
+          <Link
+            href="/portal/login"
+            aria-label="Portal do colaborador"
+            title="Portal do colaborador"
+            className="rounded-md p-1.5 text-[var(--color-fg-muted)] hover:bg-muted hover:text-foreground"
+          >
+            <CircleUserRoundIcon className="size-5" aria-hidden="true" />
+          </Link>
           {user ? (
             <>
               <Link
@@ -59,15 +68,7 @@ export async function PublicTopBar() {
               </span>
             </>
           ) : (
-            <>
-              <Link
-                href="/#inicio"
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-[var(--color-fg-muted)] hover:bg-muted hover:text-foreground"
-              >
-                Sobre
-              </Link>
-              <Button render={<Link href="/login" />}>Entrar</Button>
-            </>
+            <Button render={<Link href="/login" />}>Entrar</Button>
           )}
         </div>
         <PublicMobileMenu user={user ? { firstName: user.firstName } : null} />
