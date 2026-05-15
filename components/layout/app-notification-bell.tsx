@@ -65,7 +65,7 @@ export function AppNotificationBell() {
               </div>
 
               {/* List */}
-              <div className="max-h-[360px] overflow-y-auto">
+              <div className="max-h-[400px] overflow-y-auto">
                 {items.length === 0 ? (
                   <p className="px-4 py-6 text-center text-sm text-[var(--color-fg-muted)]">
                     Nenhuma notificação recente

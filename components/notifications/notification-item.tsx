@@ -47,12 +47,11 @@ export function NotificationItem({ notification, onOpen }: NotificationItemProps
       />
       <span className="flex flex-col gap-0.5 min-w-0">
         <span className="font-medium leading-snug truncate">
-          {noun}{" "}
-          <span className="font-normal text-[var(--color-fg-muted)]">
-            {notification.evento}
-          </span>
+          {notification.evento}
         </span>
-        <span className="text-xs text-[var(--color-fg-muted)]">{relative}</span>
+        <span className="text-xs text-[var(--color-fg-muted)]">
+          {noun} · {relative}
+        </span>
       </span>
     </button>
   );
