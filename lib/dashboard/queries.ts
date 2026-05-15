@@ -74,7 +74,7 @@ export async function getEmailsFalhados(admin: SupabaseClient): Promise<FailedGr
   const failed = (data ?? []).filter(
     (e: any) => e.dados && typeof e.dados === "object" && "error" in e.dados,
   );
-  const ids = [...new Set(failed.map((e: any) => e.entidade_id as string))];
+  const ids = [...new Set<string>(failed.map((e: any) => e.entidade_id as string))];
   const items = await resolveAfastamentoItems(admin, ids);
   return { count: ids.length, items };
 }
@@ -87,7 +87,7 @@ export async function getFluigFalhados(admin: SupabaseClient): Promise<FailedGro
     .eq("tipo_entidade", "afastamento")
     .gte("ocorrido_em", oneDayAgo()) as any);
 
-  const ids = [...new Set((data ?? []).map((e: any) => e.entidade_id as string))];
+  const ids = [...new Set<string>((data ?? []).map((e: any) => e.entidade_id as string))];
   const items = await resolveAfastamentoItems(admin, ids);
   return { count: ids.length, items };
 }
