@@ -9,9 +9,16 @@ import {
   NetworkIcon,
   GaugeIcon,
   ListIcon,
+  HeartPulseIcon,
 } from "lucide-react";
 
 const ITEMS = [
+  {
+    href: "/painel/saude",
+    title: "Saúde do sistema",
+    desc: "Emails e Fluig falhados nas últimas 24h, KPIs operacionais.",
+    icon: HeartPulseIcon,
+  },
   {
     href: "/admin/usuarios",
     title: "Usuários",

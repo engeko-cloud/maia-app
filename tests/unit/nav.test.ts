@@ -20,7 +20,8 @@ describe("appNav config", () => {
 
   it("groups with submenus have at least one submenu item, others have empty submenu", () => {
     for (const group of appNav) {
-      if (group.id === "painel") {
+      // painel and admin link directly (no dropdown items needed)
+      if (group.id === "painel" || group.id === "admin") {
         expect(group.items.length).toBe(0);
       } else {
         expect(group.items.length).toBeGreaterThan(0);
@@ -50,10 +51,8 @@ describe("appNav config", () => {
     }
   });
 
-  it("admin group contains a Saúde item pointing to /painel/saude", () => {
+  it("admin group has no dropdown items (admin nav lives on /admin page)", () => {
     const admin = appNav.find((g) => g.id === "admin")!;
-    const saude = admin.items.find((i) => i.href === "/painel/saude");
-    expect(saude).toBeDefined();
-    expect(saude!.label).toBe("Saúde");
+    expect(admin.items.length).toBe(0);
   });
 });

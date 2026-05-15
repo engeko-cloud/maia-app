@@ -52,8 +52,6 @@ export const appNav: AppNavGroup[] = [
     label: "Admin",
     href: "/admin",
     adminOnly: true,
-    items: [
-      { label: "Saúde", href: "/painel/saude" },
-    ],
+    items: [],
   },
 ];
