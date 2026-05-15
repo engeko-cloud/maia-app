@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { FileText } from "lucide-react";
-import { requireColaborador } from "@/lib/portal-auth";
-import { getSupabaseServer } from "@/lib/supabase/server";
+import { requirePortalSession } from "@/lib/portal-auth";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/data/empty-state";
@@ -18,10 +18,10 @@ type AfastamentoRow = {
 };
 
 const COLUMNS: DataTableColumn<AfastamentoRow>[] = [
-  { key: "tipo", label: "Tipo", render: (r) => r.afastamento_tipos.rotulo },
-  { key: "inicio", label: "Início", render: (r) => r.data_inicio, mono: true },
-  { key: "fim", label: "Fim", render: (r) => r.data_fim ?? "—", mono: true },
-  { key: "duracao", label: "Duração", render: (r) => (r.duracao ? `${r.duracao} dias` : "—") },
+  { key: "tipo",     label: "Tipo",     render: (r) => r.afastamento_tipos.rotulo },
+  { key: "inicio",   label: "Início",   render: (r) => r.data_inicio, mono: true },
+  { key: "fim",      label: "Fim",      render: (r) => r.data_fim ?? "—", mono: true },
+  { key: "duracao",  label: "Duração",  render: (r) => (r.duracao ? `${r.duracao} dias` : "—") },
   {
     key: "situacao",
     label: "Situação",
@@ -30,18 +30,18 @@ const COLUMNS: DataTableColumn<AfastamentoRow>[] = [
 ];
 
 export default async function PortalPainelPage() {
-  const session = await requireColaborador();
-  if (session.status !== "ok") redirect("/portal/login");
+  const session = await requirePortalSession();
+  if (!session) redirect("/portal/login");
 
-  const supabase = await getSupabaseServer();
+  const admin = getSupabaseAdmin();
 
   const [{ data: config }, { data: rows }] = await Promise.all([
-    supabase
+    admin
       .from("configuracoes")
       .select("portal_saudacao, portal_vazio, portal_banner")
       .eq("id", 1)
       .single(),
-    supabase
+    admin
       .from("afastamentos")
       .select(
         "id, situacao, data_inicio, data_fim, duracao, colaborador_nome, afastamento_tipos!inner(rotulo), empresas!inner(nome)",
@@ -52,8 +52,8 @@ export default async function PortalPainelPage() {
   ]);
 
   const nome = rows?.[0]?.colaborador_nome ?? "colaborador";
-  const saudacao = (config?.portal_saudacao ?? "Olá, {nome}.").replace("{nome}", nome);
-  const banner = config?.portal_banner ?? "";
+  const saudacao  = (config?.portal_saudacao ?? "Olá, {nome}.").replace("{nome}", nome);
+  const banner    = config?.portal_banner ?? "";
   const textoVazio = config?.portal_vazio ?? "Nenhum afastamento registrado.";
 
   return (
