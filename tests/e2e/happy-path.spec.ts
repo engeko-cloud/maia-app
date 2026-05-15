@@ -50,9 +50,12 @@ test.describe("Phase 6 investigation", () => {
     await page.getByRole("link", { name: /Iniciar investigação|Continuar investigação/ }).click();
     await expect(page).toHaveURL(/\/investigacao$/);
 
-    // 3. Step 1 — fill the first Ishikawa branch
+    // 3. Step 1 — fill the first Ishikawa branch by picking a library causa
     await page.getByRole("button", { name: /Adicionar causa/i }).first().click();
-    await page.getByPlaceholder("Descreva a causa").first().fill("Falta de procedimento");
+    // Pick the first library suggestion from the Select on the new causa row
+    await page.getByRole("combobox").first().click();
+    await page.getByRole("option").first().click();
+    // The descricao Input is now auto-filled from the library
     // grau: pick the first option
     await page.getByLabel(/Grau/i).first().click();
     await page.getByRole("option", { name: /Alto|Médio|Baixo/ }).first().click();
