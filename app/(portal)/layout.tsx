@@ -14,6 +14,7 @@ export default async function PortalLayout({ children }: { children: React.React
     if (!cpf || !email) redirect("/portal/login");
     const { ok } = await autoRegisterColaborador(session.user.id, cpf, email);
     if (!ok) redirect("/portal/login");
+    redirect("/portal/painel");
   }
 
   return (
