@@ -142,7 +142,7 @@ export default function PortalLoginPage() {
                 <FormItem>
                   <FormLabel>Código de 6 dígitos</FormLabel>
                   <FormControl>
-                    <Input type="text" inputMode="numeric" maxLength={6} autoComplete="one-time-code" {...field} />
+                    <Input type="text" inputMode="numeric" maxLength={6} autoComplete="one-time-code" autoFocus {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
