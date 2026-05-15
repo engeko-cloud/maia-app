@@ -7,6 +7,7 @@ import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/data/empty-state";
 import { parseFilterParams } from "@/lib/filter-rail";
 import { ocorrenciaTipoLabel } from "@/lib/ocorrencia-state";
+import { ExportDialog } from "@/components/relatorios/export-dialog";
 
 interface OcorrenciaRow {
   id: string;
@@ -35,8 +36,14 @@ export default async function OcorrenciasListPage({
     const safe = q.replace(/[%_,]/g, "");
     query = query.or(`tipo.ilike.%${safe}%,descricao.ilike.%${safe}%`);
   }
-  const { data } = await query.returns<OcorrenciaRow[]>();
-  const rows = data ?? [];
+  const [{ data }, { data: empresasData }, { data: unidadesData }] = await Promise.all([
+    query.returns<OcorrenciaRow[]>(),
+    supabase.from("empresas").select("id, nome").order("nome"),
+    supabase.from("unidades").select("id, nome").order("nome"),
+  ]);
+  const rows     = data ?? [];
+  const empresas = (empresasData ?? []) as { id: string; nome: string }[];
+  const unidades = (unidadesData ?? []) as { id: string; nome: string }[];
 
   const columns: DataTableColumn<OcorrenciaRow>[] = [
     { key: "tipo", label: "Tipo", render: (r) => ocorrenciaTipoLabel(r.tipo) },
@@ -66,14 +73,17 @@ export default async function OcorrenciasListPage({
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">Ocorrências</h1>
           <p className="text-sm text-[var(--color-fg-muted)]">{rows.length} registro{rows.length === 1 ? "" : "s"}</p>
         </div>
-        <Link
-          href="/forms/ocorrencias"
-          className="relative inline-flex items-center gap-1.5 rounded-md bg-[var(--brand-primary-600)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--brand-primary-700)]"
-        >
-          <PlusIcon className="size-4" aria-hidden="true" />
-          Nova ocorrência
-          <span aria-hidden="true" className="absolute -bottom-px left-2 right-2 h-[2px] bg-[var(--brand-accent-500)]" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <ExportDialog domain="ocorrencias" empresas={empresas} unidades={unidades} />
+          <Link
+            href="/forms/ocorrencias"
+            className="relative inline-flex items-center gap-1.5 rounded-md bg-[var(--brand-primary-600)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--brand-primary-700)]"
+          >
+            <PlusIcon className="size-4" aria-hidden="true" />
+            Nova ocorrência
+            <span aria-hidden="true" className="absolute -bottom-px left-2 right-2 h-[2px] bg-[var(--brand-accent-500)]" />
+          </Link>
+        </div>
       </header>
 
       <FilterRail
