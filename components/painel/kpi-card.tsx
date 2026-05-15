@@ -1,17 +1,18 @@
 import { cn } from "@/lib/utils";
-import type { QuickActionTone } from "@/components/painel/quick-action";
+
+export type KpiCardTone = "primary" | "accent" | "warning";
 
 interface KpiCardProps {
   label: string;
   value: number | string;
-  /** Optional second-line context, e.g. "+2 esta semana". */
   delta?: string;
-  tone?: QuickActionTone;
+  tone?: KpiCardTone;
 }
 
-const toneStrip: Record<QuickActionTone, string> = {
+const toneStrip: Record<KpiCardTone, string> = {
   primary: "bg-[var(--brand-primary-600)]",
   accent:  "bg-[var(--brand-accent-500)]",
+  warning: "bg-[var(--color-warning)]",
 };
 
 export function KpiCard({ label, value, delta, tone = "primary" }: KpiCardProps) {
