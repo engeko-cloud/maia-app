@@ -58,13 +58,14 @@ Concretely:
 
 ### Phase 8 — Self-service portal (colaborador surface)
 
-**Status:** sketch (sub-spec written when its turn comes).
+**Status:** spec complete (sub-spec: `2026-05-14-phase-8-design.md`). Implementation not started.
 
-- New auth class: `colaborador`. Entry via `/portal` (login) + `/portal/cadastro` (first-time CPF-to-Supabase-user linking). Auth method (magic link vs OTP) decided at spec time.
-- Routes: `/portal/painel`, `/portal/afastamentos`, `/portal/afastamentos/[id]`, `/portal/ocorrencias`, `/portal/ocorrencias/[id]`.
-- RLS scope: colaborador sees rows where `cpf = sua.cpf`.
-- Portal copy (greetings, empty-state messages, banner text) persisted as `configuracoes` rows, not hardcoded strings, to satisfy §2.
-- Size: ~1.2× Phase 5 (heaviest of the three; adds a third user class and new RLS policies).
+- New auth class: `colaborador`. Entry via `/portal/login` (email OTP) + `/portal/cadastro` (first-time CPF linkage, CPF must match ≥1 existing afastamento).
+- Routes: `/portal/painel`, `/portal/afastamentos/[id]` — afastamentos only; ocorrências deferred (no CPF column on `ocorrencias`).
+- Identity: dedicated `colaboradores (id → auth.users, cpf text unique)` table. SQL function `colaborador_cpf(uid)` used in RLS.
+- Detail view: simplified status view (tipo, datas, situação, motivo rejeição) — no CID, no medical flags, no timeline.
+- Portal copy (saudação, banner, empty-state) as columns on `configuracoes`, editable at `/admin/configuracoes`.
+- Route groups: `(portal-public)` for login/cadastro (no auth gate), `(portal)` for authenticated pages.
 
 ## 5. Ordering rationale
 
