@@ -189,24 +189,51 @@ export type Database = {
           },
         ]
       }
+      colaboradores: {
+        Row: {
+          cpf: string
+          criado_em: string
+          id: string
+        }
+        Insert: {
+          cpf: string
+          criado_em?: string
+          id: string
+        }
+        Update: {
+          cpf?: string
+          criado_em?: string
+          id?: string
+        }
+        Relationships: []
+      }
       configuracoes: {
         Row: {
           atualizado_em: string | null
           atualizado_por: string | null
           email_folha: string
           id: number
+          portal_banner: string
+          portal_saudacao: string
+          portal_vazio: string
         }
         Insert: {
           atualizado_em?: string | null
           atualizado_por?: string | null
           email_folha?: string
           id: number
+          portal_banner?: string
+          portal_saudacao?: string
+          portal_vazio?: string
         }
         Update: {
           atualizado_em?: string | null
           atualizado_por?: string | null
           email_folha?: string
           id?: number
+          portal_banner?: string
+          portal_saudacao?: string
+          portal_vazio?: string
         }
         Relationships: [
           {
@@ -612,6 +639,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      colaborador_cpf: { Args: { uid: string }; Returns: string }
       is_admin: { Args: { uid: string }; Returns: boolean }
       is_in_equipe: {
         Args: { eq_codigo: string; uid: string }
