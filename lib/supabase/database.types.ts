@@ -367,6 +367,44 @@ export type Database = {
         }
         Relationships: []
       }
+      investigacao_causas: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string
+          categoria_id: string
+          criado_em: string
+          id: string
+          ordem: number
+          texto: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string
+          categoria_id: string
+          criado_em?: string
+          id?: string
+          ordem?: number
+          texto: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string
+          categoria_id?: string
+          criado_em?: string
+          id?: string
+          ordem?: number
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investigacao_causas_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "investigacao_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       investigacao_graus: {
         Row: {
           ativo: boolean
