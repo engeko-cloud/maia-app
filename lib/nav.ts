@@ -45,7 +45,6 @@ export const appNav: AppNavGroup[] = [
     href: "/ocorrencias",
     items: [
       { label: "Lista", href: "/ocorrencias" },
-      { label: "Nova",  href: "/forms/ocorrencias" },
     ],
   },
   {
