@@ -1,86 +1,42 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import type { User } from "@supabase/supabase-js";
 
-vi.mock("@/lib/supabase/server");
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(),
+}));
+vi.mock("@/lib/portal-session");
 
-import { requireColaborador } from "@/lib/portal-auth";
-import { getSupabaseServer } from "@/lib/supabase/server";
+import { requirePortalSession } from "@/lib/portal-auth";
+import { cookies } from "next/headers";
+import { getPortalSession } from "@/lib/portal-session";
 
-const mockGetSupabaseServer = vi.mocked(getSupabaseServer);
+const mockCookies = vi.mocked(cookies);
+const mockGetPortalSession = vi.mocked(getPortalSession);
 
-const FAKE_USER = { id: "user-123" } as User;
-
-function makeClient({
-  user,
-  colaboradorCpf,
-}: {
-  user: User | null;
-  colaboradorCpf: string | null;
-}) {
-  return {
-    auth: {
-      getUser: vi.fn().mockResolvedValue({ data: { user } }),
-    },
-    from: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: colaboradorCpf ? { cpf: colaboradorCpf } : null,
-            error: null,
-          }),
-        }),
-      }),
-    }),
-  } as unknown as Awaited<ReturnType<typeof getSupabaseServer>>;
+function makeCookieStore(token: string | undefined) {
+  return { get: vi.fn().mockReturnValue(token ? { value: token } : undefined) } as unknown as Awaited<ReturnType<typeof cookies>>;
 }
 
-describe("requireColaborador", () => {
+describe("requirePortalSession", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("returns unauthenticated when no session", async () => {
-    mockGetSupabaseServer.mockResolvedValue(makeClient({ user: null, colaboradorCpf: null }));
-    const result = await requireColaborador();
-    expect(result.status).toBe("unauthenticated");
+  it("returns null when no cookie present", async () => {
+    mockCookies.mockResolvedValue(makeCookieStore(undefined));
+    const result = await requirePortalSession();
+    expect(result).toBeNull();
+    expect(mockGetPortalSession).not.toHaveBeenCalled();
   });
 
-  it("returns no_profile when session exists but no colaboradores row", async () => {
-    mockGetSupabaseServer.mockResolvedValue(makeClient({ user: FAKE_USER, colaboradorCpf: null }));
-    const result = await requireColaborador();
-    expect(result.status).toBe("no_profile");
-    if (result.status === "no_profile") {
-      expect(result.user.id).toBe("user-123");
-    }
+  it("returns null when session not found in DB", async () => {
+    mockCookies.mockResolvedValue(makeCookieStore("sometoken"));
+    mockGetPortalSession.mockResolvedValue(null);
+    const result = await requirePortalSession();
+    expect(result).toBeNull();
   });
 
-  it("returns ok with cpf when colaboradores row exists", async () => {
-    mockGetSupabaseServer.mockResolvedValue(
-      makeClient({ user: FAKE_USER, colaboradorCpf: "11111111111" }),
-    );
-    const result = await requireColaborador();
-    expect(result.status).toBe("ok");
-    if (result.status === "ok") {
-      expect(result.cpf).toBe("11111111111");
-      expect(result.user.id).toBe("user-123");
-    }
-  });
-
-  it("queries colaboradores by auth_id (not id)", async () => {
-    let capturedEqColumn: unknown;
-    const client = {
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: FAKE_USER } }) },
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockImplementation((col: unknown) => {
-            capturedEqColumn = col;
-            return {
-              single: vi.fn().mockResolvedValue({ data: { cpf: "11111111111" }, error: null }),
-            };
-          }),
-        }),
-      }),
-    } as unknown as Awaited<ReturnType<typeof getSupabaseServer>>;
-    mockGetSupabaseServer.mockResolvedValue(client);
-    await requireColaborador();
-    expect(capturedEqColumn).toBe("auth_id");
+  it("returns cpf when valid session found", async () => {
+    mockCookies.mockResolvedValue(makeCookieStore("validtoken"));
+    mockGetPortalSession.mockResolvedValue("11111111111");
+    const result = await requirePortalSession();
+    expect(result).toEqual({ cpf: "11111111111" });
   });
 });
