@@ -39,7 +39,8 @@ All required data already exists in the `eventos` table (logged since Phase 1):
 |---|---|
 | Emails falhados (24h) | `eventos` where `evento = 'email_enviado'` AND `dados->>'error' IS NOT NULL` AND `ocorrido_em > now() - interval '24h'` |
 | Fluig falhados (24h) | `eventos` where `evento = 'fluig_erro'` AND `ocorrido_em > now() - interval '24h'` |
-| Aprovação P50/P95 | Per-afastamento diff between `criado` and `aprovado` eventos, últimos 30 dias |
+| Aprovação P50 | Per-afastamento diff between `criado` and `aprovado` eventos, últimos 30 dias — 50th percentile |
+| Aprovação P95 | Same query as P50, 95th percentile |
 | Distribuição por tipo | `afastamentos` JOIN `afastamento_tipos`, mês corrente, grouped by tipo |
 | Ocorrências por situação | `ocorrencias` count grouped by `situacao` |
 | Anexos por status | `afastamentos` count: with vs. without `arquivo_url` |
@@ -62,7 +63,7 @@ The `aprovacao_lenta_horas` threshold determines when the P50 latency card rende
 
 ### Notification bell — unread count
 
-Definition of "unread": count of `eventos` in the last 24h where `tipo_entidade IN ('afastamento', 'ocorrencia')`. No new table, no per-user read state. The badge disappears when the admin clicks the bell (client-side state reset only). A full read/unread model is deferred to a future phase.
+Definition of "unread": count of `eventos` in the last 24h where `tipo_entidade IN ('afastamento', 'ocorrencia')`. No new table, no per-user read state. The badge disappears when the user clicks the bell (client-side state reset only). A full read/unread model is deferred to a future phase.
 
 ### Aggregation queries location
 
@@ -140,7 +141,7 @@ When a failure card has `count > 0`, renders a compact list below the value:
 
 ## 7. Error handling
 
-- `/api/saude` and `/api/notificacoes/unread`: non-admin requests → 403. Query failures → 500 with `{ error: "internal" }`. Client components treat non-ok responses by retaining last good data (no flash to zero on transient error).
+- `/api/saude`: non-admin requests → 403. `/api/notificacoes/unread`: unauthenticated requests → 401 (any logged-in user may call it — non-admin OH users also have the bell). Query failures → 500 with `{ error: "internal" }`. Client components treat non-ok responses by retaining last good data (no flash to zero on transient error).
 - `<SaudeClient>` shows a muted "última atualização: HH:MM" timestamp so the admin knows if data is stale.
 - `<SaudeBanner>` is silent on error (returns `null`) — a transient polling failure should not cause a false alarm on the main painel.
 
