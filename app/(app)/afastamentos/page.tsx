@@ -6,6 +6,7 @@ import { FilterRail } from "@/components/data/filter-rail";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/data/empty-state";
 import { parseFilterParams } from "@/lib/filter-rail";
+import { ExportDialog } from "@/components/relatorios/export-dialog";
 
 interface AfastamentoRow {
   id: string;
@@ -38,8 +39,14 @@ export default async function AfastamentosListPage({
     const safe = q.replace(/[%_,]/g, "");
     query = query.or(`colaborador_nome.ilike.%${safe}%,cpf.ilike.%${safe}%`);
   }
-  const { data } = await query.returns<AfastamentoRow[]>();
-  const rows = data ?? [];
+  const [{ data }, { data: empresasData }, { data: unidadesData }] = await Promise.all([
+    query.returns<AfastamentoRow[]>(),
+    supabase.from("empresas").select("id, nome").order("nome"),
+    supabase.from("unidades").select("id, nome").order("nome"),
+  ]);
+  const rows     = data ?? [];
+  const empresas = (empresasData ?? []) as { id: string; nome: string }[];
+  const unidades = (unidadesData ?? []) as { id: string; nome: string }[];
 
   const columns: DataTableColumn<AfastamentoRow>[] = [
     {
@@ -93,17 +100,20 @@ export default async function AfastamentosListPage({
             {rows.length} registro{rows.length === 1 ? "" : "s"}
           </p>
         </div>
-        <Link
-          href="/forms/afastamentos"
-          className="relative inline-flex items-center gap-1.5 rounded-md bg-[var(--brand-primary-600)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--brand-primary-700)]"
-        >
-          <PlusIcon className="size-4" aria-hidden="true" />
-          Novo afastamento
-          <span
-            aria-hidden="true"
-            className="absolute -bottom-px left-2 right-2 h-[2px] bg-[var(--brand-accent-500)]"
-          />
-        </Link>
+        <div className="flex items-center gap-2">
+          <ExportDialog domain="afastamentos" empresas={empresas} unidades={unidades} />
+          <Link
+            href="/forms/afastamentos"
+            className="relative inline-flex items-center gap-1.5 rounded-md bg-[var(--brand-primary-600)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--brand-primary-700)]"
+          >
+            <PlusIcon className="size-4" aria-hidden="true" />
+            Novo afastamento
+            <span
+              aria-hidden="true"
+              className="absolute -bottom-px left-2 right-2 h-[2px] bg-[var(--brand-accent-500)]"
+            />
+          </Link>
+        </div>
       </header>
 
       <FilterRail
