@@ -44,6 +44,14 @@ export function ExportDialog({ domain, empresas, unidades }: ExportDialogProps) 
   const domainLabel = domain === "afastamentos" ? "Afastamentos" : "Ocorrências";
   const dateLabel   = domain === "afastamentos" ? "Início" : "Ocorrência";
 
+  function resetFilters() {
+    setEmpresaId(ALL);
+    setUnidadeId(ALL);
+    setCpf("");
+    setDataDe("");
+    setDataAte("");
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -66,9 +74,13 @@ export function ExportDialog({ domain, empresas, unidades }: ExportDialogProps) 
           data_ate:     dataAte || undefined,
         }),
       });
-      const json = await res.json();
       if (!res.ok) {
-        setError(json.error ?? "Erro ao gerar relatório.");
+        let message = "Erro ao gerar relatório.";
+        try {
+          const json = await res.json();
+          message = json.error ?? message;
+        } catch { /* non-JSON error body */ }
+        setError(message);
       } else {
         setDone(true);
       }
@@ -82,6 +94,7 @@ export function ExportDialog({ domain, empresas, unidades }: ExportDialogProps) 
   function handleOpenChange(v: boolean) {
     setOpen(v);
     if (!v) {
+      resetFilters();
       setDone(false);
       setError("");
     }
@@ -114,7 +127,7 @@ export function ExportDialog({ domain, empresas, unidades }: ExportDialogProps) 
             <button
               type="button"
               className="mt-4 text-sm font-medium text-[var(--brand-primary-600)] hover:underline"
-              onClick={() => setDone(false)}
+              onClick={() => { resetFilters(); setDone(false); }}
             >
               Exportar novamente
             </button>
@@ -195,7 +208,7 @@ export function ExportDialog({ domain, empresas, unidades }: ExportDialogProps) 
               <button
                 type="button"
                 className="rounded-md border border-[var(--color-border)] px-3 py-1.5 text-sm font-medium text-[var(--color-fg-muted)] hover:text-foreground transition-colors"
-                onClick={() => setOpen(false)}
+                onClick={() => handleOpenChange(false)}
               >
                 Cancelar
               </button>
