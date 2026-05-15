@@ -11,10 +11,11 @@ const Schema = z.object({
 export async function GET() {
   if (!(await requireAdminUser())) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const admin = getSupabaseAdmin();
-  const { data } = await admin
+  const { data, error } = await admin
     .from("colaboradores")
     .select("cpf, email, auth_id, criado_em")
     .order("criado_em", { ascending: false });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data ?? []);
 }
 
