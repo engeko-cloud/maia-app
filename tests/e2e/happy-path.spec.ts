@@ -82,3 +82,54 @@ test.describe("Phase 6 investigation", () => {
     await expect(page.getByText("Investigação finalizada")).toBeVisible();
   });
 });
+
+test.describe("Phase 8 portal", () => {
+  test.skip(!process.env.E2E_PORTAL, "set E2E_PORTAL=1 to run");
+
+  test("colaborador sees own afastamentos and detail view", async ({ page }) => {
+    // Bypass OTP in tests: use admin API to generate a magic link for the seeded user,
+    // then navigate to it with next=/portal/painel so auth/confirm redirects there.
+    const { createClient } = await import("@supabase/supabase-js");
+    const adminClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } },
+    );
+
+    const { data, error } = await adminClient.auth.admin.generateLink({
+      type: "magiclink",
+      email: "colaborador@seed.local",
+    });
+    if (error || !data?.properties?.action_link) {
+      throw new Error(`Failed to generate portal login link: ${error?.message}`);
+    }
+
+    // Inject next=/portal/painel so auth/confirm redirects to the portal.
+    const confirmUrl = new URL(data.properties.action_link);
+    confirmUrl.searchParams.set("next", "/portal/painel");
+
+    await page.goto(confirmUrl.toString());
+    await expect(page).toHaveURL(/\/portal\/painel/, { timeout: 10_000 });
+
+    // Assert greeting and list render.
+    // The seeded CPF 11111111111 = Ana Silva (from 017_seed_dev.sql).
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Ana Silva");
+    const dataRows = page.getByRole("row").filter({ hasNot: page.getByRole("columnheader") });
+    await expect(dataRows).not.toHaveCount(0);
+
+    // Click the first row link to reach the detail page.
+    await page.getByRole("link").filter({ hasText: /Doença|Acidente/ }).first().click();
+    await expect(page).toHaveURL(/\/portal\/afastamentos\/[a-f0-9-]+/);
+
+    // Assert status detail renders.
+    await expect(page.getByText(/Pendente|Finalizado|Rejeitado|Cancelado/)).toBeVisible();
+
+    // Assert no medical/sensitive fields appear.
+    await expect(page.getByText(/\bCID\b/i)).not.toBeVisible();
+    await expect(page.getByText(/\bINSS\b/i)).not.toBeVisible();
+    await expect(page.getByText(/Internação/i)).not.toBeVisible();
+
+    // Assert no approval bar or admin controls.
+    await expect(page.getByRole("button", { name: /Aprovar|Rejeitar/i })).not.toBeVisible();
+  });
+});
