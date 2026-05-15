@@ -4,6 +4,7 @@ import {
   ExternalLinkIcon,
   FileTextIcon,
   SirenIcon,
+  UserCircleIcon,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   "file-text": FileTextIcon,
   "siren": SirenIcon,
   "external-link": ExternalLinkIcon,
+  "user-circle": UserCircleIcon,
 };
 
 interface LinkItemProps {
