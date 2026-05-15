@@ -28,7 +28,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Portal: /portal/login and /portal/cadastro are public; everything else requires auth.
+  // Portal: /portal/login is public; everything else requires auth.
   const isPortalPublic = path.startsWith("/portal/login");
   const isPortal = path === "/portal" || path.startsWith("/portal/");
 
