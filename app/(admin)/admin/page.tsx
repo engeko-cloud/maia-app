@@ -8,6 +8,7 @@ import {
   SettingsIcon,
   NetworkIcon,
   GaugeIcon,
+  ListIcon,
 } from "lucide-react";
 
 const ITEMS = [
@@ -52,6 +53,12 @@ const ITEMS = [
     title: "Graus de severidade",
     desc: "Escala usada para classificar causas na Ishikawa.",
     icon: GaugeIcon,
+  },
+  {
+    href: "/admin/investigacao/causas",
+    title: "Causas da Ishikawa",
+    desc: "Biblioteca de causas sugeridas por categoria.",
+    icon: ListIcon,
   },
   {
     href: "/admin/configuracoes",
