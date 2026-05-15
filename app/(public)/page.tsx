@@ -13,7 +13,7 @@ export default async function PublicLanding() {
   if (authUser) {
     const { data: row } = await supabase
       .from("usuarios")
-      .select("nome, administrador, equipe_usuarios(id)")
+      .select("nome, administrador, equipe_usuarios(equipe_id)")
       .eq("id", authUser.id)
       .single();
     const isStaff =
