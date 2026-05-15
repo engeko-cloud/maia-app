@@ -1,21 +1,11 @@
 import { redirect } from "next/navigation";
 import { LogoMark } from "@/components/brand/logo-mark";
-import { requireColaborador } from "@/lib/portal-auth";
-import { autoRegisterColaborador } from "@/lib/portal-register";
+import { requirePortalSession } from "@/lib/portal-auth";
 import { PortalLogoutButton } from "@/components/portal/portal-logout-button";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
-  const session = await requireColaborador();
-  if (session.status === "unauthenticated") redirect("/portal/login");
-
-  if (session.status === "no_profile") {
-    const cpf = session.user.user_metadata?.cpf as string | undefined;
-    const email = session.user.email;
-    if (!cpf || !email) redirect("/portal/login");
-    const { ok } = await autoRegisterColaborador(session.user.id, cpf, email);
-    if (!ok) redirect("/portal/login");
-    redirect("/portal/painel");
-  }
+  const session = await requirePortalSession();
+  if (!session) redirect("/portal/login");
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-subtle)]">
