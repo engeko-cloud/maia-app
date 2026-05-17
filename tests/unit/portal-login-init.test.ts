@@ -45,7 +45,16 @@ function makeAdmin({
         };
       }
       if (table === "portal_otp_codes") {
+        // Build a fluent chain for .select().eq().eq().eq().gt().order().limit().maybeSingle()
+        const otpSelectChain = {} as Record<string, unknown>;
+        const fluent = () => otpSelectChain;
+        otpSelectChain.eq = fluent;
+        otpSelectChain.gt = fluent;
+        otpSelectChain.order = fluent;
+        otpSelectChain.limit = fluent;
+        otpSelectChain.maybeSingle = vi.fn().mockResolvedValue({ data: null });
         return {
+          select: vi.fn().mockReturnValue(otpSelectChain),
           update: updateChain,
           insert: insertResult,
         };
