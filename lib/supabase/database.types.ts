@@ -121,7 +121,7 @@ export type Database = {
           inss: boolean
           internacao: boolean
           motivo_rejeicao: string | null
-          serial_id: number | null
+          serial_id: number
           situacao: string
           tipo_id: string
           token_edicao: string
@@ -153,7 +153,7 @@ export type Database = {
           inss?: boolean
           internacao?: boolean
           motivo_rejeicao?: string | null
-          serial_id?: number | null
+          serial_id?: number
           situacao: string
           tipo_id: string
           token_edicao?: string
@@ -185,7 +185,7 @@ export type Database = {
           inss?: boolean
           internacao?: boolean
           motivo_rejeicao?: string | null
-          serial_id?: number | null
+          serial_id?: number
           situacao?: string
           tipo_id?: string
           token_edicao?: string
@@ -612,10 +612,12 @@ export type Database = {
           no_bo: string | null
           parecer_medico: string | null
           relacao_vitima: string | null
+          serial_id: number
           situacao: string
           texto_local: string | null
           tipo: string
           tipo_local: string | null
+          token_edicao: string
           unidade_id: string
         }
         Insert: {
@@ -648,10 +650,12 @@ export type Database = {
           no_bo?: string | null
           parecer_medico?: string | null
           relacao_vitima?: string | null
+          serial_id?: number
           situacao?: string
           texto_local?: string | null
           tipo: string
           tipo_local?: string | null
+          token_edicao?: string
           unidade_id: string
         }
         Update: {
@@ -684,10 +688,12 @@ export type Database = {
           no_bo?: string | null
           parecer_medico?: string | null
           relacao_vitima?: string | null
+          serial_id?: number
           situacao?: string
           texto_local?: string | null
           tipo?: string
           tipo_local?: string | null
+          token_edicao?: string
           unidade_id?: string
         }
         Relationships: [
