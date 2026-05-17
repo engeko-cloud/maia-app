@@ -24,14 +24,26 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ token:
   const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL ?? process.env.APP_URL ?? "http://localhost:3000";
   const reportUrl = `${baseUrl}/ocorrencias/relatorio/${token}`;
 
-  // Conditional import: in dev we'd use full puppeteer if installed, but to keep
-  // a single dep we use puppeteer-core + @sparticuz/chromium in all environments.
-  const chromium = (await import("@sparticuz/chromium")).default;
   const puppeteer = await import("puppeteer-core");
 
+  let executablePath: string;
+  let launchArgs: string[];
+
+  if (process.env.NODE_ENV === "development") {
+    // @sparticuz/chromium ships a Linux binary — unusable on macOS. Use local Chrome.
+    executablePath =
+      process.env.CHROMIUM_PATH ??
+      "/Applications/Chromium.app/Contents/MacOS/Chromium";
+    launchArgs = ["--no-sandbox", "--disable-setuid-sandbox"];
+  } else {
+    const chromium = (await import("@sparticuz/chromium")).default;
+    executablePath = await chromium.executablePath();
+    launchArgs = chromium.args;
+  }
+
   const browser = await puppeteer.launch({
-    args: chromium.args,
-    executablePath: await chromium.executablePath(),
+    args: launchArgs,
+    executablePath,
     headless: true,
     defaultViewport: { width: 1240, height: 1754 },
   });
