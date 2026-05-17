@@ -47,7 +47,15 @@ export async function PATCH(
   const admin = getSupabaseAdmin();
   const { error } = await admin
     .from("afastamentos")
-    .update({ tipo_id, unidade_id: unidade_id ?? undefined, data_inicio, duracao, data_fim, cid: cid ?? undefined, emissor: emissor ?? undefined })
+    .update({
+      tipo_id,
+      unidade_id,
+      data_inicio,
+      duracao,
+      data_fim,
+      cid,
+      emissor,
+    } as any)
     .eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
