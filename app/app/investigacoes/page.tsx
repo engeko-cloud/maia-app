@@ -25,6 +25,7 @@ export default async function InvestigacoesPage() {
   const { data } = await supabase
     .from("investigacoes")
     .select("id, situacao, ocorrencias!inner(id, tipo, data_ocorrencia, empresas!inner(nome))")
+    .in("situacao", ["em_andamento", "em_aprovacao", "rejeitada"])
     .order("criado_em", { ascending: false })
     .limit(200)
     .returns<InvestigacaoRow[]>();
@@ -68,7 +69,7 @@ export default async function InvestigacoesPage() {
         </nav>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">Investigações</h1>
         <p className="text-sm text-[var(--color-fg-muted)]">
-          {rows.length} registro{rows.length === 1 ? "" : "s"}
+          {rows.length} investigaç{rows.length === 1 ? "ão" : "ões"} em aberto
         </p>
       </header>
 
@@ -81,7 +82,7 @@ export default async function InvestigacoesPage() {
           <EmptyState
             icon={SearchIcon}
             title="Nenhuma investigação"
-            hint="As investigações aparecem aqui quando uma ocorrência é registrada."
+            hint="Todas as investigações foram resolvidas ou não há ocorrências registradas."
           />
         }
       />
