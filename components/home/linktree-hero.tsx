@@ -1,4 +1,4 @@
-import { ActivityIcon } from "lucide-react";
+import Image from "next/image";
 
 interface LinktreeHeroProps {
   greeting: string;
@@ -14,12 +14,14 @@ export function LinktreeHero({ greeting, lead }: LinktreeHeroProps) {
         </h1>
         <p className="max-w-md text-[var(--color-fg-muted)]">{lead}</p>
       </div>
-      <div
-        aria-hidden="true"
-        className="grid size-16 shrink-0 place-items-center rounded-2xl bg-[linear-gradient(135deg,var(--brand-accent-500)_0%,var(--brand-primary-600)_100%)] text-white shadow-lg"
-      >
-        <ActivityIcon className="size-8" />
-      </div>
+      <a href="https://fapptory.me" target="_blank" rel="noopener noreferrer" className="shrink-0">
+        <Image
+          src="/fapptory-mark.svg"
+          alt="Fapptory"
+          width={37}
+          height={37}
+        />
+      </a>
     </div>
   );
 }

@@ -26,10 +26,10 @@ export default async function PublicLanding() {
     }
   }
 
-  const greeting = user ? `Olá, ${user.firstName}` : "Bem-vindo à MAIA";
+  const greeting = user ? `Olá, ${user.firstName}` : "Bem vindo ao MAIA";
   const lead = user
     ? "Atalhos rápidos, formulários e sistemas auxiliares."
-    : "Formulários públicos e sistemas auxiliares para colaboradores ENGEKO.";
+    : "Gestão de afastamentos e ocorrências para colaboradores ENGEKO. Consulte os formulários e sistemas auxiliares.";
 
   return (
     <div className="mx-auto max-w-3xl space-y-10 px-4 py-12">
@@ -37,11 +37,15 @@ export default async function PublicLanding() {
         <LinktreeHero greeting={greeting} lead={lead} />
       </section>
 
-      <PrivateShortcuts user={user} />
-
+      {!user && (
       <section id="portal">
         <PortalEntryCard />
       </section>
+      )}
+
+      <PrivateShortcuts user={user} />
+
+      
 
       {publicLinks.map((group) => (
         <section
