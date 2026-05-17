@@ -11,12 +11,13 @@ const EditSchema = z.object({
 async function resolveAuth(supabase: Awaited<ReturnType<typeof getSupabaseServer>>) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: usuario } = await supabase
-    .from("usuarios")
-    .select("administrador")
-    .eq("id", user.id)
-    .single();
-  return { user, isAdmin: usuario?.administrador === true };
+  const [{ data: usuario }, { data: m }] = await Promise.all([
+    supabase.from("usuarios").select("administrador").eq("id", user.id).single(),
+    supabase.from("equipe_usuarios").select("equipes!inner(codigo)").eq("usuario_id", user.id),
+  ]);
+  const isAdmin = usuario?.administrador === true;
+  const isOh = (m ?? []).some((r: any) => r.equipes?.codigo === "oh");
+  return { user, isAdmin, isOh };
 }
 
 export async function PATCH(
@@ -27,6 +28,7 @@ export async function PATCH(
   const supabase = await getSupabaseServer();
   const auth = await resolveAuth(supabase);
   if (!auth) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!auth.isAdmin && !auth.isOh) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   let body: unknown;
   try {
@@ -76,6 +78,7 @@ export async function DELETE(
   const supabase = await getSupabaseServer();
   const auth = await resolveAuth(supabase);
   if (!auth) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!auth.isAdmin && !auth.isOh) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const admin = getSupabaseAdmin();
 
@@ -98,5 +101,6 @@ export async function DELETE(
     .eq("afastamento_id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // TODO: delete orphaned storage files under afastamentos/comentarios/{id}/ when cleaning up attachments
   return NextResponse.json({ ok: true });
 }
