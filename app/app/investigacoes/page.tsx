@@ -6,6 +6,7 @@ import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/data/empty-state";
 import { SearchIcon } from "lucide-react";
 import { ocorrenciaTipoLabel } from "@/lib/ocorrencia-state";
+import { fmtDate } from "@/lib/fmt-date";
 
 interface InvestigacaoRow {
   id: string;
@@ -49,7 +50,7 @@ export default async function InvestigacoesPage() {
       mono: true,
       render: (r) =>
         r.ocorrencias
-          ? new Date(r.ocorrencias.data_ocorrencia).toLocaleDateString("pt-BR")
+          ? fmtDate(r.ocorrencias.data_ocorrencia)
           : "—",
     },
     {

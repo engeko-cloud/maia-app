@@ -2,6 +2,7 @@ import * as React from "react";
 import type { InvestigacaoDados } from "@/lib/investigacao-dados";
 import { ocorrenciaTipoLabel } from "@/lib/ocorrencia-state";
 import { investigacaoSituacaoLabel, planoAcaoStatusLabel } from "@/lib/investigacao-state";
+import { fmtDateTime } from "@/lib/fmt-date";
 
 interface Props {
   ocorrencia: {
@@ -68,10 +69,10 @@ export function InvestigacaoReport({
         <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm">
           <div><span className="text-[var(--color-fg-muted)]">Identificador:</span> <strong>{idLabel}</strong></div>
           <div><span className="text-[var(--color-fg-muted)]">Tipo:</span> {ocorrenciaTipoLabel(ocorrencia.tipo)}</div>
-          <div><span className="text-[var(--color-fg-muted)]">Data:</span> {new Date(ocorrencia.data_ocorrencia).toLocaleString("pt-BR")}</div>
+          <div><span className="text-[var(--color-fg-muted)]">Data:</span> {fmtDateTime(ocorrencia.data_ocorrencia)}</div>
           <div><span className="text-[var(--color-fg-muted)]">Situação:</span> {investigacaoSituacaoLabel(investigacao.situacao)}</div>
           {investigacao.situacao === "aprovada" && investigacao.decidido_por_nome ? (
-            <div><span className="text-[var(--color-fg-muted)]">Aprovada por:</span> {investigacao.decidido_por_nome}{investigacao.decidido_em ? ` em ${new Date(investigacao.decidido_em).toLocaleString("pt-BR")}` : ""}</div>
+            <div><span className="text-[var(--color-fg-muted)]">Aprovada por:</span> {investigacao.decidido_por_nome}{investigacao.decidido_em ? ` em ${fmtDateTime(investigacao.decidido_em)}` : ""}</div>
           ) : null}
         </div>
       </header>

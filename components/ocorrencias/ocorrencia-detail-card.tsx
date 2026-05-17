@@ -1,5 +1,6 @@
 import { FieldGrid, type Field } from "@/components/detail/field-grid";
 import { ocorrenciaTipoLabel } from "@/lib/ocorrencia-state";
+import { fmtDateTime } from "@/lib/fmt-date";
 
 export interface OcorrenciaFull {
   id: string;
@@ -18,7 +19,7 @@ export function OcorrenciaDetailCard({ o }: { o: OcorrenciaFull }) {
     { label: "Tipo",              value: ocorrenciaTipoLabel(o.tipo) },
     { label: "Empresa",           value: o.empresas?.nome ?? "—" },
     { label: "Unidade",           value: o.unidades?.nome ?? "—" },
-    { label: "Data da ocorrência", value: new Date(o.data_ocorrencia).toLocaleString("pt-BR"), mono: true },
+    { label: "Data da ocorrência", value: fmtDateTime(o.data_ocorrencia), mono: true },
     { label: "Email do remetente", value: o.email_remetente, full: true },
     { label: "Descrição",          value: <p className="whitespace-pre-wrap">{o.descricao}</p>, full: true },
   ];

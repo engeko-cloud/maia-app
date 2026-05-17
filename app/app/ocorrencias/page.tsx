@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/data/empty-state";
 import { parseFilterParams } from "@/lib/filter-rail";
 import { ocorrenciaTipoLabel } from "@/lib/ocorrencia-state";
 import { ExportDialog } from "@/components/relatorios/export-dialog";
+import { fmtDate } from "@/lib/fmt-date";
 
 interface OcorrenciaRow {
   id: string;
@@ -52,7 +53,7 @@ export default async function OcorrenciasListPage({
       key: "data",
       label: "Data",
       mono: true,
-      render: (r) => new Date(r.data_ocorrencia).toLocaleDateString("pt-BR"),
+      render: (r) => fmtDate(r.data_ocorrencia),
     },
     {
       key: "situacao",

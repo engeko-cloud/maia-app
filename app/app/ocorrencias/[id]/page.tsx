@@ -8,6 +8,7 @@ import { OcorrenciaDetailCard, type OcorrenciaFull } from "@/components/ocorrenc
 import { InvestigacaoDetailSection } from "@/components/investigacoes/investigacao-detail-section";
 import { ocorrenciaTipoLabel } from "@/lib/ocorrencia-state";
 import type { InvestigacaoDados } from "@/lib/investigacao-dados";
+import { fmtDateTime } from "@/lib/fmt-date";
 
 const EMPTY_DADOS: InvestigacaoDados = { ishikawa: [], plano_acao: [], participantes: [], fotos: [] };
 
@@ -100,7 +101,7 @@ export default async function OcorrenciaDetailPage({
           <>
             <StatusPill domain="ocorrencia" situacao={row.situacao} />
             <span>{row.empresas?.nome ?? "—"}</span>
-            <span className="font-mono">{new Date(row.data_ocorrencia).toLocaleString("pt-BR")}</span>
+            <span className="font-mono">{fmtDateTime(row.data_ocorrencia)}</span>
           </>
         }
       />

@@ -7,6 +7,7 @@ import { TimelineEvents, type TimelineEventRow } from "@/components/detail/timel
 import { InvestigacaoForm } from "@/components/investigacoes/investigacao-form";
 import { ocorrenciaTipoLabel } from "@/lib/ocorrencia-state";
 import type { InvestigacaoDados } from "@/lib/investigacao-dados";
+import { fmtDateTime } from "@/lib/fmt-date";
 
 interface OcorrenciaSummary {
   id: string;
@@ -88,7 +89,7 @@ export default async function InvestigacaoPage({
           <>
             <StatusPill domain="ocorrencia" situacao={row.situacao} />
             <span>{ocorrenciaTipoLabel(row.tipo)}</span>
-            <span className="font-mono">{new Date(row.data_ocorrencia).toLocaleString("pt-BR")}</span>
+            <span className="font-mono">{fmtDateTime(row.data_ocorrencia)}</span>
           </>
         }
       />
