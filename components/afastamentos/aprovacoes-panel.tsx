@@ -5,6 +5,7 @@ import { ArrowRightIcon, FileTextIcon } from "lucide-react";
 import { ApprovalBar } from "@/components/detail/approval-bar";
 import { EmptyState } from "@/components/data/empty-state";
 import { cn } from "@/lib/utils";
+import { fmtDate } from "@/lib/fmt-date";
 
 export interface PendenteRow {
   id: string;
@@ -50,8 +51,8 @@ export function AprovacoesPanel({ pendentes }: AprovacoesPanelProps) {
                 <p className="text-base font-semibold text-foreground">{p.colaborador_nome}</p>
                 <p className="font-mono text-xs text-[var(--color-fg-muted)]">{p.cpf}</p>
                 <p className="mt-1 text-sm text-[var(--color-fg-muted)]">
-                  {p.afastamento_tipos?.rotulo ?? "—"} · {p.data_inicio}
-                  {p.data_fim ? ` → ${p.data_fim}` : ""}
+                  {p.afastamento_tipos?.rotulo ?? "—"} · {fmtDate(p.data_inicio)}
+                  {p.data_fim ? ` → ${fmtDate(p.data_fim)}` : ""}
                 </p>
               </div>
               <div className="text-right text-xs text-[var(--color-fg-muted)]">

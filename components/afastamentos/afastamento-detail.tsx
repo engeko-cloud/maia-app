@@ -1,5 +1,6 @@
 import { FieldGrid, type Field } from "@/components/detail/field-grid";
 import { AttachmentChip } from "@/components/detail/attachment-chip";
+import { fmtDate } from "@/lib/fmt-date";
 
 export interface AfastamentoFull {
   id: string;
@@ -38,8 +39,8 @@ export function AfastamentoDetail({ a }: { a: AfastamentoFull }) {
     { label: "Unidade",            value: a.unidades?.nome ?? "—" },
     { label: "Setor",              value: a.colaborador_setor ?? "—" },
     { label: "Cargo",              value: a.colaborador_cargo ?? "—" },
-    { label: "Início",             value: a.data_inicio, mono: true },
-    { label: "Fim",                value: a.data_fim ?? "—", mono: true },
+    { label: "Início",             value: fmtDate(a.data_inicio), mono: true },
+    { label: "Fim",                value: a.data_fim ? fmtDate(a.data_fim) : "—", mono: true },
     { label: "Duração",            value: a.duracao != null ? `${a.duracao} dia(s)` : "—" },
     { label: "CID",                value: a.cid ?? "—", mono: true },
     { label: "Emissor",            value: a.emissor ? `${a.emissor.tipo} ${a.emissor.no}/${a.emissor.uf}` : "—" },

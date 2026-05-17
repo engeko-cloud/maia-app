@@ -7,6 +7,7 @@ import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/data/empty-state";
 import { parseFilterParams } from "@/lib/filter-rail";
 import { ExportDialog } from "@/components/relatorios/export-dialog";
+import { fmtDate } from "@/lib/fmt-date";
 
 interface AfastamentoRow {
   id: string;
@@ -70,7 +71,7 @@ export default async function AfastamentosListPage({
       key: "periodo",
       label: "Período",
       mono: true,
-      render: (r) => `${r.data_inicio} → ${r.data_fim ?? "—"}`,
+      render: (r) => `${fmtDate(r.data_inicio)} → ${r.data_fim ? fmtDate(r.data_fim) : "—"}`,
     },
     {
       key: "situacao",
