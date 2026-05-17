@@ -41,6 +41,14 @@ export const OcorrenciaInputSchema = z.object({
   morte:                  z.boolean().optional(),
   bo:                     z.boolean().optional(),
   no_bo:                  z.string().optional(),
+}).superRefine((val, ctx) => {
+  if (val.relacao_vitima && !val.dut) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["dut"],
+      message: "Último dia trabalhado obrigatório quando há vítima.",
+    });
+  }
 });
 
 export type OcorrenciaInput = z.infer<typeof OcorrenciaInputSchema>;

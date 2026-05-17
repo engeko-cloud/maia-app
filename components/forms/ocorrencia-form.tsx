@@ -147,6 +147,7 @@ export function OcorrenciaForm({ lookups }: { lookups: Lookups }) {
             dut: undefined,
           }
         : {}),
+      ...(!values.relacao_vitima ? { dut: undefined } : {}),
       ...(values.tipo_local !== "terceiros" ? { cnpj_local: undefined } : {}),
       ...(!values.atendimento
         ? {
@@ -349,10 +350,12 @@ export function OcorrenciaForm({ lookups }: { lookups: Lookups }) {
             </div>
           )}
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="dut">Último dia trabalhado (DUT)</Label>
-            <Input id="dut" type="date" {...form.register("dut")} />
-          </div>
+          {relacaoVitima && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="dut">Último dia trabalhado (DUT)</Label>
+              <Input id="dut" type="date" {...form.register("dut")} />
+            </div>
+          )}
         </>
       )}
 
