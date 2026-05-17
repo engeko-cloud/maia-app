@@ -15,15 +15,10 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const { data: usuario } = await supabase
-    .from("usuarios")
-    .select("administrador")
-    .eq("id", user.id)
-    .single();
-  const { data: m } = await supabase
-    .from("equipe_usuarios")
-    .select("equipes!inner(codigo)")
-    .eq("usuario_id", user.id);
+  const [{ data: usuario }, { data: m }] = await Promise.all([
+    supabase.from("usuarios").select("administrador").eq("id", user.id).single(),
+    supabase.from("equipe_usuarios").select("equipes!inner(codigo)").eq("usuario_id", user.id),
+  ]);
   const isOh = (m ?? []).some((r: any) => r.equipes?.codigo === "oh");
   if (!usuario?.administrador && !isOh) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
@@ -36,7 +31,8 @@ export async function POST(
   if (!ALLOWED.has(file.type)) return NextResponse.json({ error: "bad_mime" }, { status: 415 });
 
   const admin = getSupabaseAdmin();
-  const path = `afastamentos/comentarios/${id}/${crypto.randomUUID()}-${file.name}`;
+  const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+  const path = `afastamentos/comentarios/${id}/${crypto.randomUUID()}-${safeName}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const { error } = await admin.storage.from("attachments").upload(path, buffer, {
