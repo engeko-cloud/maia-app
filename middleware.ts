@@ -22,16 +22,9 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
 
-  const protectedPrefixes = ["/painel", "/afastamentos", "/ocorrencias", "/admin"];
-  const isProtected = protectedPrefixes.some(p => path === p || path.startsWith(p + "/"));
-  const isPublicEdit = path.startsWith("/afastamentos/editar/");
-
-  if (isProtected && !isPublicEdit && !user) {
+  if (path.startsWith("/app/") && !user) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
-
-  // Portal auth is handled by (portal)/layout.tsx via portal_session cookie.
-  // No middleware check needed here.
 
   return response;
 }

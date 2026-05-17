@@ -12,7 +12,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .select("administrador")
     .eq("id", user.id)
     .single();
-  if (!u?.administrador) redirect("/painel");
+  if (!u?.administrador) redirect("/app/painel");
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-subtle)] pb-14">
