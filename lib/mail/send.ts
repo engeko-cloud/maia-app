@@ -19,59 +19,72 @@ function tagId(id: number | null | undefined): string {
 
 // Registro de templates. Subject pode ser função de data para incluir
 // o identificador serial_id no assunto.
+// toUser: true  → recipient is a system user (seed email in dev) — override applies
+// toUser: false → recipient is an external worker/contact from form data — no override
 const TEMPLATES = {
   "afastamento-receipt": {
     subject: (data: { a: AfastamentoEmail }) => `Recebemos seu afastamento${tagId(data.a.serial_id)}`,
     render:  afastamentoReceipt,
+    toUser:  false,
   },
   "afastamento-rejected": {
     subject: (data: { a: AfastamentoEmail }) => `Afastamento${tagId(data.a.serial_id)} rejeitado — ação necessária`,
     render:  afastamentoRejected,
+    toUser:  false,
   },
   "afastamento-approved": {
     subject: (data: { a: AfastamentoEmail }) => `Afastamento${tagId(data.a.serial_id)} aprovado`,
     render:  afastamentoApproved,
+    toUser:  false,
   },
   "folha-auto-accept": {
     subject: (data: { a: AfastamentoEmail }) => `Novo afastamento${tagId(data.a.serial_id)} (não-médico)`,
     render:  folhaAutoAccept,
+    toUser:  true,
   },
   "folha-approved-medical": {
     subject: (data: { a: AfastamentoEmail }) => `Afastamento médico${tagId(data.a.serial_id)} aprovado`,
     render:  folhaApprovedMedical,
+    toUser:  true,
   },
   "ocorrencia-receipt": {
     subject: (data: { o: OcorrenciaEmail }) => `Recebemos sua ocorrência${tagId(data.o.serial_id)}`,
     render:  ocorrenciaReceipt,
+    toUser:  false,
   },
   "ocorrencia-nova-para-safety": {
     subject: (data: { o: OcorrenciaParaSafetyEmail }) => `Nova ocorrência${tagId(data.o.serial_id)} — investigação pendente`,
     render:  ocorrenciaNovaParaSafety,
+    toUser:  true,
   },
   "investigacao-em-aprovacao": {
     subject: (data: { o: InvestigacaoEmAprovacaoEmail }) => `Investigação${tagId(data.o.serial_id)} pronta para aprovação`,
     render:  investigacaoEmAprovacao,
+    toUser:  true,
   },
   "investigacao-aprovada": {
     subject: (data: { o: InvestigacaoAprovadaEmail }) => `Investigação${tagId(data.o.serial_id)} concluída`,
     render:  investigacaoAprovada,
+    toUser:  true,
   },
   "investigacao-rejeitada": {
     subject: (data: { o: InvestigacaoRejeitadaEmail }) => `Investigação${tagId(data.o.serial_id)} precisa de ajustes`,
     render:  investigacaoRejeitada,
+    toUser:  true,
   },
   "portal-otp": {
     subject: () => "Seu código de acesso — MAIA",
     render:  (data: { code: string }) => portalOtp(data),
+    toUser:  false,
   },
 } as const;
 
 export type TemplateKey = keyof typeof TEMPLATES;
 
-// Dev/test email override: when NODE_ENV !== "production", route every send
-// to this inbox so seed users with @seed.local addresses don't bounce. The
-// real recipient(s) are surfaced in the subject prefix for debugging.
-const DEV_RECIPIENT = "lucas@fapptory.me";
+// Dev/test email override: when NODE_ENV !== "production" and the template targets
+// a system user (toUser: true), route to this inbox — seed users have @seed.local
+// addresses that bounce. External contact emails (form data) are sent as-is.
+const DEV_RECIPIENT = "dev-tests@fapptory.me";
 
 export async function sendMail(opts: { template: TemplateKey; to: string | string[]; data: any }) {
   const t = TEMPLATES[opts.template];
@@ -79,10 +92,10 @@ export async function sendMail(opts: { template: TemplateKey; to: string | strin
   const html = (t.render as (d: any) => string)(opts.data);
   const resend = new Resend(process.env.RESEND_TEST_API_KEY!);
   const from   = "Maia <maia@fapptory.me>";
-  const isDev = process.env.NODE_ENV !== "production";
+  const override = process.env.NODE_ENV !== "production" && t.toUser;
   const realTo = Array.isArray(opts.to) ? opts.to.join(", ") : opts.to;
-  const to = isDev ? DEV_RECIPIENT : opts.to;
-  const finalSubject = isDev ? `[DEV → ${realTo}] ${subject}` : subject;
+  const to = override ? DEV_RECIPIENT : opts.to;
+  const finalSubject = override ? `[DEV → ${realTo}] ${subject}` : subject;
   const { error } = await resend.emails.send({ from, to, subject: finalSubject, html });
   if (error) throw new Error(error.message);
 }
