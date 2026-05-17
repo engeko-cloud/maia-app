@@ -174,7 +174,7 @@ export default async function PainelPage() {
                 count={ocorrenciasAbertas}
               />
               <QuickAction
-                href="/app/ocorrencias"
+                href="/app/investigacoes"
                 icon={SearchIcon}
                 title="Investigações"
                 sub="Gerir investigações abertas"

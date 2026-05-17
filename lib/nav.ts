@@ -37,7 +37,7 @@ export const appNav: AppNavGroup[] = [
     requiredEquipe: "safety",
     items: [
       { label: "Lista",         href: "/app/ocorrencias" },
-      { label: "Investigações", href: "/app/ocorrencias" },
+      { label: "Investigações", href: "/app/investigacoes" },
     ],
   },
   {
