@@ -61,7 +61,8 @@ export async function PATCH(
       anexos:     parsed.data.anexos,
       editado_em: new Date().toISOString(),
     })
-    .eq("id", comentarioId);
+    .eq("id", comentarioId)
+    .eq("afastamento_id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
@@ -93,7 +94,8 @@ export async function DELETE(
   const { error } = await (admin as any)
     .from("afastamento_comentarios")
     .delete()
-    .eq("id", comentarioId);
+    .eq("id", comentarioId)
+    .eq("afastamento_id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
