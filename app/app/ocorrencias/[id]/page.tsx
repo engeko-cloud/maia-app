@@ -5,9 +5,11 @@ import { DetailHeader } from "@/components/detail/detail-header";
 import { StatusPill } from "@/components/data/status-pill";
 import { TimelineEvents, type TimelineEventRow } from "@/components/detail/timeline-events";
 import { OcorrenciaDetailCard, type OcorrenciaFull } from "@/components/ocorrencias/ocorrencia-detail-card";
-import { InvestigationStatus } from "@/components/investigacoes/investigation-status";
+import { InvestigacaoDetailSection } from "@/components/investigacoes/investigacao-detail-section";
 import { ocorrenciaTipoLabel } from "@/lib/ocorrencia-state";
 import type { InvestigacaoDados } from "@/lib/investigacao-dados";
+
+const EMPTY_DADOS: InvestigacaoDados = { ishikawa: [], plano_acao: [], participantes: [], fotos: [] };
 
 type OcorrenciaWithInvestigacoes = OcorrenciaFull & {
   investigacoes: {
@@ -27,7 +29,13 @@ export default async function OcorrenciaDetailPage({
   await requireEquipe("safety");
   const { id } = await params;
   const supabase = await getSupabaseServer();
-  const [{ data: rawRow }, { data: timelineData }] = await Promise.all([
+
+  const [
+    { data: rawRow },
+    { data: timelineData },
+    { data: categoriasData },
+    { data: grausData },
+  ] = await Promise.all([
     supabase
       .from("ocorrencias")
       .select("*, empresas!inner(nome), unidades!inner(nome), investigacoes(id, situacao, dados, token_publico, motivo_rejeicao)")
@@ -40,9 +48,28 @@ export default async function OcorrenciaDetailPage({
       .eq("entidade_id", id)
       .order("ocorrido_em", { ascending: false })
       .returns<TimelineEventRow[]>(),
+    supabase
+      .from("investigacao_categorias")
+      .select("id, codigo, rotulo")
+      .eq("ativo", true),
+    supabase
+      .from("investigacao_graus")
+      .select("id, rotulo")
+      .eq("ativo", true),
   ]);
+
   if (!rawRow) notFound();
   const row = rawRow as unknown as OcorrenciaWithInvestigacoes;
+
+  const categoriasById = Object.fromEntries(
+    (categoriasData ?? []).map((c) => [c.id, { rotulo: c.rotulo, codigo: c.codigo }]),
+  );
+  const grausById = Object.fromEntries(
+    (grausData ?? []).map((g) => [g.id, { rotulo: g.rotulo }]),
+  );
+  const storagePublicBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/attachments/`;
+
+  const inv = row.investigacoes?.[0];
 
   return (
     <div className="flex flex-col gap-6">
@@ -62,10 +89,15 @@ export default async function OcorrenciaDetailPage({
         }
       />
 
-      <InvestigationStatus
-        ocorrenciaId={row.id}
-        investigacao={row.investigacoes?.[0] ?? null}
-      />
+      {inv && (
+        <InvestigacaoDetailSection
+          ocorrenciaId={row.id}
+          investigacao={{ ...inv, dados: inv.dados ?? EMPTY_DADOS }}
+          categoriasById={categoriasById}
+          grausById={grausById}
+          storagePublicBase={storagePublicBase}
+        />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <OcorrenciaDetailCard o={row} />
