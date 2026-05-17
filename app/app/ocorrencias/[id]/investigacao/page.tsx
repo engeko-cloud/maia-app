@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { requireEquipe } from "@/components/gates/equipe-only";
 import { DetailHeader } from "@/components/detail/detail-header";
 import { StatusPill } from "@/components/data/status-pill";
 import { TimelineEvents, type TimelineEventRow } from "@/components/detail/timeline-events";
@@ -27,6 +28,7 @@ export default async function InvestigacaoPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireEquipe("safety");
   const { id } = await params;
   const supabase = await getSupabaseServer();
 

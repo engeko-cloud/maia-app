@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { requireEquipe } from "@/components/gates/equipe-only";
 import { DetailHeader } from "@/components/detail/detail-header";
 import { StatusPill } from "@/components/data/status-pill";
 import { ApprovalBar } from "@/components/detail/approval-bar";
@@ -23,6 +24,7 @@ export default async function AfastamentoDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireEquipe("oh");
   const { id } = await params;
   const supabase = await getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
