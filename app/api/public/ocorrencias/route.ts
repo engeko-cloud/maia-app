@@ -132,13 +132,17 @@ export async function POST(req: NextRequest) {
 
   await writeEvento(supabase, { tipoEntidade: "ocorrencia", entidadeId: ocorrenciaRow.id, evento: "criado" });
 
-  // Cria investigação vazia (best-effort) para o PATCH funcionar desde o dia 0.
+  // Cria investigação vazia para o PATCH funcionar desde o dia 0 e captura
+  // token_publico para incluir no email de recibo.
+  let investigacaoUrl: string | undefined;
   try {
-    await supabase.from("investigacoes").insert({
-      ocorrencia_id: ocorrenciaRow.id,
-      dados: EMPTY_DADOS,
-      situacao: "em_andamento",
-    });
+    const { data: invRow, error: invErr } = await supabase
+      .from("investigacoes")
+      .insert({ ocorrencia_id: ocorrenciaRow.id, dados: EMPTY_DADOS, situacao: "em_andamento" })
+      .select("token_publico")
+      .single();
+    if (invErr) throw invErr;
+    investigacaoUrl = `${baseUrl}/investigacoes/editar/${invRow.token_publico}`;
   } catch (err: unknown) {
     await writeEvento(supabase, {
       tipoEntidade: "ocorrencia", entidadeId: ocorrenciaRow.id, evento: "email_enviado",
@@ -178,6 +182,7 @@ export async function POST(req: NextRequest) {
         unidade_nome: (data.unidades as { nome: string }).nome,
         descricao: parsed.data.descricao ?? "",
         status_url: `${baseUrl}/ocorrencias/status/${ocorrenciaRow.token_edicao}`,
+        investigacao_url: investigacaoUrl,
       } },
     });
     await writeEvento(supabase, { tipoEntidade: "ocorrencia", entidadeId: ocorrenciaRow.id,
