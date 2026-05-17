@@ -15,6 +15,7 @@ type HistoryRow = {
 type Props = { cpf: string; currentId: string };
 
 export async function AfastamentoHistoryCard({ cpf, currentId }: Props) {
+  // eslint-disable-next-line react-hooks/purity
   const cutoff = new Date(Date.now() - 60 * 86_400_000).toISOString().slice(0, 10);
   const supabase = await getSupabaseServer();
 
