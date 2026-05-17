@@ -64,7 +64,7 @@ export default async function AfastamentoDetailPage({
           { label: row.colaborador_nome },
         ]}
         title={row.colaborador_nome}
-        titleSuffix={row.cpf}
+        titleSuffix={`${row.serial_id != null ? `#${row.serial_id} · ` : ""}${row.cpf}`}
         meta={
           <>
             <StatusPill domain="afastamento" situacao={row.situacao} />

@@ -18,6 +18,7 @@ type DetailRow = {
   afastamento_tipos: { rotulo: string };
   empresas: { nome: string };
   unidades: { nome: string };
+  serial_id: number | null;
 };
 
 export default async function PortalAfastamentoDetailPage({
@@ -33,7 +34,7 @@ export default async function PortalAfastamentoDetailPage({
   const { data: row } = await admin
     .from("afastamentos")
     .select(
-      "id, situacao, cpf, data_inicio, data_fim, duracao, colaborador_nome, motivo_rejeicao, afastamento_tipos!inner(rotulo), empresas!inner(nome), unidades!inner(nome)",
+      "id, situacao, cpf, data_inicio, data_fim, duracao, colaborador_nome, motivo_rejeicao, serial_id, afastamento_tipos!inner(rotulo), empresas!inner(nome), unidades!inner(nome)",
     )
     .eq("id", id)
     .single<DetailRow>();
@@ -42,6 +43,7 @@ export default async function PortalAfastamentoDetailPage({
   if (!row || row.cpf !== session.cpf) notFound();
 
   const fields: Field[] = [
+    { label: "#", value: row.serial_id != null ? `#${row.serial_id}` : "—", mono: true },
     { label: "Tipo",     value: row.afastamento_tipos.rotulo },
     { label: "Empresa",  value: row.empresas.nome },
     { label: "Unidade",  value: row.unidades.nome },

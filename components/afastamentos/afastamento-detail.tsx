@@ -23,6 +23,9 @@ export interface AfastamentoFull {
   empresas: { nome: string } | null;
   unidades: { nome: string } | null;
   afastamento_tipos: { rotulo: string } | null;
+  serial_id: number | null;
+  tipo_id: string;
+  unidade_id: string | null;
 }
 
 export function AfastamentoDetail({ a }: { a: AfastamentoFull }) {
