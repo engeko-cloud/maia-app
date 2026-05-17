@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type EventoType =
-  | "criado" | "rejeitado" | "resubmetido" | "aprovado"
+  | "criado" | "rejeitado" | "resubmetido" | "aprovado" | "editado"
   | "fluig_enviado" | "fluig_erro" | "email_enviado" | "cancelado"
   | "investigacao_iniciada" | "investigacao_finalizada"
   | "ocorrencia_para_safety_enviada" | "ocorrencia_para_safety_falhou";

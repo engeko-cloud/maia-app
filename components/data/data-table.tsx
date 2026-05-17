@@ -26,12 +26,14 @@ interface DataTableProps<Row> {
   getRowId: (row: Row) => string;
   /** Wrap each row in a link to this href. Mutually exclusive with onRowClick (link wins). */
   getRowHref?: (row: Row) => string;
+  /** Optional extra className applied to each row. */
+  getRowClassName?: (row: Row) => string | undefined;
   /** Empty-state node when rows.length === 0. */
   empty: React.ReactNode;
 }
 
 export function DataTable<Row>({
-  rows, columns, getRowId, getRowHref, empty,
+  rows, columns, getRowId, getRowHref, getRowClassName, empty,
 }: DataTableProps<Row>) {
   if (rows.length === 0) {
     return <>{empty}</>;
@@ -60,7 +62,7 @@ export function DataTable<Row>({
             const id = getRowId(row);
             const href = getRowHref?.(row);
             return (
-              <TableRow key={id} className="hover:bg-[var(--color-bg-subtle)]">
+              <TableRow key={id} className={cn("hover:bg-[var(--color-bg-subtle)]", getRowClassName?.(row))}>
                 {columns.map((c) => {
                   const cell = (
                     <span className={cn(c.mono && "font-mono text-[13px]")}>{c.render(row)}</span>
