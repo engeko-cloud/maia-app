@@ -8,6 +8,19 @@ import type { InvestigacaoDados } from "@/lib/investigacao-dados";
 
 const EMPTY_DADOS: InvestigacaoDados = { ishikawa: [], plano_acao: [], participantes: [], fotos: [] };
 
+function parseDados(raw: unknown): InvestigacaoDados {
+  if (!raw) return EMPTY_DADOS;
+  if (typeof raw === "string") {
+    try { return JSON.parse(raw) as InvestigacaoDados; } catch { return EMPTY_DADOS; }
+  }
+  return raw as InvestigacaoDados;
+}
+
+function nome(join: unknown): string {
+  if (Array.isArray(join)) return (join[0] as { nome: string })?.nome ?? "—";
+  return (join as { nome: string } | null)?.nome ?? "—";
+}
+
 const SITUACAO_LABEL: Record<string, string> = {
   aberta:          "Aberta",
   em_investigacao: "Em investigação",
@@ -61,7 +74,7 @@ export default async function StatusPage({ params }: { params: Promise<{ token: 
 
   const idLabel = o.serial_id != null ? `#${o.serial_id}` : "—";
   const tone = SITUACAO_TONE[o.situacao] ?? SITUACAO_TONE.aberta;
-  const invDados: InvestigacaoDados = (inv?.dados as InvestigacaoDados | null) ?? EMPTY_DADOS;
+  const invDados = parseDados(inv?.dados);
 
   return (
     <PublicFormShell
@@ -82,9 +95,9 @@ export default async function StatusPage({ params }: { params: Promise<{ token: 
         <dt className="text-[var(--color-fg-muted)]">Colaborador</dt>
         <dd>{o.colaborador_nome ?? "—"}{o.cpf ? ` (${o.cpf})` : ""}</dd>
         <dt className="text-[var(--color-fg-muted)]">Empresa</dt>
-        <dd>{(o.empresas as { nome: string }).nome}</dd>
+        <dd>{nome(o.empresas)}</dd>
         <dt className="text-[var(--color-fg-muted)]">Unidade</dt>
-        <dd>{(o.unidades as { nome: string }).nome}</dd>
+        <dd>{nome(o.unidades)}</dd>
         <dt className="text-[var(--color-fg-muted)]">Descrição</dt>
         <dd>{o.descricao ?? "—"}</dd>
       </dl>
