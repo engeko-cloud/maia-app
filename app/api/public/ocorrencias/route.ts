@@ -78,11 +78,9 @@ async function createBoundAfastamento(
     .single();
   if (afErr || !af) return null;
 
-  // Cast: afastamento_ocorrencias join ainda não está no database.types.ts
-  // até o usuário regerar via `supabase gen types`.
   await supabase
-    .from("afastamento_ocorrencias" as never)
-    .insert({ afastamento_id: af.id, ocorrencia_id: ocorrenciaId } as never);
+    .from("afastamento_ocorrencias")
+    .insert({ afastamento_id: af.id, ocorrencia_id: ocorrenciaId });
 
   return { id: af.id, serial_id: af.serial_id, token_edicao: af.token_edicao, codigo, situacao };
 }
@@ -104,30 +102,19 @@ export async function POST(req: NextRequest) {
   };
 
   const supabase = getSupabaseAdmin();
-  // Cast: database.types.ts ainda não reflete as colunas adicionadas na
-  // migração 009 (cpf, colaborador_*, atendimento, ...). Regerar via
-  // `supabase gen types` depois de `make db-reset` para remover o cast.
-  // Cast: serial_id e token_edicao foram adicionados na migração 009 mas
-  // ainda não estão em database.types.ts até regerar via `supabase gen types`.
   const { data, error } = await supabase
     .from("ocorrencias")
-    .insert(insertData as never)
+    .insert(insertData)
     .select(`
       id,
       serial_id,
       token_edicao,
       empresas!inner(nome),
       unidades!inner(nome)
-    ` as never)
+    `)
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  const ocorrenciaRow = data as {
-    id: string;
-    serial_id: number | null;
-    token_edicao: string;
-    empresas: { nome: string };
-    unidades: { nome: string };
-  };
+  const ocorrenciaRow = data;
   const baseUrl = process.env.APP_URL ?? "";
 
   await writeEvento(supabase, { tipoEntidade: "ocorrencia", entidadeId: ocorrenciaRow.id, evento: "criado" });
@@ -174,8 +161,8 @@ export async function POST(req: NextRequest) {
         serial_id: ocorrenciaRow.serial_id,
         tipo: parsed.data.tipo,
         data_ocorrencia: parsed.data.data_ocorrencia,
-        empresa_nome: (data.empresas as { nome: string }).nome,
-        unidade_nome: (data.unidades as { nome: string }).nome,
+        empresa_nome: ocorrenciaRow.empresas.nome,
+        unidade_nome: ocorrenciaRow.unidades.nome,
         descricao: parsed.data.descricao ?? "",
         status_url: `${baseUrl}/ocorrencias/status/${ocorrenciaRow.token_edicao}`,
       } },
@@ -202,8 +189,8 @@ export async function POST(req: NextRequest) {
           tipo_rotulo:      afastamentoCriado.codigo,
           data_inicio:      (parsed.data.data_atendimento ?? parsed.data.data_ocorrencia).slice(0, 10),
           data_fim:         null,
-          empresa_nome:     (data.empresas as { nome: string }).nome,
-          unidade_nome:     (data.unidades as { nome: string }).nome,
+          empresa_nome:     ocorrenciaRow.empresas.nome,
+          unidade_nome:     ocorrenciaRow.unidades.nome,
           situacao:         afastamentoCriado.situacao,
           cid:              parsed.data.cid,
           status_url:       `${baseUrl}/afastamentos/status/${afastamentoCriado.token_edicao}`,
@@ -235,8 +222,8 @@ export async function POST(req: NextRequest) {
           serial_id:       ocorrenciaRow.serial_id,
           tipo:            parsed.data.tipo,
           data_ocorrencia: parsed.data.data_ocorrencia,
-          empresa_nome:    (data.empresas as { nome: string }).nome,
-          unidade_nome:    (data.unidades as { nome: string }).nome,
+          empresa_nome:    ocorrenciaRow.empresas.nome,
+          unidade_nome:    ocorrenciaRow.unidades.nome,
           descricao:       parsed.data.descricao ?? "",
           base_url:        baseUrl,
         } },

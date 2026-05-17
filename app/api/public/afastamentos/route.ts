@@ -29,11 +29,9 @@ export async function POST(request: NextRequest) {
 
   // Vínculo opcional com ocorrência (1:1 via afastamento_ocorrencias).
   if (ocorrencia_id) {
-    // Cast: tabela join ainda não está em database.types.ts até o usuário
-    // regerar via `supabase gen types`.
     const { error: bindErr } = await supabase
-      .from("afastamento_ocorrencias" as never)
-      .insert({ afastamento_id: data.id, ocorrencia_id } as never);
+      .from("afastamento_ocorrencias")
+      .insert({ afastamento_id: data.id, ocorrencia_id });
     if (bindErr) {
       await writeEvento(supabase, {
         tipoEntidade: "afastamento", entidadeId: data.id,
