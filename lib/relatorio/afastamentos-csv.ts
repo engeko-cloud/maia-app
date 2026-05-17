@@ -1,3 +1,5 @@
+import { fmtDate } from "@/lib/fmt-date";
+
 export type AfastamentoReportRow = {
   serial_id: number;
   cpf: string;
@@ -46,8 +48,8 @@ export function toAfastamentoCsvRows(rows: AfastamentoReportRow[]): string[][] {
     r.empresas?.nome ?? "",
     r.unidades?.nome ?? "",
     r.afastamento_tipos?.rotulo ?? "",
-    r.data_inicio,
-    r.data_fim ?? "",
+    fmtDate(r.data_inicio),
+    r.data_fim ? fmtDate(r.data_fim) : "",
     r.duracao != null ? String(r.duracao) : "",
     r.situacao,
     r.acidente ? "Sim" : "Não",

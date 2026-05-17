@@ -1,3 +1,5 @@
+import { fmtDate } from "@/lib/fmt-date";
+
 export type OcorrenciaReportRow = {
   serial_id: number;
   cpf: string | null;
@@ -48,7 +50,7 @@ export function toOcorrenciaCsvRows(rows: OcorrenciaReportRow[]): string[][] {
     r.empresas?.nome ?? "",
     r.unidades?.nome ?? "",
     r.tipo,
-    r.data_ocorrencia,
+    fmtDate(r.data_ocorrencia),
     r.hora_ocorrencia ?? "",
     r.situacao,
     r.afastamento ? "Sim" : "Não",

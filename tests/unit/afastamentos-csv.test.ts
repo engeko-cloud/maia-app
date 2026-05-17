@@ -35,8 +35,8 @@ describe("toAfastamentoCsvRows", () => {
     expect(row[5]).toBe("Engeko");       // empresa
     expect(row[6]).toBe("Matriz");       // unidade
     expect(row[7]).toBe("Médico");       // tipo
-    expect(row[8]).toBe("2024-01-15");   // data_inicio
-    expect(row[9]).toBe("2024-01-20");   // data_fim
+    expect(row[8]).toBe("01/15/2024");   // data_inicio
+    expect(row[9]).toBe("01/20/2024");   // data_fim
     expect(row[10]).toBe("5");           // duracao
     expect(row[11]).toBe("aprovado");    // situacao
     expect(row[12]).toBe("Não");         // acidente

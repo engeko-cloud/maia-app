@@ -36,7 +36,7 @@ describe("toOcorrenciaCsvRows", () => {
     expect(row[5]).toBe("Engeko");               // empresa
     expect(row[6]).toBe("Filial SP");            // unidade
     expect(row[7]).toBe("acidente_trabalho");    // tipo
-    expect(row[8]).toBe("2024-03-10");           // data_ocorrencia
+    expect(row[8]).toBe("03/10/2024");           // data_ocorrencia
     expect(row[9]).toBe("14:30");                // hora_ocorrencia
     expect(row[10]).toBe("concluida");           // situacao
     expect(row[11]).toBe("Sim");                 // afastamento
