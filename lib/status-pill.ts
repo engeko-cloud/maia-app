@@ -16,6 +16,7 @@ export interface StatusPillSpec {
 
 const AFASTAMENTO: Record<string, StatusPillSpec> = {
   pendente:   { tone: "pending",  label: "Pendente" },
+  aprovado:   { tone: "approved", label: "Aprovado" },
   rejeitado:  { tone: "rejected", label: "Rejeitado" },
   finalizado: { tone: "success",  label: "Finalizado" },
   cancelado:  { tone: "draft",    label: "Cancelado" },
