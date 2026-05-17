@@ -11,15 +11,13 @@ import type { InvestigacaoDados } from "@/lib/investigacao-dados";
 
 const EMPTY_DADOS: InvestigacaoDados = { ishikawa: [], plano_acao: [], participantes: [], fotos: [] };
 
-type OcorrenciaWithInvestigacoes = OcorrenciaFull & {
-  investigacoes: {
-    id: string;
-    situacao: "em_andamento" | "em_aprovacao" | "aprovada" | "rejeitada" | "cancelada";
-    dados: InvestigacaoDados | null;
-    token_publico: string;
-    motivo_rejeicao: string | null;
-  }[] | null;
-};
+function parseDados(raw: unknown): InvestigacaoDados {
+  if (!raw) return EMPTY_DADOS;
+  if (typeof raw === "string") {
+    try { return JSON.parse(raw) as InvestigacaoDados; } catch { return EMPTY_DADOS; }
+  }
+  return raw as InvestigacaoDados;
+}
 
 export default async function OcorrenciaDetailPage({
   params,
@@ -32,15 +30,21 @@ export default async function OcorrenciaDetailPage({
 
   const [
     { data: rawRow },
+    { data: invData },
     { data: timelineData },
     { data: categoriasData },
     { data: grausData },
   ] = await Promise.all([
     supabase
       .from("ocorrencias")
-      .select("*, empresas!inner(nome), unidades!inner(nome), investigacoes(id, situacao, dados, token_publico, motivo_rejeicao)")
+      .select("*, empresas!inner(nome), unidades!inner(nome)")
       .eq("id", id)
       .single(),
+    supabase
+      .from("investigacoes")
+      .select("id, situacao, dados, token_publico, motivo_rejeicao")
+      .eq("ocorrencia_id", id)
+      .maybeSingle(),
     supabase
       .from("eventos")
       .select("id, evento, ocorrido_em, usuarios:autor_id(nome)")
@@ -59,7 +63,7 @@ export default async function OcorrenciaDetailPage({
   ]);
 
   if (!rawRow) notFound();
-  const row = rawRow as unknown as OcorrenciaWithInvestigacoes;
+  const row = rawRow as unknown as OcorrenciaFull;
 
   const categoriasById = Object.fromEntries(
     (categoriasData ?? []).map((c) => [c.id, { rotulo: c.rotulo, codigo: c.codigo }]),
@@ -69,13 +73,19 @@ export default async function OcorrenciaDetailPage({
   );
   const storagePublicBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/attachments/`;
 
-  const rawInv = row.investigacoes?.[0] ?? null;
-  const inv = rawInv ?? {
-    situacao: "em_andamento" as const,
-    dados: EMPTY_DADOS,
-    token_publico: "",
-    motivo_rejeicao: null,
-  };
+  const inv = invData
+    ? {
+        situacao: invData.situacao as "em_andamento" | "em_aprovacao" | "aprovada" | "rejeitada" | "cancelada",
+        dados: parseDados(invData.dados),
+        token_publico: invData.token_publico as string,
+        motivo_rejeicao: invData.motivo_rejeicao as string | null,
+      }
+    : {
+        situacao: "em_andamento" as const,
+        dados: EMPTY_DADOS,
+        token_publico: "",
+        motivo_rejeicao: null,
+      };
 
   return (
     <div className="flex flex-col gap-6">
