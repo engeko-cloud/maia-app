@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requirePortalSession } from "@/lib/portal-auth";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { FieldGrid, type Field } from "@/components/detail/field-grid";
+import { fmtDate } from "@/lib/fmt-date";
 import { StatusPill } from "@/components/data/status-pill";
 
 type DetailRow = {
@@ -44,8 +45,8 @@ export default async function PortalAfastamentoDetailPage({
     { label: "Tipo",     value: row.afastamento_tipos.rotulo },
     { label: "Empresa",  value: row.empresas.nome },
     { label: "Unidade",  value: row.unidades.nome },
-    { label: "Início",   value: row.data_inicio, mono: true },
-    { label: "Fim",      value: row.data_fim ?? "—", mono: true },
+    { label: "Início",   value: fmtDate(row.data_inicio), mono: true },
+    { label: "Fim",      value: row.data_fim ? fmtDate(row.data_fim) : "—", mono: true },
     { label: "Duração",  value: row.duracao ? `${row.duracao} dias` : "—" },
     { label: "Situação", value: <StatusPill domain="afastamento" situacao={row.situacao} /> },
     ...(row.situacao === "rejeitado" && row.motivo_rejeicao

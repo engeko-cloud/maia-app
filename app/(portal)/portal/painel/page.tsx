@@ -6,6 +6,7 @@ import { DataTable, type DataTableColumn } from "@/components/data/data-table";
 import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/data/empty-state";
 import { KpiCard } from "@/components/painel/kpi-card";
+import { fmtDate, fmtDateTime } from "@/lib/fmt-date";
 
 type AfastamentoRow = {
   id: string;
@@ -18,34 +19,10 @@ type AfastamentoRow = {
   empresas: { nome: string };
 };
 
-function fmtDate(iso: string, defaultTime: string): string {
-  const [datePart, timePart] = iso.includes("T") ? iso.split("T") : [iso, ""];
-  const [y, m, d] = datePart.split("-");
-  const time = timePart ? timePart.slice(0, 5) : defaultTime;
-  return `${m}/${d}/${y} ${time}`;
-}
-
-function fmtDateOnly(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const datePart = iso.includes("T") ? iso.split("T")[0] : iso;
-  const [y, m, d] = datePart.split("-");
-  return `${m}/${d}/${y}`;
-}
-
-function nextDayFmt(iso: string): string {
-  const datePart = iso.includes("T") ? iso.split("T")[0] : iso;
-  const [y, m, d] = datePart.split("-");
-  const date = new Date(Number(y), Number(m) - 1, Number(d) + 1);
-  const ry = date.getFullYear();
-  const rm = String(date.getMonth() + 1).padStart(2, "0");
-  const rd = String(date.getDate()).padStart(2, "0");
-  return `${rm}/${rd}/${ry}`;
-}
-
 const COLUMNS: DataTableColumn<AfastamentoRow>[] = [
   { key: "tipo",     label: "Tipo",     render: (r) => r.afastamento_tipos.rotulo },
-  { key: "inicio",   label: "Início",   render: (r) => fmtDate(r.data_inicio, "00:00"), mono: true },
-  { key: "fim",      label: "Fim",      render: (r) => r.data_fim ? fmtDate(r.data_fim, "23:59") : "—", mono: true },
+  { key: "inicio",   label: "Início",   render: (r) => fmtDateTime(r.data_inicio, "00:00"), mono: true },
+  { key: "fim",      label: "Fim",      render: (r) => r.data_fim ? fmtDateTime(r.data_fim, "23:59") : "—", mono: true },
   { key: "duracao",  label: "Duração",  render: (r) => (r.duracao ? `${r.duracao} dias` : "—") },
   {
     key: "situacao",
@@ -103,12 +80,19 @@ export default async function PortalPainelPage() {
           />
           <KpiCard
             label="Último afastamento"
-            value={`${fmtDateOnly(last!.data_inicio)} → ${fmtDateOnly(last!.data_fim!)}`}
+            value={`${fmtDate(last!.data_inicio)} → ${fmtDate(last!.data_fim!)}`}
           />
           <KpiCard
             label="Status atual"
             value={isAfastado ? "Afastado" : "Sem afastamento ativo"}
-            delta={isAfastado ? `Retorno em ${nextDayFmt(activeAfastamento!.data_fim!)}` : undefined}
+            delta={isAfastado ? (() => {
+              const [y, m, d] = (activeAfastamento!.data_fim! as string).split("-").map(Number);
+              const next = new Date(y, m - 1, d + 1);
+              const ry = next.getFullYear();
+              const rm = String(next.getMonth() + 1).padStart(2, "0");
+              const rd = String(next.getDate()).padStart(2, "0");
+              return `Retorno em ${rm}/${rd}/${ry}`;
+            })() : undefined}
             tone={isAfastado ? "warning" : "primary"}
           />
         </div>
