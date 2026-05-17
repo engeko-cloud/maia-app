@@ -7,8 +7,9 @@ import {
 } from "lucide-react";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/current-user";
-import { isInEquipe } from "@/lib/permissions";
+import { isAdmin, isInEquipe } from "@/lib/permissions";
 import { greetingFor } from "@/lib/greeting";
+import { buildHeroContent } from "@/lib/painel-hero-content";
 import { PainelHero } from "@/components/painel/painel-hero";
 import { QuickAction } from "@/components/painel/quick-action";
 import { KpiCard } from "@/components/painel/kpi-card";
@@ -33,10 +34,10 @@ export default async function PainelPage() {
     getSupabaseServer(),
   ]);
 
+  const isUserAdmin = isAdmin(me);
   const showOh = isInEquipe(me, "oh");
   const showSafety = isInEquipe(me, "safety");
 
-  // Fetch display name
   const { data: usuario } = await supabase
     .from("usuarios")
     .select("nome")
@@ -44,39 +45,62 @@ export default async function PainelPage() {
     .single();
   const firstName = (usuario?.nome?.trim() || "").split(/\s+/)[0] || "Usuário";
 
-  const [pendentesRes, ativosRes, ocorrenciasAbertasRes, recentesRes] =
-    await Promise.all([
-      showOh
-        ? supabase
-            .from("afastamentos")
-            .select("id", { count: "exact", head: true })
-            .eq("situacao", "pendente")
-        : Promise.resolve({ count: 0 }),
-      showOh
-        ? supabase
-            .from("afastamentos")
-            .select("id", { count: "exact", head: true })
-            .in("situacao", ["aprovado", "em_andamento"])
-        : Promise.resolve({ count: 0 }),
-      showSafety
-        ? supabase
-            .from("ocorrencias")
-            .select("id", { count: "exact", head: true })
-            .eq("situacao", "aberta")
-        : Promise.resolve({ count: 0 }),
-      supabase
-        .from("eventos")
-        .select(
-          "id, tipo_entidade, entidade_id, evento, ocorrido_em, usuarios:autor_id(nome, sobrenome)",
-        )
-        .order("ocorrido_em", { ascending: false })
-        .limit(5)
-        .returns<EventoRow[]>(),
-    ]);
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+  const [
+    pendentesRes,
+    ativosRes,
+    ocorrenciasAbertasRes,
+    ocorrenciasMesRes,
+    investigacoesPendentesRes,
+    recentesRes,
+  ] = await Promise.all([
+    showOh
+      ? supabase
+          .from("afastamentos")
+          .select("id", { count: "exact", head: true })
+          .eq("situacao", "pendente")
+      : Promise.resolve({ count: 0 }),
+    showOh
+      ? supabase
+          .from("afastamentos")
+          .select("id", { count: "exact", head: true })
+          .in("situacao", ["aprovado", "em_andamento"])
+      : Promise.resolve({ count: 0 }),
+    showSafety
+      ? supabase
+          .from("ocorrencias")
+          .select("id", { count: "exact", head: true })
+          .eq("situacao", "aberta")
+      : Promise.resolve({ count: 0 }),
+    showSafety
+      ? supabase
+          .from("ocorrencias")
+          .select("id", { count: "exact", head: true })
+          .gte("criado_em", startOfMonth)
+      : Promise.resolve({ count: 0 }),
+    showSafety
+      ? supabase
+          .from("investigacoes")
+          .select("id", { count: "exact", head: true })
+          .in("situacao", ["em_andamento", "em_aprovacao"])
+      : Promise.resolve({ count: 0 }),
+    supabase
+      .from("eventos")
+      .select(
+        "id, tipo_entidade, entidade_id, evento, ocorrido_em, usuarios:autor_id(nome, sobrenome)",
+      )
+      .order("ocorrido_em", { ascending: false })
+      .limit(5)
+      .returns<EventoRow[]>(),
+  ]);
 
   const pendentes = pendentesRes.count ?? 0;
   const ativos = ativosRes.count ?? 0;
   const ocorrenciasAbertas = ocorrenciasAbertasRes.count ?? 0;
+  const ocorrenciasMes = ocorrenciasMesRes.count ?? 0;
+  const investigacoesPendentes = investigacoesPendentesRes.count ?? 0;
 
   const recentes: ActivityFeedRow[] = (recentesRes.data ?? []).map((row) => ({
     id: row.id,
@@ -89,7 +113,6 @@ export default async function PainelPage() {
       null,
   }));
 
-  const now = new Date();
   const greeting = greetingFor(now.getHours());
   const formattedDate = now.toLocaleDateString("pt-BR", {
     weekday: "long",
@@ -97,19 +120,13 @@ export default async function PainelPage() {
     month: "long",
   });
 
-  const heroHeadline =
-    showOh && pendentes > 0
-      ? `${pendentes} ${pendentes === 1 ? "aprovação aguardando" : "aprovações aguardando"} sua revisão.`
-      : showSafety && ocorrenciasAbertas > 0
-        ? `${ocorrenciasAbertas} ${ocorrenciasAbertas === 1 ? "ocorrência aberta" : "ocorrências abertas"} aguardando investigação.`
-        : "Nada pendente — tudo em dia.";
-
-  const heroSub =
-    showOh && pendentes > 0
-      ? "Revise as solicitações pendentes antes do fim do dia para manter o fluxo."
-      : showSafety && ocorrenciasAbertas > 0
-        ? "Acesse as ocorrências abertas e inicie as investigações necessárias."
-        : "Acompanhe os registros ativos pelos cartões abaixo.";
+  const hero = buildHeroContent({
+    isAdmin: isUserAdmin,
+    showOh,
+    showSafety,
+    pendentes,
+    investigacoesPendentes,
+  });
 
   const activitySeeAllHref = showOh ? "/app/afastamentos" : "/app/ocorrencias";
 
@@ -131,15 +148,9 @@ export default async function PainelPage() {
       </header>
 
       <PainelHero
-        headline={heroHeadline}
-        sub={heroSub}
-        cta={
-          showOh && pendentes > 0
-            ? { href: "/app/afastamentos/aprovacoes", label: "Ver aprovações" }
-            : showSafety && ocorrenciasAbertas > 0
-              ? { href: "/app/ocorrencias", label: "Ver ocorrências" }
-              : undefined
-        }
+        headline={hero.headline}
+        sub={hero.sub}
+        ctas={hero.ctas}
       />
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -151,7 +162,7 @@ export default async function PainelPage() {
                 icon={CheckCircle2Icon}
                 title="Aprovações"
                 sub="Revisar afastamentos pendentes"
-                tone="primary"
+                tone={pendentes > 0 ? "accent" : "primary"}
                 count={pendentes}
               />
               <QuickAction
@@ -159,7 +170,7 @@ export default async function PainelPage() {
                 icon={ListChecksIcon}
                 title="Afastamentos"
                 sub="Lista completa"
-                tone="accent"
+                tone="primary"
               />
             </>
           )}
@@ -170,7 +181,7 @@ export default async function PainelPage() {
                 icon={AlertTriangleIcon}
                 title="Ocorrências"
                 sub="Aberturas e investigações"
-                tone="accent"
+                tone={ocorrenciasAbertas > 0 ? "accent" : "primary"}
                 count={ocorrenciasAbertas}
               />
               <QuickAction
@@ -178,7 +189,7 @@ export default async function PainelPage() {
                 icon={SearchIcon}
                 title="Investigações"
                 sub="Gerir investigações abertas"
-                tone="accent"
+                tone="primary"
               />
             </>
           )}
@@ -187,7 +198,7 @@ export default async function PainelPage() {
             icon={AlertTriangleIcon}
             title="Nova ocorrência"
             sub="Formulário público"
-            tone="accent"
+            tone="primary"
           />
           {showOh && (
             <QuickAction
@@ -195,7 +206,7 @@ export default async function PainelPage() {
               icon={FileEditIcon}
               title="Novo afastamento"
               sub="Formulário público"
-              tone="accent"
+              tone="primary"
             />
           )}
         </div>
@@ -208,27 +219,35 @@ export default async function PainelPage() {
                   label="Afastamentos ativos"
                   value={ativos}
                   delta={ativos === 0 ? "—" : `${ativos} em curso`}
-                  tone="primary"
+                  tone={ativos > 0 ? "accent" : "primary"}
                 />
                 <KpiCard
                   label="Aprovações pendentes"
                   value={pendentes}
                   delta={pendentes === 0 ? "—" : `${pendentes} aguardando revisão`}
-                  tone="accent"
+                  tone={pendentes > 0 ? "accent" : "primary"}
                 />
               </>
             )}
             {showSafety && (
-              <KpiCard
-                label="Ocorrências abertas"
-                value={ocorrenciasAbertas}
-                delta={
-                  ocorrenciasAbertas === 0
-                    ? "—"
-                    : `${ocorrenciasAbertas} aguardando investigação`
-                }
-                tone="accent"
-              />
+              <>
+                <KpiCard
+                  label="Ocorrências no mês"
+                  value={ocorrenciasMes}
+                  delta={ocorrenciasMes === 0 ? "—" : `${ocorrenciasMes} este mês`}
+                  tone={ocorrenciasMes > 0 ? "accent" : "primary"}
+                />
+                <KpiCard
+                  label="Investigações pendentes"
+                  value={investigacoesPendentes}
+                  delta={
+                    investigacoesPendentes === 0
+                      ? "—"
+                      : `${investigacoesPendentes} aguardando conclusão`
+                  }
+                  tone={investigacoesPendentes > 0 ? "accent" : "primary"}
+                />
+              </>
             )}
           </div>
           <ActivityFeed rows={recentes} seeAllHref={activitySeeAllHref} />
