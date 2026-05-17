@@ -15,67 +15,67 @@ import {
 
 const ITEMS = [
   {
-    href: "/painel/saude",
+    href: "/app/painel/saude",
     title: "Saúde do sistema",
     desc: "Emails e Fluig falhados nas últimas 24h, KPIs operacionais.",
     icon: HeartPulseIcon,
   },
   {
-    href: "/admin/usuarios",
+    href: "/app/admin/usuarios",
     title: "Usuários",
     desc: "Convidar e gerenciar usuários da plataforma.",
     icon: UserCogIcon,
   },
   {
-    href: "/admin/colaboradores",
+    href: "/app/admin/colaboradores",
     title: "Colaboradores",
     desc: "CPFs pré-cadastrados para acesso ao portal do colaborador.",
     icon: HardHatIcon,
   },
   {
-    href: "/admin/equipes",
+    href: "/app/admin/equipes",
     title: "Equipes",
     desc: "Atribuir membros às equipes operacionais.",
     icon: UsersIcon,
   },
   {
-    href: "/admin/empresas",
+    href: "/app/admin/empresas",
     title: "Empresas",
     desc: "Empresas tenantes — código SOC e Fluig.",
     icon: Building2Icon,
   },
   {
-    href: "/admin/unidades",
+    href: "/app/admin/unidades",
     title: "Unidades",
     desc: "Unidades operacionais por empresa.",
     icon: FactoryIcon,
   },
   {
-    href: "/admin/afastamento-tipos",
+    href: "/app/admin/afastamento-tipos",
     title: "Tipos de afastamento",
     desc: "Catálogo de tipos com regras de aprovação.",
     icon: ListTreeIcon,
   },
   {
-    href: "/admin/investigacao/categorias",
+    href: "/app/admin/investigacao/categorias",
     title: "Categorias de Ishikawa",
     desc: "Os 6Ms usados na investigação de ocorrências.",
     icon: NetworkIcon,
   },
   {
-    href: "/admin/investigacao/graus",
+    href: "/app/admin/investigacao/graus",
     title: "Graus de severidade",
     desc: "Escala usada para classificar causas na Ishikawa.",
     icon: GaugeIcon,
   },
   {
-    href: "/admin/investigacao/causas",
+    href: "/app/admin/investigacao/causas",
     title: "Causas da Ishikawa",
     desc: "Biblioteca de causas sugeridas por categoria.",
     icon: ListIcon,
   },
   {
-    href: "/admin/configuracoes",
+    href: "/app/admin/configuracoes",
     title: "Configurações",
     desc: "Email da folha de pagamentos e integrações.",
     icon: SettingsIcon,
@@ -87,7 +87,7 @@ export default function AdminHome() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1 border-b border-[var(--color-border)] pb-4">
         <nav aria-label="Breadcrumb" className="text-xs text-[var(--color-fg-muted)]">
-          <Link href="/painel" className="hover:text-foreground">
+          <Link href="/app/painel" className="hover:text-foreground">
             Painel
           </Link>
           <span className="mx-1 text-[var(--color-fg-subtle)]">/</span>

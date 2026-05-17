@@ -111,7 +111,7 @@ export function PublicMobileMenu({ user }: PublicMobileMenuProps) {
         <div className="mt-auto flex flex-col gap-2 border-t border-border pt-4">
           {user ? (
             <Link
-              href="/painel"
+              href="/app/painel"
               onClick={close}
               className="rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground"
             >

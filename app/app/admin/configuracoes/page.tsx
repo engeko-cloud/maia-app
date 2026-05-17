@@ -78,7 +78,7 @@ export default function ConfiguracoesPage() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1 border-b border-[var(--color-border)] pb-4">
         <nav aria-label="Breadcrumb" className="text-xs text-[var(--color-fg-muted)]">
-          <Link href="/admin" className="hover:text-foreground">Administração</Link>
+          <Link href="/app/admin" className="hover:text-foreground">Administração</Link>
           <span className="mx-1 text-[var(--color-fg-subtle)]">/</span>
           <span aria-current="page" className="text-foreground">Configurações</span>
         </nav>

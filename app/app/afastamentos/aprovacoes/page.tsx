@@ -18,9 +18,9 @@ export default async function AprovacoesPage() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-1 border-b border-[var(--color-border)] pb-4">
         <nav aria-label="Breadcrumb" className="text-xs text-[var(--color-fg-muted)]">
-          <Link href="/painel" className="hover:text-foreground">Painel</Link>
+          <Link href="/app/painel" className="hover:text-foreground">Painel</Link>
           <span className="mx-1 text-[var(--color-fg-subtle)]">/</span>
-          <Link href="/afastamentos" className="hover:text-foreground">Afastamentos</Link>
+          <Link href="/app/afastamentos" className="hover:text-foreground">Afastamentos</Link>
           <span className="mx-1 text-[var(--color-fg-subtle)]">/</span>
           <span aria-current="page" className="text-foreground">Aprovações</span>
         </nav>

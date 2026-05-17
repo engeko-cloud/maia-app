@@ -53,7 +53,7 @@ export async function PublicTopBar() {
           {user ? (
             <>
               <Link
-                href="/painel"
+                href="/app/painel"
                 className="rounded-md px-3 py-1.5 text-sm font-medium text-[var(--color-fg-muted)] hover:bg-muted hover:text-foreground"
               >
                 Painel →

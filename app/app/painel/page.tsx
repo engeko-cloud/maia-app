@@ -104,13 +104,13 @@ export default async function PainelPage() {
       <PainelHero
         headline={heroHeadline}
         sub={heroSub}
-        cta={pendentes > 0 ? { href: "/afastamentos/aprovacoes", label: "Ver aprovações" } : undefined}
+        cta={pendentes > 0 ? { href: "/app/afastamentos/aprovacoes", label: "Ver aprovações" } : undefined}
       />
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <QuickAction
-            href="/afastamentos/aprovacoes"
+            href="/app/afastamentos/aprovacoes"
             icon={CheckCircle2Icon}
             title="Aprovações"
             sub="Revisar afastamentos pendentes"
@@ -118,14 +118,14 @@ export default async function PainelPage() {
             count={pendentes}
           />
           <QuickAction
-            href="/afastamentos"
+            href="/app/afastamentos"
             icon={ListChecksIcon}
             title="Afastamentos"
             sub="Lista completa"
             tone="accent"
           />
           <QuickAction
-            href="/ocorrencias"
+            href="/app/ocorrencias"
             icon={AlertTriangleIcon}
             title="Ocorrências"
             sub="Aberturas e investigações"
@@ -155,7 +155,7 @@ export default async function PainelPage() {
               tone="accent"
             />
           </div>
-          <ActivityFeed rows={recentes} seeAllHref="/afastamentos" />
+          <ActivityFeed rows={recentes} seeAllHref="/app/afastamentos" />
         </div>
       </div>
     </div>

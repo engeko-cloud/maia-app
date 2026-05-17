@@ -51,8 +51,8 @@ export default async function AfastamentoDetailPage({
     <div className="flex flex-col gap-6">
       <DetailHeader
         breadcrumbs={[
-          { label: "Painel", href: "/painel" },
-          { label: "Afastamentos", href: "/afastamentos" },
+          { label: "Painel", href: "/app/painel" },
+          { label: "Afastamentos", href: "/app/afastamentos" },
           { label: row.colaborador_nome },
         ]}
         title={row.colaborador_nome}

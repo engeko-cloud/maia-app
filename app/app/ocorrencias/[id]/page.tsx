@@ -46,8 +46,8 @@ export default async function OcorrenciaDetailPage({
     <div className="flex flex-col gap-6">
       <DetailHeader
         breadcrumbs={[
-          { label: "Painel", href: "/painel" },
-          { label: "Ocorrências", href: "/ocorrencias" },
+          { label: "Painel", href: "/app/painel" },
+          { label: "Ocorrências", href: "/app/ocorrencias" },
           { label: ocorrenciaTipoLabel(row.tipo) },
         ]}
         title={ocorrenciaTipoLabel(row.tipo)}

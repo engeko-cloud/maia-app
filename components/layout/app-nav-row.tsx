@@ -12,7 +12,7 @@ interface AppNavRowProps {
 }
 
 function isActive(pathname: string, group: AppNavGroup): boolean {
-  if (group.href === "/painel") return pathname === "/painel";
+  if (group.href === "/app/painel") return pathname === "/app/painel";
   return pathname === group.href || pathname.startsWith(`${group.href}/`);
 }
 

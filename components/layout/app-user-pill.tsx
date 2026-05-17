@@ -45,7 +45,7 @@ export function AppUserPill({ firstName, initials }: AppUserPillProps) {
         <ChevronDownIcon className="size-4 opacity-60" aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="min-w-[180px]">
-        <DropdownMenuItem render={<Link href="/painel" />}>
+        <DropdownMenuItem render={<Link href="/app/painel" />}>
           <UserIcon className="size-4" aria-hidden="true" />
           Perfil
         </DropdownMenuItem>

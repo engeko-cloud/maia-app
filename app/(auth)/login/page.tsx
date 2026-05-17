@@ -39,7 +39,7 @@ export default function LoginPage() {
       setErrorMessage(translateAuthError(error));
       return;
     }
-    router.push("/painel");
+    router.push("/app/painel");
     router.refresh();
   }
 

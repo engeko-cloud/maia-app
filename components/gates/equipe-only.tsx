@@ -13,6 +13,6 @@ export async function requireEquipe(codigo: "oh" | "safety") {
   const { data: m } = await supabase
     .from("equipe_usuarios").select("equipes!inner(codigo)").eq("usuario_id", user.id);
   const hasIt = (m ?? []).some((row: any) => row.equipes?.codigo === codigo);
-  if (!hasIt) redirect("/painel");
+  if (!hasIt) redirect("/app/painel");
   return user;
 }

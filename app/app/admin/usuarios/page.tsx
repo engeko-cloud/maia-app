@@ -132,7 +132,7 @@ export default function UsuariosPage() {
       <header className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--color-border)] pb-4">
         <div className="flex flex-col">
           <nav aria-label="Breadcrumb" className="text-xs text-[var(--color-fg-muted)]">
-            <Link href="/admin" className="hover:text-foreground">Administração</Link>
+            <Link href="/app/admin" className="hover:text-foreground">Administração</Link>
             <span className="mx-1 text-[var(--color-fg-subtle)]">/</span>
             <span aria-current="page" className="text-foreground">Usuários</span>
           </nav>

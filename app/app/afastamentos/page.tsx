@@ -87,7 +87,7 @@ export default async function AfastamentosListPage({
             aria-label="Breadcrumb"
             className="text-xs text-[var(--color-fg-muted)]"
           >
-            <Link href="/painel" className="hover:text-foreground">
+            <Link href="/app/painel" className="hover:text-foreground">
               Painel
             </Link>
             <span className="mx-1 text-[var(--color-fg-subtle)]">/</span>
@@ -117,7 +117,7 @@ export default async function AfastamentosListPage({
       </header>
 
       <FilterRail
-        basePath="/afastamentos"
+        basePath="/app/afastamentos"
         searchPlaceholder="Buscar por nome ou CPF…"
         chips={[
           { value: "", label: "Todos" },
@@ -132,7 +132,7 @@ export default async function AfastamentosListPage({
         rows={rows}
         columns={columns}
         getRowId={(r) => r.id}
-        getRowHref={(r) => `/afastamentos/${r.id}`}
+        getRowHref={(r) => `/app/afastamentos/${r.id}`}
         empty={
           <EmptyState
             icon={ClipboardListIcon}

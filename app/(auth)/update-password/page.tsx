@@ -46,7 +46,7 @@ export default function UpdatePasswordPage() {
       return;
     }
     toast.success("Senha atualizada.");
-    router.push("/painel");
+    router.push("/app/painel");
   }
 
   const sessionExpired = errorMessage === SESSION_EXPIRED_MESSAGE;

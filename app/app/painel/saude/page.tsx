@@ -15,7 +15,7 @@ import { SaudeClient } from "@/components/saude/saude-client";
 
 export default async function PainelSaudePage() {
   const me = await requireAdminUser();
-  if (!me) redirect("/painel");
+  if (!me) redirect("/app/painel");
 
   const admin = getSupabaseAdmin();
 

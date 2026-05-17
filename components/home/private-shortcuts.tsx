@@ -16,7 +16,7 @@ export function PrivateShortcuts({ user }: PrivateShortcutsProps) {
       </CardHeader>
       <CardContent className="flex flex-col gap-1 px-2 pb-2">
         <Link
-          href="/painel"
+          href="/app/painel"
           className="flex items-center gap-3 rounded-lg px-3 py-3 transition-colors hover:bg-white/50"
         >
           <span

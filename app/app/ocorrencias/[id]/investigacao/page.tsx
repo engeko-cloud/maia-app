@@ -69,9 +69,9 @@ export default async function InvestigacaoPage({
     <div className="flex flex-col gap-6">
       <DetailHeader
         breadcrumbs={[
-          { label: "Painel", href: "/painel" },
-          { label: "Ocorrências", href: "/ocorrencias" },
-          { label: ocorrenciaTipoLabel(row.tipo), href: `/ocorrencias/${row.id}` },
+          { label: "Painel", href: "/app/painel" },
+          { label: "Ocorrências", href: "/app/ocorrencias" },
+          { label: ocorrenciaTipoLabel(row.tipo), href: `/app/ocorrencias/${row.id}` },
           { label: "Investigação" },
         ]}
         title="Investigação"

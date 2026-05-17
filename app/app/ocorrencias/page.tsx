@@ -66,7 +66,7 @@ export default async function OcorrenciasListPage({
       <header className="flex flex-wrap items-end justify-between gap-3 border-b border-[var(--color-border)] pb-4">
         <div className="flex flex-col">
           <nav aria-label="Breadcrumb" className="text-xs text-[var(--color-fg-muted)]">
-            <Link href="/painel" className="hover:text-foreground">Painel</Link>
+            <Link href="/app/painel" className="hover:text-foreground">Painel</Link>
             <span className="mx-1 text-[var(--color-fg-subtle)]">/</span>
             <span aria-current="page" className="text-foreground">Ocorrências</span>
           </nav>
@@ -87,7 +87,7 @@ export default async function OcorrenciasListPage({
       </header>
 
       <FilterRail
-        basePath="/ocorrencias"
+        basePath="/app/ocorrencias"
         searchPlaceholder="Buscar por tipo ou descrição…"
         chips={[
           { value: "",                label: "Todas" },
@@ -101,7 +101,7 @@ export default async function OcorrenciasListPage({
         rows={rows}
         columns={columns}
         getRowId={(r) => r.id}
-        getRowHref={(r) => `/ocorrencias/${r.id}`}
+        getRowHref={(r) => `/app/ocorrencias/${r.id}`}
         empty={<EmptyState icon={AlertTriangleIcon} title="Nenhuma ocorrência encontrada." hint="Ajuste os filtros ou registre uma nova ocorrência." />}
       />
     </div>

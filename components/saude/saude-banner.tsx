@@ -39,7 +39,7 @@ export function SaudeBanner() {
         <AlertTriangleIcon className="size-4 shrink-0" aria-hidden="true" />
         {failures} {failures === 1 ? "falha" : "falhas"} nas últimas 24 h
       </span>
-      <Link href="/painel/saude" className="font-medium underline hover:text-red-900">
+      <Link href="/app/painel/saude" className="font-medium underline hover:text-red-900">
         ver painel →
       </Link>
     </div>
