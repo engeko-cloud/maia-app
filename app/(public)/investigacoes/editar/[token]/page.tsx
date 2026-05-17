@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { PublicFormShell } from "@/components/forms/public-form-shell";
 import { PublicInvestigacaoForm } from "./form";
