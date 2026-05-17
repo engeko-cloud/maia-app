@@ -16,6 +16,7 @@ import {
   InvestigacaoDadosSchema,
   type InvestigacaoDados,
 } from "@/lib/investigacao-dados";
+import { gatePassesUpTo } from "@/lib/investigacao-step-gates";
 
 interface Categoria { id: string; codigo: string; rotulo: string; ativo: boolean; }
 interface Grau      { id: string; codigo: string; rotulo: string; ativo: boolean; }
@@ -108,6 +109,9 @@ export function InvestigacaoForm({
       <Stepper
         current={step}
         steps={STEPS.map((s) => ({ label: s }))}
+        onStepClick={(i) => {
+          if (i === 0 || gatePassesUpTo(form.getValues(), i - 1)) setStep(i);
+        }}
       />
 
       {step === 0 ? (

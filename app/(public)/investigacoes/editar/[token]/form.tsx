@@ -15,7 +15,7 @@ import {
   InvestigacaoDadosSchema,
   type InvestigacaoDados,
 } from "@/lib/investigacao-dados";
-import { STEP_GATES } from "@/lib/investigacao-step-gates";
+import { STEP_GATES, gatePassesUpTo } from "@/lib/investigacao-step-gates";
 
 interface Categoria { id: string; codigo: string; rotulo: string; ativo: boolean; }
 interface Grau      { id: string; codigo: string; rotulo: string; ativo: boolean; }
@@ -149,7 +149,13 @@ export function PublicInvestigacaoForm({
 
   return (
     <form className="flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
-      <Stepper current={step} steps={STEP_LABELS.map((s) => ({ label: s }))} />
+      <Stepper
+        current={step}
+        steps={STEP_LABELS.map((s) => ({ label: s }))}
+        onStepClick={readOnly ? undefined : (i) => {
+          if (i === 0 || gatePassesUpTo(dados, i - 1)) setStep(i);
+        }}
+      />
 
       {step === 0 ? (
         <div className="flex flex-col gap-4">
