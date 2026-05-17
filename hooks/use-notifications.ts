@@ -22,11 +22,12 @@ export function useNotifications() {
       .catch(() => {});
   }, []);
 
-  // Realtime subscription
+  // Realtime subscription — unique name avoids Supabase singleton channel reuse on remount
   React.useEffect(() => {
     const supabase = getSupabaseBrowser();
+    const channelName = `notifications-${Math.random().toString(36).slice(2)}`;
     const channel = supabase
-      .channel("notifications")
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
