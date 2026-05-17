@@ -69,7 +69,13 @@ export default async function OcorrenciaDetailPage({
   );
   const storagePublicBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/attachments/`;
 
-  const inv = row.investigacoes?.[0];
+  const rawInv = row.investigacoes?.[0] ?? null;
+  const inv = rawInv ?? {
+    situacao: "em_andamento" as const,
+    dados: EMPTY_DADOS,
+    token_publico: "",
+    motivo_rejeicao: null,
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -89,15 +95,13 @@ export default async function OcorrenciaDetailPage({
         }
       />
 
-      {inv && (
-        <InvestigacaoDetailSection
-          ocorrenciaId={row.id}
-          investigacao={{ ...inv, dados: inv.dados ?? EMPTY_DADOS }}
-          categoriasById={categoriasById}
-          grausById={grausById}
-          storagePublicBase={storagePublicBase}
-        />
-      )}
+      <InvestigacaoDetailSection
+        ocorrenciaId={row.id}
+        investigacao={{ ...inv, dados: inv.dados ?? EMPTY_DADOS }}
+        categoriasById={categoriasById}
+        grausById={grausById}
+        storagePublicBase={storagePublicBase}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <OcorrenciaDetailCard o={row} />
