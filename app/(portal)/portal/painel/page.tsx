@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { FileText } from "lucide-react";
 import { requirePortalSession } from "@/lib/portal-auth";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
@@ -7,6 +8,10 @@ import { StatusPill } from "@/components/data/status-pill";
 import { EmptyState } from "@/components/data/empty-state";
 import { KpiCard } from "@/components/painel/kpi-card";
 import { fmtDate, fmtDateTime } from "@/lib/fmt-date";
+import {
+  ColaboradorSummaryCard,
+  ColaboradorSummaryCardSkeleton,
+} from "@/components/painel/colaborador-summary-card";
 
 type AfastamentoRow = {
   id: string;
@@ -15,8 +20,12 @@ type AfastamentoRow = {
   data_fim: string | null;
   duracao: number | null;
   colaborador_nome: string | null;
+  colaborador_cargo: string | null;
+  colaborador_setor: string | null;
+  empresa_id: string;
   afastamento_tipos: { rotulo: string };
-  empresas: { nome: string };
+  empresas: { nome: string; codigo_soc: string | null };
+  unidades: { nome: string } | null;
 };
 
 const COLUMNS: DataTableColumn<AfastamentoRow>[] = [
@@ -46,7 +55,7 @@ export default async function PortalPainelPage() {
     admin
       .from("afastamentos")
       .select(
-        "id, situacao, data_inicio, data_fim, duracao, colaborador_nome, afastamento_tipos!inner(rotulo), empresas!inner(nome)",
+        "id, situacao, data_inicio, data_fim, duracao, colaborador_nome, colaborador_cargo, colaborador_setor, empresa_id, afastamento_tipos!inner(rotulo), empresas!inner(nome, codigo_soc), unidades(nome)",
       )
       .eq("cpf", session.cpf)
       .order("criado_em", { ascending: false })
@@ -72,6 +81,20 @@ export default async function PortalPainelPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{saudacao}</h1>
         {banner && <p className="text-sm text-[var(--color-fg-muted)]">{banner}</p>}
       </header>
+      {rows && rows.length > 0 && rows[0].empresas.codigo_soc && (
+        <Suspense fallback={<ColaboradorSummaryCardSkeleton />}>
+          <ColaboradorSummaryCard
+            cpf={session.cpf}
+            empresaCodigoSoc={rows[0].empresas.codigo_soc}
+            fallback={{
+              nome: rows[0].colaborador_nome,
+              cargo: rows[0].colaborador_cargo,
+              setor: rows[0].colaborador_setor,
+              unidade_nome: rows[0].unidades?.nome ?? null,
+            }}
+          />
+        </Suspense>
+      )}
       {total > 0 && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <KpiCard
