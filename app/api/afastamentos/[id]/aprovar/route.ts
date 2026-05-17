@@ -123,7 +123,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
             tipoEntidade: "afastamento", entidadeId: id,
             evento: "fluig_enviado", autorId: user.id, dados: { response: result.response },
           });
-        } else {
+        } else if (!result?.skipped) {
           await writeEvento(admin, {
             tipoEntidade: "afastamento", entidadeId: id,
             evento: "fluig_erro", autorId: user.id, dados: result,
