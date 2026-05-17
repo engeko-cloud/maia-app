@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   const ocorrenciaRow = data;
-  const baseUrl = process.env.APP_URL ?? "";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL ?? process.env.APP_URL ?? "http://localhost:3000";
 
   await writeEvento(supabase, { tipoEntidade: "ocorrencia", entidadeId: ocorrenciaRow.id, evento: "criado" });
 

@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     .eq("id", data.id).single();
 
   if (full) {
-    const baseUrl = process.env.APP_URL ?? "";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL ?? process.env.APP_URL ?? "http://localhost:3000";
     const emailA = {
       serial_id:        full.serial_id,
       colaborador_nome: full.colaborador_nome,
