@@ -62,11 +62,16 @@ export async function POST(req: NextRequest) {
   if (!user.email) return NextResponse.json({ error: "Conta sem e-mail configurado." }, { status: 422 });
 
   const today = new Date().toISOString().slice(0, 10);
+  const DEV_RECIPIENT = "dev-tests@fapptory.me";
+  const isDevOverride = process.env.NODE_ENV !== "production";
+  const to = isDevOverride ? DEV_RECIPIENT : user.email!;
+  const baseSubject = `Relatório de afastamentos — ${today}`;
+  const subject = isDevOverride ? `[DEV → ${user.email}] ${baseSubject}` : baseSubject;
   const resend = new Resend(process.env.RESEND_TEST_API_KEY!);
   const { error: mailError } = await resend.emails.send({
     from: "Maia <maia@fapptory.me>",
-    to: user.email!,
-    subject: `Relatório de afastamentos — ${today}`,
+    to,
+    subject,
     html,
     attachments: [
       {
