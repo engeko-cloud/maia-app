@@ -1,5 +1,4 @@
 import { FieldGrid, type Field } from "@/components/detail/field-grid";
-import { AttachmentChip } from "@/components/detail/attachment-chip";
 import { fmtDate } from "@/lib/fmt-date";
 
 export interface AfastamentoFull {
@@ -52,25 +51,11 @@ export function AfastamentoDetail({ a }: { a: AfastamentoFull }) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="rounded-md border border-[var(--color-border)] bg-white p-6">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
-          Dados do afastamento
-        </h2>
-        <FieldGrid fields={fields} />
-      </section>
-
-      {a.arquivo_url && (
-        <section className="rounded-md border border-[var(--color-border)] bg-white p-6">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
-            Anexo
-          </h2>
-          <AttachmentChip
-            href={`/api/public/afastamentos/upload/preview?path=${encodeURIComponent(a.arquivo_url)}`}
-            filename={a.arquivo_url.split("/").pop() ?? "anexo"}
-          />
-        </section>
-      )}
-    </div>
+    <section className="rounded-md border border-[var(--color-border)] bg-white p-6">
+      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
+        Dados do afastamento
+      </h2>
+      <FieldGrid fields={fields} />
+    </section>
   );
 }

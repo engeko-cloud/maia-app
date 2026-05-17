@@ -6,6 +6,7 @@ import { StatusPill } from "@/components/data/status-pill";
 import { ApprovalBar } from "@/components/detail/approval-bar";
 import { TimelineEvents, type TimelineEventRow } from "@/components/detail/timeline-events";
 import { AfastamentoDetail, type AfastamentoFull } from "@/components/afastamentos/afastamento-detail";
+import { AttachmentChip } from "@/components/detail/attachment-chip";
 import { Suspense } from "react";
 import {
   AfastamentoHistoryCard,
@@ -77,6 +78,18 @@ export default async function AfastamentoDetailPage({
       />
 
       {showApprovalBar && <ApprovalBar afastamentoId={row.id} />}
+
+      {row.arquivo_url && (
+        <section className="rounded-md border border-[var(--color-border)] bg-white p-6">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
+            Anexo
+          </h2>
+          <AttachmentChip
+            href={`/api/public/afastamentos/upload/preview?path=${encodeURIComponent(row.arquivo_url)}`}
+            filename={row.arquivo_url.split("/").pop() ?? "anexo"}
+          />
+        </section>
+      )}
 
       <Suspense fallback={<AfastamentoHistoryCardSkeleton />}>
         <AfastamentoHistoryCard cpf={row.cpf} currentId={id} />
