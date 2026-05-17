@@ -25,7 +25,8 @@ function fmtDate(iso: string, defaultTime: string): string {
   return `${m}/${d}/${y} ${time}`;
 }
 
-function fmtDateOnly(iso: string): string {
+function fmtDateOnly(iso: string | null | undefined): string {
+  if (!iso) return "—";
   const datePart = iso.includes("T") ? iso.split("T")[0] : iso;
   const [y, m, d] = datePart.split("-");
   return `${m}/${d}/${y}`;

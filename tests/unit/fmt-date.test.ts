@@ -11,6 +11,12 @@ describe("fmtDate", () => {
   it("pads single-digit month and day", () => {
     expect(fmtDate("2024-03-05")).toBe("03/05/2024");
   });
+  it("returns — for null", () => {
+    expect(fmtDate(null)).toBe("—");
+  });
+  it("returns — for undefined", () => {
+    expect(fmtDate(undefined)).toBe("—");
+  });
 });
 
 describe("fmtDateTime", () => {

@@ -4,12 +4,14 @@ function split(iso: string): { y: string; m: string; d: string; time: string } {
   return { y, m, d, time: timePart.slice(0, 5) };
 }
 
-export function fmtDate(iso: string): string {
+export function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
   const { y, m, d } = split(iso);
   return `${m}/${d}/${y}`;
 }
 
-export function fmtDateTime(iso: string, fallbackTime = "00:00"): string {
+export function fmtDateTime(iso: string | null | undefined, fallbackTime = "00:00"): string {
+  if (!iso) return "—";
   const { y, m, d, time } = split(iso);
   return `${m}/${d}/${y} ${time || fallbackTime}`;
 }
