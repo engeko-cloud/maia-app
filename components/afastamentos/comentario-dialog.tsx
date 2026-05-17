@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PaperclipIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
