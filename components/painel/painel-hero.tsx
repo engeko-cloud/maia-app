@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { ArrowRightIcon } from "lucide-react";
 
-interface PainelHeroProps {
-  /** Headline metric, e.g. "3 aprovações aguardando sua revisão." */
-  headline: string;
-  /** Sub-copy explaining context. */
-  sub: string;
-  /** Optional CTA. */
-  cta?: { href: string; label: string };
+interface HeroCta {
+  href: string;
+  label: string;
 }
 
-export function PainelHero({ headline, sub, cta }: PainelHeroProps) {
+interface PainelHeroProps {
+  headline: string;
+  sub: string;
+  ctas?: HeroCta[];
+}
+
+export function PainelHero({ headline, sub, ctas }: PainelHeroProps) {
   return (
     <section className="relative overflow-hidden rounded-[var(--radius-xl)] bg-gradient-to-br from-[var(--brand-primary-600)] to-[var(--brand-primary-900)] p-6 text-white sm:p-8">
       <div
@@ -24,14 +26,19 @@ export function PainelHero({ headline, sub, cta }: PainelHeroProps) {
       <div className="relative">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{headline}</h1>
         <p className="mt-2 max-w-xl text-sm text-white/80">{sub}</p>
-        {cta && (
-          <Link
-            href={cta.href}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-[var(--brand-accent-500)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--brand-accent-600)]"
-          >
-            {cta.label}
-            <ArrowRightIcon className="size-4" aria-hidden="true" />
-          </Link>
+        {ctas && ctas.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {ctas.map((cta) => (
+              <Link
+                key={cta.href}
+                href={cta.href}
+                className="inline-flex items-center gap-1.5 rounded-md bg-[var(--brand-accent-500)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--brand-accent-600)]"
+              >
+                {cta.label}
+                <ArrowRightIcon className="size-4" aria-hidden="true" />
+              </Link>
+            ))}
+          </div>
         )}
       </div>
       <span
