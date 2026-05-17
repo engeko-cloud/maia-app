@@ -116,6 +116,11 @@ export function ComentarioDialog({
   }
 
   async function salvar() {
+    if (mode === "edit" && !comentarioId) {
+      toast.error("Erro interno: comentário não identificado.");
+      return;
+    }
+
     if (!texto.trim()) {
       toast.error("A nota não pode estar vazia.");
       return;
@@ -140,11 +145,18 @@ export function ComentarioDialog({
         : `/api/afastamentos/${afastamentoId}/comentarios/${comentarioId}`;
     const method = mode === "create" ? "POST" : "PATCH";
 
-    const r = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    let r: Response;
+    try {
+      r = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    } catch {
+      setBusy(false);
+      toast.error("Erro de rede ao salvar nota.");
+      return;
+    }
 
     setBusy(false);
 
@@ -160,7 +172,7 @@ export function ComentarioDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(next) => { if (!busy) setOpen(next); }}>
       <DialogTrigger render={trigger} />
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
