@@ -21,7 +21,7 @@ import { AfastamentoEditDialog, type AfastamentoEditDialogProps } from "@/compon
 interface ApprovalBarProps {
   /** Afastamento ID — used to build API URLs. */
   afastamentoId: string;
-  editProps: {
+  editProps?: {
     tipos: { id: string; rotulo: string }[];
     unidades: { id: string; nome: string }[];
     initialValues: AfastamentoEditDialogProps["initialValues"];
@@ -79,12 +79,14 @@ export function ApprovalBar({ afastamentoId, editProps }: ApprovalBarProps) {
         </p>
       </div>
       <div className="flex items-center gap-2">
-        <AfastamentoEditDialog
-          afastamentoId={afastamentoId}
-          tipos={editProps.tipos}
-          unidades={editProps.unidades}
-          initialValues={editProps.initialValues}
-        />
+        {editProps && (
+          <AfastamentoEditDialog
+            afastamentoId={afastamentoId}
+            tipos={editProps.tipos}
+            unidades={editProps.unidades}
+            initialValues={editProps.initialValues}
+          />
+        )}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger
             render={

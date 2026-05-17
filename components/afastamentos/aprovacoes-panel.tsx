@@ -5,6 +5,7 @@ import { ArrowRightIcon, FileTextIcon } from "lucide-react";
 import { EmptyState } from "@/components/data/empty-state";
 import { cn } from "@/lib/utils";
 import { fmtDate } from "@/lib/fmt-date";
+import { ApprovalBar } from "@/components/detail/approval-bar";
 
 export interface PendenteRow {
   id: string;
@@ -67,6 +68,7 @@ export function AprovacoesPanel({ pendentes }: AprovacoesPanelProps) {
                 Ver detalhes
                 <ArrowRightIcon className="size-3.5" aria-hidden="true" />
               </Link>
+              <ApprovalBar afastamentoId={p.id} />
             </div>
           </li>
         );
