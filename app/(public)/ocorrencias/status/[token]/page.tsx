@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { PublicFormShell } from "@/components/forms/public-form-shell";
 import { InvestigacaoDataView } from "@/components/investigacoes/investigacao-data-view";
 import { ocorrenciaTipoLabel } from "@/lib/ocorrencia-state";
+import { fmtDateTime } from "@/lib/fmt-date";
 import type { InvestigacaoDados } from "@/lib/investigacao-dados";
 
 const EMPTY_DADOS: InvestigacaoDados = { ishikawa: [], plano_acao: [], participantes: [], fotos: [] };
@@ -91,7 +92,7 @@ export default async function StatusPage({ params }: { params: Promise<{ token: 
         <dt className="text-[var(--color-fg-muted)]">Tipo</dt>
         <dd>{ocorrenciaTipoLabel(o.tipo)}</dd>
         <dt className="text-[var(--color-fg-muted)]">Data</dt>
-        <dd>{new Date(o.data_ocorrencia).toLocaleString("pt-BR")}</dd>
+        <dd>{fmtDateTime(o.data_ocorrencia)}</dd>
         <dt className="text-[var(--color-fg-muted)]">Colaborador</dt>
         <dd>{o.colaborador_nome ?? "—"}{o.cpf ? ` (${o.cpf})` : ""}</dd>
         <dt className="text-[var(--color-fg-muted)]">Empresa</dt>

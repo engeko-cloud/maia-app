@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { PublicFormShell } from "@/components/forms/public-form-shell";
+import { fmtDate } from "@/lib/fmt-date";
 
 const SITUACAO_LABEL: Record<string, string> = {
   pendente:   "Pendente de aprovação",
@@ -61,7 +62,7 @@ export default async function StatusPage({ params }: { params: Promise<{ token: 
         <dt className="text-[var(--color-fg-muted)]">Tipo</dt>
         <dd>{(a.afastamento_tipos as { rotulo: string }).rotulo}</dd>
         <dt className="text-[var(--color-fg-muted)]">Período</dt>
-        <dd>{a.data_inicio} → {a.data_fim ?? "—"} {a.duracao ? `(${a.duracao} dia${a.duracao > 1 ? "s" : ""})` : ""}</dd>
+        <dd>{fmtDate(a.data_inicio)} → {a.data_fim ? fmtDate(a.data_fim) : "—"} {a.duracao ? `(${a.duracao} dia${a.duracao > 1 ? "s" : ""})` : ""}</dd>
         <dt className="text-[var(--color-fg-muted)]">CID</dt>
         <dd>{a.cid ?? "—"}</dd>
         <dt className="text-[var(--color-fg-muted)]">Empresa</dt>
