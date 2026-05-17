@@ -11,6 +11,7 @@ import { fmtDate } from "@/lib/fmt-date";
 
 interface AfastamentoRow {
   id: string;
+  serial_id: number | null;
   cpf: string;
   colaborador_nome: string;
   data_inicio: string;
@@ -32,7 +33,7 @@ export default async function AfastamentosListPage({
   let query = supabase
     .from("afastamentos")
     .select(
-      "id, cpf, colaborador_nome, data_inicio, data_fim, situacao, cid, afastamento_tipos!inner(rotulo)",
+      "id, serial_id, cpf, colaborador_nome, data_inicio, data_fim, situacao, cid, afastamento_tipos!inner(rotulo)",
     )
     .order("criado_em", { ascending: false })
     .limit(200);
@@ -51,6 +52,12 @@ export default async function AfastamentosListPage({
   const unidades = (unidadesData ?? []) as { id: string; nome: string }[];
 
   const columns: DataTableColumn<AfastamentoRow>[] = [
+    {
+      key: "serial",
+      label: "#",
+      mono: true,
+      render: (r) => r.serial_id != null ? `#${r.serial_id}` : "—",
+    },
     {
       key: "colaborador",
       label: "Colaborador",

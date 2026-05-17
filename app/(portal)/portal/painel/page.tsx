@@ -15,6 +15,7 @@ import {
 
 type AfastamentoRow = {
   id: string;
+  serial_id: number | null;
   situacao: string;
   data_inicio: string;
   data_fim: string | null;
@@ -30,6 +31,7 @@ type AfastamentoRow = {
 };
 
 const COLUMNS: DataTableColumn<AfastamentoRow>[] = [
+  { key: "serial", label: "#", mono: true, render: (r) => r.serial_id != null ? `#${r.serial_id}` : "—" },
   { key: "tipo",     label: "Tipo",     render: (r) => r.afastamento_tipos.rotulo },
   { key: "inicio",   label: "Início",   render: (r) => fmtDateTime(r.data_inicio, "00:00"), mono: true },
   { key: "fim",      label: "Fim",      render: (r) => r.data_fim ? fmtDateTime(r.data_fim, "23:59") : "—", mono: true },
@@ -57,7 +59,7 @@ export default async function PortalPainelPage() {
     admin
       .from("afastamentos")
       .select(
-        "id, situacao, data_inicio, data_fim, duracao, colaborador_nome, colaborador_cargo, colaborador_setor, empresa_id, cid, afastamento_tipos!inner(rotulo), empresas!inner(nome, codigo_soc), unidades(nome)",
+        "id, serial_id, situacao, data_inicio, data_fim, duracao, colaborador_nome, colaborador_cargo, colaborador_setor, empresa_id, cid, afastamento_tipos!inner(rotulo), empresas!inner(nome, codigo_soc), unidades(nome)",
       )
       .eq("cpf", session.cpf)
       .order("criado_em", { ascending: false })
