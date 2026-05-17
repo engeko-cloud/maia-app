@@ -28,6 +28,7 @@ interface ComentariosCardProps {
 }
 
 function fmtDateTime(iso: string) {
+  if (!iso) return "—";
   return format(new Date(iso), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
 }
 
@@ -38,19 +39,25 @@ export function ComentariosCard({
   isAdmin,
 }: ComentariosCardProps) {
   const router = useRouter();
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
   async function handleDelete(comentarioId: string) {
-    const r = await fetch(
-      `/api/afastamentos/${afastamentoId}/comentarios/${comentarioId}`,
-      { method: "DELETE" },
-    );
-    if (!r.ok) {
-      const j = await r.json().catch(() => ({}));
-      toast.error(j.error ?? "Erro ao excluir nota.");
-      return;
+    setDeletingId(comentarioId);
+    try {
+      const r = await fetch(
+        `/api/afastamentos/${afastamentoId}/comentarios/${comentarioId}`,
+        { method: "DELETE" },
+      );
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        toast.error(j.error ?? "Erro ao excluir nota.");
+        return;
+      }
+      toast.success("Nota excluída.");
+      router.refresh();
+    } finally {
+      setDeletingId(null);
     }
-    toast.success("Nota excluída.");
-    router.refresh();
   }
 
   return (
@@ -134,7 +141,8 @@ export function ComentariosCard({
                       <button
                         type="button"
                         onClick={() => handleDelete(c.id)}
-                        className="text-xs text-[var(--color-danger)] hover:opacity-70"
+                        disabled={deletingId === c.id}
+                        className="text-xs text-[var(--color-danger)] hover:opacity-70 disabled:opacity-50"
                         aria-label="Excluir nota"
                       >
                         <Trash2Icon className="size-3.5" />
