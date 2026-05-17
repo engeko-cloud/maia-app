@@ -16,13 +16,19 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { AfastamentoEditDialog, type AfastamentoEditDialogProps } from "@/components/afastamentos/afastamento-edit-dialog";
 
 interface ApprovalBarProps {
   /** Afastamento ID — used to build API URLs. */
   afastamentoId: string;
+  editProps: {
+    tipos: { id: string; rotulo: string }[];
+    unidades: { id: string; nome: string }[];
+    initialValues: AfastamentoEditDialogProps["initialValues"];
+  };
 }
 
-export function ApprovalBar({ afastamentoId }: ApprovalBarProps) {
+export function ApprovalBar({ afastamentoId, editProps }: ApprovalBarProps) {
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);
   const [motivo, setMotivo] = React.useState("");
@@ -73,6 +79,12 @@ export function ApprovalBar({ afastamentoId }: ApprovalBarProps) {
         </p>
       </div>
       <div className="flex items-center gap-2">
+        <AfastamentoEditDialog
+          afastamentoId={afastamentoId}
+          tipos={editProps.tipos}
+          unidades={editProps.unidades}
+          initialValues={editProps.initialValues}
+        />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger
             render={

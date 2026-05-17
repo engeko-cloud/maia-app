@@ -2,7 +2,6 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ArrowRightIcon, FileTextIcon } from "lucide-react";
-import { ApprovalBar } from "@/components/detail/approval-bar";
 import { EmptyState } from "@/components/data/empty-state";
 import { cn } from "@/lib/utils";
 import { fmtDate } from "@/lib/fmt-date";
@@ -68,7 +67,6 @@ export function AprovacoesPanel({ pendentes }: AprovacoesPanelProps) {
                 Ver detalhes
                 <ArrowRightIcon className="size-3.5" aria-hidden="true" />
               </Link>
-              <ApprovalBar afastamentoId={p.id} />
             </div>
           </li>
         );

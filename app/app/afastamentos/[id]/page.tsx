@@ -35,7 +35,12 @@ export default async function AfastamentoDetailPage({
   const supabase = await getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [{ data: rawRow }, { data: timelineData }] = await Promise.all([
+  const [
+    { data: rawRow },
+    { data: timelineData },
+    { data: tiposData },
+    { data: unidadesData },
+  ] = await Promise.all([
     supabase
       .from("afastamentos")
       .select("*, empresas!inner(nome), unidades!inner(nome), afastamento_tipos!inner(rotulo)")
@@ -48,6 +53,16 @@ export default async function AfastamentoDetailPage({
       .eq("entidade_id", id)
       .order("ocorrido_em", { ascending: false })
       .returns<TimelineEventRow[]>(),
+    supabase
+      .from("afastamento_tipos")
+      .select("id, rotulo")
+      .eq("requer_aprovacao", true)
+      .order("ordem"),
+    supabase
+      .from("unidades")
+      .select("id, nome")
+      .eq("ativo", true)
+      .order("nome"),
   ]);
   if (!rawRow) notFound();
   const row = rawRow as unknown as AfastamentoFull;
@@ -77,7 +92,23 @@ export default async function AfastamentoDetailPage({
         }
       />
 
-      {showApprovalBar && <ApprovalBar afastamentoId={row.id} />}
+      {showApprovalBar && (
+        <ApprovalBar
+          afastamentoId={row.id}
+          editProps={{
+            tipos: (tiposData ?? []) as { id: string; rotulo: string }[],
+            unidades: (unidadesData ?? []) as { id: string; nome: string }[],
+            initialValues: {
+              tipo_id: row.tipo_id,
+              unidade_id: row.unidade_id,
+              data_inicio: row.data_inicio,
+              duracao: row.duracao,
+              cid: row.cid,
+              emissor: row.emissor,
+            },
+          }}
+        />
+      )}
 
       {row.arquivo_url && (
         <section className="rounded-md border border-[var(--color-border)] bg-white p-6">
