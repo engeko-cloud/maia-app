@@ -44,7 +44,7 @@ export function InvestigationStatus({ ocorrenciaId, investigacao }: Props) {
         </header>
         <p className="mb-4 text-sm text-[var(--color-fg-muted)]">Aguardando aprovação da equipe de segurança.</p>
         <div className="flex flex-wrap gap-2">
-          <Link href={`/ocorrencias/${ocorrenciaId}/investigacao`}>
+          <Link href={`/app/ocorrencias/${ocorrenciaId}/investigacao`}>
             <Button>Revisar agora</Button>
           </Link>
           {investigacao?.token_publico ? (
@@ -70,7 +70,7 @@ export function InvestigationStatus({ ocorrenciaId, investigacao }: Props) {
         {truncated ? (
           <p className="mb-4 whitespace-pre-wrap text-sm text-[var(--color-fg)]">{truncated}</p>
         ) : null}
-        <Link href={`/ocorrencias/${ocorrenciaId}/investigacao`}>
+        <Link href={`/app/ocorrencias/${ocorrenciaId}/investigacao`}>
           <Button>Ajustar investigação</Button>
         </Link>
       </section>
@@ -103,8 +103,8 @@ export function InvestigationStatus({ ocorrenciaId, investigacao }: Props) {
           ? "Ainda não iniciada. Abra a investigação para registrar Ishikawa, ações, participantes e fotos."
           : "Investigação em andamento. Continue de onde parou."}
       </p>
-      <Link href={`/ocorrencias/${ocorrenciaId}/investigacao`}>
-        <Button>{isEmpty ? "Iniciar investigação" : "Continuar investigação"}</Button>
+      <Link href={`/app/ocorrencias/${ocorrenciaId}/investigacao`}>
+        <Button>{investigacao === null ? "Iniciar investigação" : "Continuar investigação"}</Button>
       </Link>
     </section>
   );

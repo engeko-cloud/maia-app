@@ -27,9 +27,9 @@ const dotColor: Record<ReturnType<typeof eventoDotTone>, string> = {
 };
 
 function detailHref(row: ActivityFeedRow): string {
-  if (row.tipo_entidade === "afastamento") return `/afastamentos/${row.entidade_id}`;
-  if (row.tipo_entidade === "ocorrencia") return `/ocorrencias/${row.entidade_id}`;
-  return `/ocorrencias/${row.entidade_id}/investigacao`;
+  if (row.tipo_entidade === "afastamento") return `/app/afastamentos/${row.entidade_id}`;
+  if (row.tipo_entidade === "ocorrencia") return `/app/ocorrencias/${row.entidade_id}`;
+  return `/app/ocorrencias/${row.entidade_id}/investigacao`;
 }
 
 interface ActivityFeedProps {

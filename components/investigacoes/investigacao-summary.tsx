@@ -19,7 +19,7 @@ export function InvestigacaoSummary({ ocorrenciaId, dados }: Props) {
         <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
           Investigação finalizada
         </h2>
-        <Link href={`/ocorrencias/${ocorrenciaId}/investigacao`}>
+        <Link href={`/app/ocorrencias/${ocorrenciaId}/investigacao`}>
           <Button variant="secondary" size="sm">Ver investigação</Button>
         </Link>
       </header>

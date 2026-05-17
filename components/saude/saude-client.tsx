@@ -29,7 +29,7 @@ function FailedList({ items, total }: { items: FailedItem[]; total: number }) {
             {item.colaborador_nome} · {item.tipo}
           </span>
           <Link
-            href={`/afastamentos/${item.id}`}
+            href={`/app/afastamentos/${item.id}`}
             className="ml-2 shrink-0 text-red-600 underline hover:text-red-800"
           >
             ver →

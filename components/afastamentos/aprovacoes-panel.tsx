@@ -61,7 +61,7 @@ export function AprovacoesPanel({ pendentes }: AprovacoesPanelProps) {
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 p-4">
               <Link
-                href={`/afastamentos/${p.id}`}
+                href={`/app/afastamentos/${p.id}`}
                 className="inline-flex items-center gap-1 text-sm font-medium text-[var(--brand-primary-600)] hover:underline"
               >
                 Ver detalhes
