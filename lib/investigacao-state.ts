@@ -1,10 +1,14 @@
-// lib/investigacao-state.ts
-export const INVESTIGACAO_SITUACOES = ["em_andamento", "finalizada"] as const;
+export const INVESTIGACAO_SITUACOES = [
+  "em_andamento", "em_aprovacao", "aprovada", "rejeitada", "cancelada",
+] as const;
 export type InvestigacaoSituacao = (typeof INVESTIGACAO_SITUACOES)[number];
 
 const SITUACAO_LABELS: Record<InvestigacaoSituacao, string> = {
   em_andamento: "Em andamento",
-  finalizada:   "Finalizada",
+  em_aprovacao: "Aguardando aprovação",
+  aprovada:     "Aprovada",
+  rejeitada:    "Rejeitada",
+  cancelada:    "Cancelada",
 };
 
 export function investigacaoSituacaoLabel(s: string): string {
