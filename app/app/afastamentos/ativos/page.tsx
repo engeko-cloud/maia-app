@@ -33,9 +33,7 @@ export default async function AfastamentosAtivosPage({
   const sp = await searchParams;
   const { q: searchQ, status: tipoCodigo } = parseFilterParams(sp);
 
-  // eslint-disable-next-line react-hooks/purity
   const today = new Date().toISOString().slice(0, 10);
-  // eslint-disable-next-line react-hooks/purity
   const sevenDaysFromNow = new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10);
 
   const supabase = await getSupabaseServer();
