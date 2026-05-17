@@ -6,6 +6,8 @@ import { AppUserPill } from "@/components/layout/app-user-pill";
 import { AppNotificationBell } from "@/components/layout/app-notification-bell";
 import { appNav } from "@/lib/nav";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/current-user";
+import { isInEquipe } from "@/lib/permissions";
 
 function deriveInitials(name: string): string {
   const tokens = name.trim().split(/\s+/).filter(Boolean);
@@ -28,9 +30,14 @@ export async function AppTopNav() {
   const nome = row?.nome?.trim() ?? "";
   const firstName = nome ? nome.split(/\s+/)[0]! : "Usuário";
   const initials = deriveInitials(nome || firstName);
-  const isAdmin = row?.administrador === true;
 
-  const groups = appNav.filter((g) => !g.adminOnly || isAdmin);
+  const me = await getCurrentUser();
+
+  const groups = appNav.filter((g) => {
+    if (g.adminOnly) return me?.administrador === true;
+    if (g.requiredEquipe) return isInEquipe(me, g.requiredEquipe);
+    return true;
+  });
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
