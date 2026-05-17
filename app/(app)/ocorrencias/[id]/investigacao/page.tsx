@@ -12,7 +12,12 @@ interface OcorrenciaSummary {
   tipo: string;
   situacao: string;
   data_ocorrencia: string;
-  investigacoes: { id: string; situacao: "em_andamento" | "finalizada"; dados: InvestigacaoDados | null }[] | null;
+  investigacoes: {
+    id: string;
+    situacao: "em_andamento" | "em_aprovacao" | "aprovada" | "rejeitada" | "cancelada";
+    dados: InvestigacaoDados | null;
+    token_publico: string;
+  }[] | null;
 }
 
 const EMPTY_DADOS: InvestigacaoDados = { ishikawa: [], plano_acao: [], participantes: [], fotos: [] };
@@ -34,7 +39,7 @@ export default async function InvestigacaoPage({
   ] = await Promise.all([
     supabase
       .from("ocorrencias")
-      .select("id, tipo, situacao, data_ocorrencia, investigacoes(id, situacao, dados)")
+      .select("id, tipo, situacao, data_ocorrencia, investigacoes(id, situacao, dados, token_publico)")
       .eq("id", id)
       .single(),
     supabase
@@ -84,6 +89,7 @@ export default async function InvestigacaoPage({
           ocorrenciaId={row.id}
           initialDados={initialDados}
           initialSituacao={initialSituacao}
+          tokenPublico={inv?.token_publico ?? ""}
           categorias={categorias ?? []}
           graus={graus ?? []}
           causasByCategoria={causasByCategoria}

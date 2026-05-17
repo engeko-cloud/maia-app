@@ -7,7 +7,7 @@ export type StatusTone =
   | "new"
   | "investigating";
 
-export type StatusDomain = "afastamento" | "ocorrencia";
+export type StatusDomain = "afastamento" | "ocorrencia" | "investigacao";
 
 export interface StatusPillSpec {
   tone: StatusTone;
@@ -27,7 +27,17 @@ const OCORRENCIA: Record<string, StatusPillSpec> = {
   concluida:        { tone: "success",       label: "Concluída" },
 };
 
+const INVESTIGACAO: Record<string, StatusPillSpec> = {
+  em_andamento: { tone: "new",      label: "Em andamento" },
+  em_aprovacao: { tone: "pending",  label: "Aguardando aprovação" },
+  aprovada:     { tone: "approved", label: "Aprovada" },
+  rejeitada:    { tone: "rejected", label: "Rejeitada" },
+  cancelada:    { tone: "draft",    label: "Cancelada" },
+};
+
 export function resolveStatusPill(domain: StatusDomain, situacao: string): StatusPillSpec {
-  const map = domain === "afastamento" ? AFASTAMENTO : OCORRENCIA;
+  const map =
+    domain === "afastamento" ? AFASTAMENTO :
+    domain === "ocorrencia"  ? OCORRENCIA  : INVESTIGACAO;
   return map[situacao] ?? { tone: "draft", label: situacao };
 }

@@ -11,6 +11,7 @@ import { IshikawaBranchEditor } from "./ishikawa-branch-editor";
 import { ActionItemEditor } from "./action-item-editor";
 import { ParticipanteList } from "./participante-list";
 import { FotoUploader } from "./foto-uploader";
+import { DecisionActionBar } from "./decision-action-bar";
 import {
   InvestigacaoDadosSchema,
   type InvestigacaoDados,
@@ -22,7 +23,8 @@ interface Grau      { id: string; codigo: string; rotulo: string; ativo: boolean
 interface Props {
   ocorrenciaId: string;
   initialDados: InvestigacaoDados;
-  initialSituacao: "em_andamento" | "finalizada";
+  initialSituacao: "em_andamento" | "em_aprovacao" | "aprovada" | "rejeitada" | "cancelada";
+  tokenPublico: string;
   categorias: Categoria[];
   graus:      Grau[];
   causasByCategoria: Record<string, Array<{ id: string; texto: string }>>;
@@ -31,7 +33,7 @@ interface Props {
 const STEPS = ["Ishikawa", "Plano de ação", "Participantes", "Fotos"] as const;
 
 export function InvestigacaoForm({
-  ocorrenciaId, initialDados, initialSituacao, categorias, graus, causasByCategoria,
+  ocorrenciaId, initialDados, initialSituacao, tokenPublico, categorias, graus, causasByCategoria,
 }: Props) {
   const router = useRouter();
   const [step, setStep] = React.useState(0);
@@ -62,7 +64,7 @@ export function InvestigacaoForm({
 
   const planoAcao = useFieldArray({ control: form.control, name: "plano_acao" });
 
-  async function persist(situacao: "em_andamento" | "finalizada") {
+  async function persist(situacao: "em_andamento") {
     setBusy(true);
     try {
       const dados = form.getValues();
@@ -82,12 +84,8 @@ export function InvestigacaoForm({
         const j = await res.json().catch(() => ({}));
         throw new Error(j.error ?? `HTTP ${res.status}`);
       }
-      toast.success(situacao === "finalizada" ? "Investigação finalizada." : "Rascunho salvo.");
-      if (situacao === "finalizada") {
-        router.push(`/ocorrencias/${ocorrenciaId}`);
-      } else {
-        router.refresh();
-      }
+      toast.success("Rascunho salvo.");
+      router.refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Erro ao salvar.");
     } finally {
@@ -104,7 +102,7 @@ export function InvestigacaoForm({
 
   return (
     <form
-      onSubmit={(e) => { e.preventDefault(); void persist(initialSituacao === "finalizada" ? "finalizada" : "em_andamento"); }}
+      onSubmit={(e) => { e.preventDefault(); void persist("em_andamento"); }}
       className="flex flex-col gap-6"
     >
       <Stepper
@@ -201,13 +199,18 @@ export function InvestigacaoForm({
             Próximo
           </Button>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="secondary" disabled={busy} onClick={() => void persist("em_andamento")}>
             Salvar rascunho
           </Button>
-          <Button type="button" disabled={busy} onClick={() => void persist("finalizada")}>
-            Finalizar
-          </Button>
+          <DecisionActionBar
+            ocorrenciaId={ocorrenciaId}
+            situacao={initialSituacao}
+            tokenPublico={tokenPublico}
+            onBeforeAction={async () => { await persist("em_andamento"); }}
+            busy={busy}
+            setBusy={setBusy}
+          />
         </div>
       </div>
     </form>

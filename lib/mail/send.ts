@@ -7,6 +7,9 @@ import { folhaApprovedMedical } from "@/emails/folha-approved-medical";
 import { ocorrenciaReceipt, type OcorrenciaEmail } from "@/emails/ocorrencia-receipt";
 import { ocorrenciaNovaParaSafety, type OcorrenciaParaSafetyEmail } from "@/emails/ocorrencia-nova-para-safety";
 import { portalOtp } from "@/emails/portal-otp";
+import { investigacaoEmAprovacao, type InvestigacaoEmAprovacaoEmail } from "@/emails/investigacao-em-aprovacao";
+import { investigacaoAprovada, type InvestigacaoAprovadaEmail } from "@/emails/investigacao-aprovada";
+import { investigacaoRejeitada, type InvestigacaoRejeitadaEmail } from "@/emails/investigacao-rejeitada";
 
 // Identificador humano para o subject: usa serial_id quando disponível,
 // senão omite. Email subject é o principal canal de "tracking" para o autor.
@@ -45,6 +48,18 @@ const TEMPLATES = {
     subject: (data: { o: OcorrenciaParaSafetyEmail }) => `Nova ocorrência${tagId(data.o.serial_id)} — investigação pendente`,
     render:  ocorrenciaNovaParaSafety,
   },
+  "investigacao-em-aprovacao": {
+    subject: (data: { o: InvestigacaoEmAprovacaoEmail }) => `Investigação${tagId(data.o.serial_id)} pronta para aprovação`,
+    render:  investigacaoEmAprovacao,
+  },
+  "investigacao-aprovada": {
+    subject: (data: { o: InvestigacaoAprovadaEmail }) => `Investigação${tagId(data.o.serial_id)} concluída`,
+    render:  investigacaoAprovada,
+  },
+  "investigacao-rejeitada": {
+    subject: (data: { o: InvestigacaoRejeitadaEmail }) => `Investigação${tagId(data.o.serial_id)} precisa de ajustes`,
+    render:  investigacaoRejeitada,
+  },
   "portal-otp": {
     subject: () => "Seu código de acesso — MAIA",
     render:  (data: { code: string }) => portalOtp(data),
@@ -53,12 +68,21 @@ const TEMPLATES = {
 
 export type TemplateKey = keyof typeof TEMPLATES;
 
+// Dev/test email override: when NODE_ENV !== "production", route every send
+// to this inbox so seed users with @seed.local addresses don't bounce. The
+// real recipient(s) are surfaced in the subject prefix for debugging.
+const DEV_RECIPIENT = "lucas@fapptory.me";
+
 export async function sendMail(opts: { template: TemplateKey; to: string | string[]; data: any }) {
   const t = TEMPLATES[opts.template];
   const subject = (t.subject as (d: any) => string)(opts.data);
   const html = (t.render as (d: any) => string)(opts.data);
   const resend = new Resend(process.env.RESEND_TEST_API_KEY!);
   const from   = "Maia <maia@fapptory.me>";
-  const { error } = await resend.emails.send({ from, to: opts.to, subject, html });
+  const isDev = process.env.NODE_ENV !== "production";
+  const realTo = Array.isArray(opts.to) ? opts.to.join(", ") : opts.to;
+  const to = isDev ? DEV_RECIPIENT : opts.to;
+  const finalSubject = isDev ? `[DEV → ${realTo}] ${subject}` : subject;
+  const { error } = await resend.emails.send({ from, to, subject: finalSubject, html });
   if (error) throw new Error(error.message);
 }

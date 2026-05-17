@@ -551,27 +551,49 @@ export type Database = {
           atualizado_em: string
           criado_em: string
           dados: Json
+          decidido_em: string | null
+          decidido_por: string | null
+          enviada_em: string | null
           id: string
+          motivo_rejeicao: string | null
           ocorrencia_id: string
           situacao: string
+          token_publico: string
         }
         Insert: {
           atualizado_em?: string
           criado_em?: string
           dados?: Json
+          decidido_em?: string | null
+          decidido_por?: string | null
+          enviada_em?: string | null
           id?: string
+          motivo_rejeicao?: string | null
           ocorrencia_id: string
           situacao?: string
+          token_publico?: string
         }
         Update: {
           atualizado_em?: string
           criado_em?: string
           dados?: Json
+          decidido_em?: string | null
+          decidido_por?: string | null
+          enviada_em?: string | null
           id?: string
+          motivo_rejeicao?: string | null
           ocorrencia_id?: string
           situacao?: string
+          token_publico?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "investigacoes_decidido_por_fkey"
+            columns: ["decidido_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "investigacoes_ocorrencia_id_fkey"
             columns: ["ocorrencia_id"]

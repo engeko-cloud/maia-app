@@ -3,11 +3,11 @@ import { z } from "zod";
 import { requireSafetyOrAdmin } from "@/lib/admin-auth";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { writeEvento } from "@/lib/eventos";
-import { InvestigacaoDadosSchema, assertFinalizable } from "@/lib/investigacao-dados";
+import { InvestigacaoDadosSchema } from "@/lib/investigacao-dados";
 
 const Body = z.object({
   dados:    InvestigacaoDadosSchema,
-  situacao: z.enum(["em_andamento", "finalizada"]).optional(),
+  situacao: z.enum(["em_andamento"]).optional(),  // public/admin draft saves only
 });
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -18,18 +18,27 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const parsed = Body.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ error: "validation", issues: parsed.error.issues }, { status: 400 });
 
-  // If the caller is trying to finalize, run the finalize gate before touching the row.
-  if (parsed.data.situacao === "finalizada") {
-    try {
-      assertFinalizable(parsed.data.dados);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Não é possível finalizar.";
-      return NextResponse.json({ error: msg }, { status: 422 });
-    }
-  }
-
   const admin = getSupabaseAdmin();
-  const targetSituacao = parsed.data.situacao ?? "em_andamento";
+
+  // Determine target situacao. Admin save must preserve em_aprovacao (don't
+  // drop the row out of the safety queue when the admin edits in place).
+  // Otherwise default to em_andamento.
+  const { data: existing } = await admin
+    .from("investigacoes")
+    .select("situacao")
+    .eq("ocorrencia_id", id)
+    .single();
+
+  let targetSituacao: string;
+  if (parsed.data.situacao) {
+    targetSituacao = parsed.data.situacao;
+  } else if (existing?.situacao === "em_aprovacao") {
+    targetSituacao = "em_aprovacao";
+  } else if (existing?.situacao === "rejeitada") {
+    targetSituacao = "rejeitada";
+  } else {
+    targetSituacao = "em_andamento";
+  }
 
   const { data: row, error } = await admin
     .from("investigacoes")
@@ -54,8 +63,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     parsed.data.dados.fotos.length > 0;
 
   const ocorrenciaSituacao =
-    targetSituacao === "finalizada"
-      ? "concluida"
+    targetSituacao === "em_aprovacao" || targetSituacao === "rejeitada"
+      ? "em_investigacao"
       : (dadosNonEmpty ? "em_investigacao" : "aberta");
   await admin.from("ocorrencias").update({ situacao: ocorrenciaSituacao }).eq("id", id);
 
@@ -73,13 +82,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         evento: "investigacao_iniciada", autorId: user.id,
       });
     }
-  }
-
-  if (targetSituacao === "finalizada") {
-    await writeEvento(admin, {
-      tipoEntidade: "investigacao", entidadeId: row.id,
-      evento: "investigacao_finalizada", autorId: user.id,
-    });
   }
 
   return NextResponse.json(row);

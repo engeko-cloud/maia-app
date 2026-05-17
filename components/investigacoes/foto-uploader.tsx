@@ -15,13 +15,15 @@ interface Props {
   ocorrenciaId: string;
   items: Foto[];
   onChange: (next: Foto[]) => void;
+  /** Override the upload endpoint URL (default: /api/private/investigacoes/upload). */
+  uploadUrl?: string;
   /** Max fotos per investigation (default 10, enforced server-side too). */
   max?: number;
 }
 
 const ACCEPT = "image/jpeg,image/png,image/webp";
 
-export function FotoUploader({ ocorrenciaId, items, onChange, max = 10 }: Props) {
+export function FotoUploader({ ocorrenciaId, items, onChange, uploadUrl, max = 10 }: Props) {
   const [busy, setBusy] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -35,7 +37,7 @@ export function FotoUploader({ ocorrenciaId, items, onChange, max = 10 }: Props)
       const fd = new FormData();
       fd.set("file", file);
       fd.set("ocorrencia_id", ocorrenciaId);
-      const res = await fetch("/api/private/investigacoes/upload", {
+      const res = await fetch(uploadUrl ?? "/api/private/investigacoes/upload", {
         method: "POST",
         body: fd,
       });

@@ -19,3 +19,21 @@ describe("resolveStatusPill", () => {
     expect(resolveStatusPill("afastamento", "fubar" as never)).toEqual({ tone: "draft", label: "fubar" });
   });
 });
+
+describe("investigacao status pills", () => {
+  it("maps em_aprovacao to pending tone", () => {
+    expect(resolveStatusPill("investigacao", "em_aprovacao")).toEqual({
+      tone: "pending", label: "Aguardando aprovação",
+    });
+  });
+  it("maps aprovada to approved tone", () => {
+    expect(resolveStatusPill("investigacao", "aprovada")).toEqual({
+      tone: "approved", label: "Aprovada",
+    });
+  });
+  it("maps rejeitada to rejected tone", () => {
+    expect(resolveStatusPill("investigacao", "rejeitada")).toEqual({
+      tone: "rejected", label: "Rejeitada",
+    });
+  });
+});
