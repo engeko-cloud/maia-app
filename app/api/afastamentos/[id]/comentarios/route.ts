@@ -5,7 +5,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 const CreateSchema = z.object({
   texto:  z.string().min(1),
-  anexos: z.array(z.object({ path: z.string(), nome: z.string() })),
+  anexos: z.array(z.object({ path: z.string().min(1), nome: z.string().min(1) })),
 });
 
 export async function POST(
@@ -27,7 +27,13 @@ export async function POST(
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const parsed = CreateSchema.safeParse(await req.json());
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
+  }
+  const parsed = CreateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "validation", issues: parsed.error.issues }, { status: 400 });
   }
