@@ -12,6 +12,7 @@ import {
   AfastamentoHistoryCard,
   AfastamentoHistoryCardSkeleton,
 } from "@/components/afastamentos/afastamento-history-card";
+import { ComentariosCard, type Comentario } from "@/components/afastamentos/comentarios-card";
 
 async function userCanApprove(userId: string): Promise<boolean> {
   const supabase = await getSupabaseServer();
@@ -23,6 +24,16 @@ async function userCanApprove(userId: string): Promise<boolean> {
     .eq("usuario_id", userId)
     .returns<{ equipes: { codigo: string } | null }[]>();
   return (m ?? []).some((row) => row.equipes?.codigo === "oh");
+}
+
+async function getIsAdmin(userId: string): Promise<boolean> {
+  const supabase = await getSupabaseServer();
+  const { data: u } = await supabase
+    .from("usuarios")
+    .select("administrador")
+    .eq("id", userId)
+    .single();
+  return u?.administrador === true;
 }
 
 export default async function AfastamentoDetailPage({
@@ -40,6 +51,7 @@ export default async function AfastamentoDetailPage({
     { data: timelineData },
     { data: tiposData },
     { data: unidadesData },
+    { data: comentariosData },
   ] = await Promise.all([
     supabase
       .from("afastamentos")
@@ -63,11 +75,19 @@ export default async function AfastamentoDetailPage({
       .select("id, nome")
       .eq("ativo", true)
       .order("nome"),
+    (supabase as any)
+      .from("afastamento_comentarios")
+      .select("id, autor_id, autor_nome, texto, anexos, criado_em, editado_em")
+      .eq("afastamento_id", id)
+      .order("criado_em", { ascending: false }),
   ]);
   if (!rawRow) notFound();
   const row = rawRow as unknown as AfastamentoFull;
 
-  const canApprove = user ? await userCanApprove(user.id) : false;
+  const [canApprove, isAdmin] = await Promise.all([
+    user ? userCanApprove(user.id) : Promise.resolve(false),
+    user ? getIsAdmin(user.id) : Promise.resolve(false),
+  ]);
   const showApprovalBar = row.situacao === "pendente" && canApprove;
 
   return (
@@ -128,7 +148,13 @@ export default async function AfastamentoDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <AfastamentoDetail a={row} />
-        <aside className="flex flex-col gap-6">
+        <aside className="flex flex-col gap-4">
+          <ComentariosCard
+            afastamentoId={row.id}
+            comentarios={(comentariosData ?? []) as Comentario[]}
+            currentUserId={user?.id ?? ""}
+            isAdmin={isAdmin}
+          />
           <section className="rounded-md border border-[var(--color-border)] bg-white p-6">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
               Histórico
