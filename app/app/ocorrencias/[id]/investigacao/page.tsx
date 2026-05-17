@@ -13,15 +13,17 @@ interface OcorrenciaSummary {
   tipo: string;
   situacao: string;
   data_ocorrencia: string;
-  investigacoes: {
-    id: string;
-    situacao: "em_andamento" | "em_aprovacao" | "aprovada" | "rejeitada" | "cancelada";
-    dados: InvestigacaoDados | null;
-    token_publico: string;
-  }[] | null;
 }
 
 const EMPTY_DADOS: InvestigacaoDados = { ishikawa: [], plano_acao: [], participantes: [], fotos: [] };
+
+function parseDados(raw: unknown): InvestigacaoDados {
+  if (!raw) return EMPTY_DADOS;
+  if (typeof raw === "string") {
+    try { return JSON.parse(raw) as InvestigacaoDados; } catch { return EMPTY_DADOS; }
+  }
+  return raw as InvestigacaoDados;
+}
 
 export default async function InvestigacaoPage({
   params,
@@ -34,6 +36,7 @@ export default async function InvestigacaoPage({
 
   const [
     { data: rawRow },
+    { data: invData },
     { data: timelineData },
     { data: categorias },
     { data: graus },
@@ -41,9 +44,14 @@ export default async function InvestigacaoPage({
   ] = await Promise.all([
     supabase
       .from("ocorrencias")
-      .select("id, tipo, situacao, data_ocorrencia, investigacoes(id, situacao, dados, token_publico)")
+      .select("id, tipo, situacao, data_ocorrencia")
       .eq("id", id)
       .single(),
+    supabase
+      .from("investigacoes")
+      .select("id, situacao, dados, token_publico")
+      .eq("ocorrencia_id", id)
+      .maybeSingle(),
     supabase
       .from("eventos")
       .select("id, evento, ocorrido_em, usuarios:autor_id(nome)")
@@ -63,9 +71,8 @@ export default async function InvestigacaoPage({
     (causasByCategoria[c.categoria_id] ??= []).push({ id: c.id, texto: c.texto });
   }
 
-  const inv = row.investigacoes?.[0];
-  const initialDados: InvestigacaoDados = (inv?.dados ?? EMPTY_DADOS) as InvestigacaoDados;
-  const initialSituacao = inv?.situacao ?? "em_andamento";
+  const initialDados: InvestigacaoDados = parseDados(invData?.dados);
+  const initialSituacao = (invData?.situacao as "em_andamento" | "em_aprovacao" | "aprovada" | "rejeitada" | "cancelada" | undefined) ?? "em_andamento";
 
   return (
     <div className="flex flex-col gap-6">
@@ -91,7 +98,7 @@ export default async function InvestigacaoPage({
           ocorrenciaId={row.id}
           initialDados={initialDados}
           initialSituacao={initialSituacao}
-          tokenPublico={inv?.token_publico ?? ""}
+          tokenPublico={(invData?.token_publico as string | null) ?? ""}
           categorias={categorias ?? []}
           graus={graus ?? []}
           causasByCategoria={causasByCategoria}
