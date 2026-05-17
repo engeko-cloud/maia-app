@@ -81,20 +81,6 @@ export default async function PortalPainelPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{saudacao}</h1>
         {banner && <p className="text-sm text-[var(--color-fg-muted)]">{banner}</p>}
       </header>
-      {rows && rows.length > 0 && rows[0].empresas.codigo_soc && (
-        <Suspense fallback={<ColaboradorSummaryCardSkeleton />}>
-          <ColaboradorSummaryCard
-            cpf={session.cpf}
-            empresaCodigoSoc={rows[0].empresas.codigo_soc}
-            fallback={{
-              nome: rows[0].colaborador_nome,
-              cargo: rows[0].colaborador_cargo,
-              setor: rows[0].colaborador_setor,
-              unidade_nome: rows[0].unidades?.nome ?? null,
-            }}
-          />
-        </Suspense>
-      )}
       {total > 0 && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <KpiCard
@@ -119,6 +105,20 @@ export default async function PortalPainelPage() {
             tone={isAfastado ? "warning" : "primary"}
           />
         </div>
+      )}
+      {rows && rows.length > 0 && rows[0].empresas.codigo_soc && (
+        <Suspense fallback={<ColaboradorSummaryCardSkeleton />}>
+          <ColaboradorSummaryCard
+            cpf={session.cpf}
+            empresaCodigoSoc={rows[0].empresas.codigo_soc}
+            fallback={{
+              nome: rows[0].colaborador_nome,
+              cargo: rows[0].colaborador_cargo,
+              setor: rows[0].colaborador_setor,
+              unidade_nome: rows[0].unidades?.nome ?? null,
+            }}
+          />
+        </Suspense>
       )}
       <DataTable
         rows={rows ?? []}
