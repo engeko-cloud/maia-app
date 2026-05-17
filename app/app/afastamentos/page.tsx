@@ -16,6 +16,7 @@ interface AfastamentoRow {
   data_inicio: string;
   data_fim: string | null;
   situacao: string;
+  cid: string | null;
   afastamento_tipos: { rotulo: string } | null;
 }
 
@@ -31,7 +32,7 @@ export default async function AfastamentosListPage({
   let query = supabase
     .from("afastamentos")
     .select(
-      "id, cpf, colaborador_nome, data_inicio, data_fim, situacao, afastamento_tipos!inner(rotulo)",
+      "id, cpf, colaborador_nome, data_inicio, data_fim, situacao, cid, afastamento_tipos!inner(rotulo)",
     )
     .order("criado_em", { ascending: false })
     .limit(200);
@@ -72,6 +73,12 @@ export default async function AfastamentosListPage({
       label: "Período",
       mono: true,
       render: (r) => `${fmtDate(r.data_inicio)} → ${r.data_fim ? fmtDate(r.data_fim) : "—"}`,
+    },
+    {
+      key: "cid",
+      label: "CID",
+      render: (r) => r.cid ?? "—",
+      mono: true,
     },
     {
       key: "situacao",
