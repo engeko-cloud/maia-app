@@ -1,52 +1,31 @@
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 type LogoSize = "sm" | "md" | "lg";
 
 interface LogoProps {
   size?: LogoSize;
-  /** Hides " · ENGEKO" (used in tight contexts). */
-  productOnly?: boolean;
-  /** Muted tone (footer). */
-  muted?: boolean;
+  /** Render as white (for dark backgrounds). */
+  inverted?: boolean;
   className?: string;
 }
 
-const wordmarkSize: Record<LogoSize, string> = {
-  sm: "text-sm",
-  md: "text-[15px]",
-  lg: "text-lg",
+const sizeMap: Record<LogoSize, { width: number; height: number }> = {
+  sm:  { width: 90,  height: 17 },
+  md:  { width: 110, height: 21 },
+  lg:  { width: 132, height: 25 },
 };
 
-export function Logo({
-  size = "md",
-  productOnly = false,
-  muted = false,
-  className,
-}: LogoProps) {
+export function Logo({ size = "md", inverted = false, className }: LogoProps) {
+  const { width, height } = sizeMap[size];
   return (
-    <span
-      className={cn(
-        "inline-flex items-center font-bold tracking-tight",
-        muted ? "text-[var(--color-fg-muted)]" : "text-[var(--brand-primary-600)]",
-        wordmarkSize[size],
-        className,
-      )}
-    >
-      MAIA
-      {!productOnly && (
-        <>
-          <span
-            className={cn(
-              "mx-1.5 font-bold",
-              muted ? "text-[var(--color-fg-subtle)]" : "text-[var(--brand-accent-500)]",
-            )}
-            aria-hidden="true"
-          >
-            ·
-          </span>
-          <span className={cn(muted && "text-[var(--color-fg-muted)]")}>ENGEKO</span>
-        </>
-      )}
-    </span>
+    <Image
+      src="/engeko-logo.png"
+      alt="ENGEKO"
+      width={width}
+      height={height}
+      className={cn(inverted && "brightness-0 invert", className)}
+      priority
+    />
   );
 }

@@ -1,5 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export interface AuthCardPitch {
   /** Heading words; the word at `accentIndex` renders in the brand accent color. */
@@ -40,15 +41,16 @@ function PitchHeading({ pitch }: { pitch: AuthCardPitch }) {
 }
 
 function BrandStamp({ tone }: { tone: "light" | "dark" }) {
-  const wordmarkClass =
-    tone === "light"
-      ? "text-sm font-semibold tracking-tight text-foreground"
-      : "text-sm font-semibold tracking-tight text-white";
   return (
-    <Link href="/" className="inline-flex items-center gap-2">
-      <span className={wordmarkClass}>
-        MAIA <span className="text-[var(--brand-accent-500)]">·</span> ENGEKO
-      </span>
+    <Link href="/" className="inline-flex items-center">
+      <Image
+        src="/engeko-logo.png"
+        alt="ENGEKO"
+        width={120}
+        height={23}
+        className={tone === "dark" ? "brightness-0 invert" : ""}
+        priority
+      />
     </Link>
   );
 }

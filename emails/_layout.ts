@@ -1,6 +1,8 @@
 import { EMAIL_COLORS, EMAIL_FONT } from "./tokens";
 import { escapeHtml } from "./_escape";
 
+const BASE_URL = process.env.NEXT_PUBLIC_APP_BASE_URL ?? "http://localhost:3000";
+
 export function layout(title: string, bodyHtml: string): string {
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -11,11 +13,17 @@ export function layout(title: string, bodyHtml: string): string {
 </head>
 <body style="margin:0;background:${EMAIL_COLORS.bg};font-family:${EMAIL_FONT};color:${EMAIL_COLORS.fg};">
   <div style="max-width:600px;margin:0 auto;padding:24px;">
-    <h1 style="font-size:20px;color:${EMAIL_COLORS.primary};margin:0 0 8px;">MAIA · ENGEKO</h1>
+    <div style="margin:0 0 16px;">
+      <img src="${BASE_URL}/engeko-logo.png" alt="ENGEKO" width="110" height="21" style="display:block;border:0;" />
+    </div>
     <h2 style="font-size:18px;margin:16px 0;">${escapeHtml(title)}</h2>
     ${bodyHtml}
     <div style="border-top:1px solid ${EMAIL_COLORS.border};margin-top:32px;padding-top:16px;">
-      <p style="font-size:12px;color:${EMAIL_COLORS.muted};margin:0;">Esta é uma mensagem automática. Não responda a este email.</p>
+      <p style="font-size:12px;color:${EMAIL_COLORS.muted};margin:0 0 12px;">Esta é uma mensagem automática. Não responda a este email.</p>
+      <a href="https://fapptory.me" target="_blank" rel="noreferrer noopener" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:${EMAIL_COLORS.muted};">
+        <span style="font-size:12px;">Feito por</span>
+        <img src="${BASE_URL}/fapptory-logo.png" alt="Fapptory" width="56" height="12" style="display:inline-block;vertical-align:middle;border:0;" />
+      </a>
     </div>
   </div>
 </body>
