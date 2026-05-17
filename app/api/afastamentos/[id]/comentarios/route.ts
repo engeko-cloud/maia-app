@@ -39,8 +39,7 @@ export async function POST(
   }
 
   const admin = getSupabaseAdmin();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (admin as any)
+  const { data, error } = await admin
     .from("afastamento_comentarios")
     .insert({
       afastamento_id: id,

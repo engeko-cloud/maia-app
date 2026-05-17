@@ -75,11 +75,12 @@ export default async function AfastamentoDetailPage({
       .select("id, nome")
       .eq("ativo", true)
       .order("nome"),
-    (supabase as any)
+    supabase
       .from("afastamento_comentarios")
       .select("id, autor_id, autor_nome, texto, anexos, criado_em, editado_em")
       .eq("afastamento_id", id)
-      .order("criado_em", { ascending: false }),
+      .order("criado_em", { ascending: false })
+      .returns<Comentario[]>(),
   ]);
   if (!rawRow) notFound();
   const row = rawRow as unknown as AfastamentoFull;
@@ -151,7 +152,7 @@ export default async function AfastamentoDetailPage({
         <aside className="flex flex-col gap-4">
           <ComentariosCard
             afastamentoId={row.id}
-            comentarios={(comentariosData ?? []) as Comentario[]}
+            comentarios={comentariosData ?? []}
             currentUserId={user?.id ?? ""}
             isAdmin={isAdmin}
           />

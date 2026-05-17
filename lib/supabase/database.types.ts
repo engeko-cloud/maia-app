@@ -1,3 +1,4 @@
+Connecting to db 5432
 export type Json =
   | string
   | number
@@ -34,6 +35,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      afastamento_comentarios: {
+        Row: {
+          afastamento_id: string
+          anexos: Json
+          autor_id: string
+          autor_nome: string
+          criado_em: string
+          editado_em: string | null
+          id: string
+          texto: string
+        }
+        Insert: {
+          afastamento_id: string
+          anexos?: Json
+          autor_id: string
+          autor_nome: string
+          criado_em?: string
+          editado_em?: string | null
+          id?: string
+          texto: string
+        }
+        Update: {
+          afastamento_id?: string
+          anexos?: Json
+          autor_id?: string
+          autor_nome?: string
+          criado_em?: string
+          editado_em?: string | null
+          id?: string
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "afastamento_comentarios_afastamento_id_fkey"
+            columns: ["afastamento_id"]
+            isOneToOne: false
+            referencedRelation: "afastamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       afastamento_ocorrencias: {
         Row: {
           afastamento_id: string
@@ -994,3 +1036,4 @@ export const Constants = {
   },
 } as const
 
+<claude-code-hint v="1" type="plugin" value="supabase@claude-plugins-official" />

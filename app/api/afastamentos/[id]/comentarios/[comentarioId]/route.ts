@@ -44,7 +44,7 @@ export async function PATCH(
   const admin = getSupabaseAdmin();
 
   // Fetch to verify ownership
-  const { data: comentario } = await (admin as any)
+  const { data: comentario } = await admin
     .from("afastamento_comentarios")
     .select("autor_id")
     .eq("id", comentarioId)
@@ -56,7 +56,7 @@ export async function PATCH(
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const { error } = await (admin as any)
+  const { error } = await admin
     .from("afastamento_comentarios")
     .update({
       texto:      parsed.data.texto,
@@ -82,7 +82,7 @@ export async function DELETE(
 
   const admin = getSupabaseAdmin();
 
-  const { data: comentario } = await (admin as any)
+  const { data: comentario } = await admin
     .from("afastamento_comentarios")
     .select("autor_id")
     .eq("id", comentarioId)
@@ -94,7 +94,7 @@ export async function DELETE(
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const { error } = await (admin as any)
+  const { error } = await admin
     .from("afastamento_comentarios")
     .delete()
     .eq("id", comentarioId)
