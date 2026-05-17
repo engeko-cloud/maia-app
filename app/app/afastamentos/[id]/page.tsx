@@ -6,6 +6,11 @@ import { StatusPill } from "@/components/data/status-pill";
 import { ApprovalBar } from "@/components/detail/approval-bar";
 import { TimelineEvents, type TimelineEventRow } from "@/components/detail/timeline-events";
 import { AfastamentoDetail, type AfastamentoFull } from "@/components/afastamentos/afastamento-detail";
+import { Suspense } from "react";
+import {
+  AfastamentoHistoryCard,
+  AfastamentoHistoryCardSkeleton,
+} from "@/components/afastamentos/afastamento-history-card";
 
 async function userCanApprove(userId: string): Promise<boolean> {
   const supabase = await getSupabaseServer();
@@ -72,6 +77,10 @@ export default async function AfastamentoDetailPage({
       />
 
       {showApprovalBar && <ApprovalBar afastamentoId={row.id} />}
+
+      <Suspense fallback={<AfastamentoHistoryCardSkeleton />}>
+        <AfastamentoHistoryCard cpf={row.cpf} currentId={id} />
+      </Suspense>
 
       <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <AfastamentoDetail a={row} />
