@@ -38,59 +38,14 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     return NextResponse.json({ error: "invalid_transition", from: full.situacao }, { status: 409 });
   }
 
-  // Envia para o Fluig apenas para tipos com requer_aprovacao = true
-  // (a edge function se auto-pula para tipos não mapeados)
-  let fluigResult: any = null;
-  if ((full.afastamento_tipos as any).requer_aprovacao) {
-    try {
-      fluigResult = await pushToFluig({
-        afastamento_id: id,
-        tipo_codigo:    (full.afastamento_tipos as any).codigo,
-        cpf:            full.cpf,
-        colaborador_nome:       full.colaborador_nome ?? "",
-        colaborador_codigo_soc: full.colaborador_codigo_soc,
-        empresa_codigo_fluig:   (full.empresas as any).codigo_fluig ?? "",
-        data_inicio: full.data_inicio,
-        data_fim:    full.data_fim,
-        duracao:     full.duracao,
-        cid:         full.cid,
-        arquivo_url: full.arquivo_url,
-      });
-
-      // Falha explícita retornada pela edge function (sem exceção)
-      if (!fluigResult?.ok && !fluigResult?.skipped) {
-        await writeEvento(admin, {
-          tipoEntidade: "afastamento", entidadeId: id,
-          evento: "fluig_erro", autorId: user.id, dados: fluigResult,
-        });
-        return NextResponse.json({ error: "fluig_failed", detail: fluigResult }, { status: 502 });
-      }
-
-      // Registra envio bem-sucedido ao Fluig
-      if (fluigResult?.ok) {
-        await writeEvento(admin, {
-          tipoEntidade: "afastamento", entidadeId: id,
-          evento: "fluig_enviado", autorId: user.id, dados: { response: fluigResult.response },
-        });
-      }
-    } catch (err: any) {
-      // Exceção de rede ou outra falha inesperada
-      await writeEvento(admin, {
-        tipoEntidade: "afastamento", entidadeId: id,
-        evento: "fluig_erro", autorId: user.id, dados: { error: err.message },
-      });
-      return NextResponse.json({ error: "fluig_failed", message: err.message }, { status: 502 });
-    }
-  }
-
-  // Atualiza situação para finalizado — registra enviado_fluig_em se o envio teve sucesso
+  // Atualiza situação para finalizado — enviado_fluig_em será definido assincronamente se o envio ao Fluig tiver sucesso
   const { error: upErr } = await admin
     .from("afastamentos")
     .update({
       situacao: "finalizado",
       decidido_por: user.id,
       decidido_em: new Date().toISOString(),
-      enviado_fluig_em: fluigResult?.ok ? new Date().toISOString() : null,
+      enviado_fluig_em: null,  // set asynchronously if Fluig succeeds
     })
     .eq("id", id);
   if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
@@ -136,6 +91,51 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
       await writeEvento(admin, { tipoEntidade: "afastamento", entidadeId: id,
         evento: "email_enviado", autorId: user.id, dados: { template: "folha-approved-medical", error: err.message } });
     }
+  }
+
+  // Fire-and-forget: envia para o Fluig sem bloquear a resposta ao cliente
+  if ((full.afastamento_tipos as any).requer_aprovacao) {
+    void (async () => {
+      try {
+        if (process.env.NODE_ENV !== "production") {
+          await writeEvento(admin, {
+            tipoEntidade: "afastamento", entidadeId: id,
+            evento: "fluig_enviado", autorId: user.id, dados: { dev_bypass: true },
+          });
+          return;
+        }
+        const result = await pushToFluig({
+          afastamento_id:         id,
+          tipo_codigo:            (full.afastamento_tipos as any).codigo,
+          cpf:                    full.cpf,
+          colaborador_nome:       full.colaborador_nome ?? "",
+          colaborador_codigo_soc: full.colaborador_codigo_soc,
+          empresa_codigo_fluig:   (full.empresas as any).codigo_fluig ?? "",
+          data_inicio: full.data_inicio,
+          data_fim:    full.data_fim,
+          duracao:     full.duracao,
+          cid:         full.cid,
+          arquivo_url: full.arquivo_url,
+        });
+        if (result?.ok) {
+          await admin.from("afastamentos").update({ enviado_fluig_em: new Date().toISOString() }).eq("id", id);
+          await writeEvento(admin, {
+            tipoEntidade: "afastamento", entidadeId: id,
+            evento: "fluig_enviado", autorId: user.id, dados: { response: result.response },
+          });
+        } else {
+          await writeEvento(admin, {
+            tipoEntidade: "afastamento", entidadeId: id,
+            evento: "fluig_erro", autorId: user.id, dados: result,
+          });
+        }
+      } catch (err: unknown) {
+        await writeEvento(admin, {
+          tipoEntidade: "afastamento", entidadeId: id,
+          evento: "fluig_erro", autorId: user.id, dados: { error: err instanceof Error ? err.message : String(err) },
+        });
+      }
+    })();
   }
 
   return NextResponse.json({ ok: true });
