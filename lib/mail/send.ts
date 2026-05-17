@@ -7,6 +7,7 @@ import { folhaApprovedMedical } from "@/emails/folha-approved-medical";
 import { ocorrenciaReceipt, type OcorrenciaEmail } from "@/emails/ocorrencia-receipt";
 import { ocorrenciaNovaParaSafety, type OcorrenciaParaSafetyEmail } from "@/emails/ocorrencia-nova-para-safety";
 import { portalOtp } from "@/emails/portal-otp";
+import { investigacaoEmAprovacao, type InvestigacaoEmAprovacaoEmail } from "@/emails/investigacao-em-aprovacao";
 
 // Identificador humano para o subject: usa serial_id quando disponível,
 // senão omite. Email subject é o principal canal de "tracking" para o autor.
@@ -44,6 +45,10 @@ const TEMPLATES = {
   "ocorrencia-nova-para-safety": {
     subject: (data: { o: OcorrenciaParaSafetyEmail }) => `Nova ocorrência${tagId(data.o.serial_id)} — investigação pendente`,
     render:  ocorrenciaNovaParaSafety,
+  },
+  "investigacao-em-aprovacao": {
+    subject: (data: { o: InvestigacaoEmAprovacaoEmail }) => `Investigação${tagId(data.o.serial_id)} pronta para aprovação`,
+    render:  investigacaoEmAprovacao,
   },
   "portal-otp": {
     subject: () => "Seu código de acesso — MAIA",
