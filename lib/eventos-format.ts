@@ -11,6 +11,7 @@ export function formatEventoVerb(evento: EventoType): string {
     case "rejeitado":                       return "rejeitou";
     case "resubmetido":                     return "resubmeteu";
     case "cancelado":                       return "cancelou";
+    case "editado":                         return "editou";
     case "fluig_enviado":                   return "enviou ao Fluig";
     case "fluig_erro":                      return "falhou no Fluig";
     case "email_enviado":                   return "enviou email";
@@ -37,6 +38,7 @@ export function eventoDotTone(evento: EventoType): EventoTone {
     case "cancelado":                             return "rejected";
     case "criado":
     case "resubmetido":
+    case "editado":
     case "investigacao_iniciada":                 return "new";
     case "fluig_enviado":
     case "fluig_erro":

@@ -12,6 +12,7 @@ describe("formatEventoVerb", () => {
     expect(formatEventoVerb("rejeitado")).toBe("rejeitou");
     expect(formatEventoVerb("resubmetido")).toBe("resubmeteu");
     expect(formatEventoVerb("cancelado")).toBe("cancelou");
+    expect(formatEventoVerb("editado")).toBe("editou");
     expect(formatEventoVerb("fluig_enviado")).toBe("enviou ao Fluig");
     expect(formatEventoVerb("fluig_erro")).toBe("falhou no Fluig");
     expect(formatEventoVerb("email_enviado")).toBe("enviou email");
@@ -34,9 +35,10 @@ describe("eventoDotTone", () => {
     expect(eventoDotTone("rejeitado")).toBe("rejected");
     expect(eventoDotTone("cancelado")).toBe("rejected");
   });
-  it("returns 'new' for criado and resubmetido", () => {
+  it("returns 'new' for criado, resubmetido, and editado", () => {
     expect(eventoDotTone("criado")).toBe("new");
     expect(eventoDotTone("resubmetido")).toBe("new");
+    expect(eventoDotTone("editado")).toBe("new");
   });
   it("returns 'muted' for system events", () => {
     expect(eventoDotTone("fluig_enviado")).toBe("muted");
