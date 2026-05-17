@@ -9,7 +9,13 @@ import { ocorrenciaTipoLabel } from "@/lib/ocorrencia-state";
 import type { InvestigacaoDados } from "@/lib/investigacao-dados";
 
 type OcorrenciaWithInvestigacoes = OcorrenciaFull & {
-  investigacoes: { id: string; situacao: "em_andamento" | "finalizada"; dados: InvestigacaoDados | null }[] | null;
+  investigacoes: {
+    id: string;
+    situacao: "em_andamento" | "em_aprovacao" | "aprovada" | "rejeitada" | "cancelada";
+    dados: InvestigacaoDados | null;
+    token_publico: string;
+    motivo_rejeicao: string | null;
+  }[] | null;
 };
 
 export default async function OcorrenciaDetailPage({
@@ -22,7 +28,7 @@ export default async function OcorrenciaDetailPage({
   const [{ data: rawRow }, { data: timelineData }] = await Promise.all([
     supabase
       .from("ocorrencias")
-      .select("*, empresas!inner(nome), unidades!inner(nome), investigacoes(id, situacao, dados)")
+      .select("*, empresas!inner(nome), unidades!inner(nome), investigacoes(id, situacao, dados, token_publico, motivo_rejeicao)")
       .eq("id", id)
       .single(),
     supabase
