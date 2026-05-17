@@ -27,6 +27,7 @@ export const appNav: AppNavGroup[] = [
     requiredEquipe: "oh",
     items: [
       { label: "Lista",      href: "/app/afastamentos" },
+      { label: "Ativos",     href: "/app/afastamentos/ativos" },
       { label: "Aprovações", href: "/app/afastamentos/aprovacoes" },
     ],
   },
