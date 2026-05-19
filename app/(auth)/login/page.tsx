@@ -22,7 +22,7 @@ import { loginSchema, type LoginInput } from "@/lib/auth-schemas";
 import { translateAuthError } from "@/lib/auth-errors";
 
 const magicSchema = z.object({
-  email: z.string().trim().toLowerCase().email("Informe um email válido."),
+  email: z.string().email("Informe um email válido."),
 });
 type MagicInput = z.infer<typeof magicSchema>;
 
@@ -74,7 +74,7 @@ export default function LoginPage() {
     const res = await fetch("/api/auth/magic-link", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: values.email }),
+      body: JSON.stringify({ email: values.email.trim().toLowerCase() }),
     });
     if (!res.ok) {
       setErrorMessage("Erro ao enviar link. Tente novamente.");

@@ -8,7 +8,8 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const { data: usuario } = await supabase
+  const admin = getSupabaseAdmin();
+  const { data: usuario } = await admin
     .from("usuarios")
     .select("id, nome, sobrenome, email, administrador, ativo, avatar_url, primeiro_acesso")
     .eq("id", user.id)
