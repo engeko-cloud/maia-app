@@ -13,9 +13,9 @@ export interface AuthCardPitch {
 
 interface AuthCardProps {
   /** Form-column heading ("Entrar", "Recuperar senha", "Nova senha"). */
-  title: string;
+  title?: string;
   /** One-line lead under the title. */
-  lead: string;
+  lead?: string;
   /** Brand-panel pitch (right side desktop, top banner mobile). */
   pitch: AuthCardPitch;
   children: React.ReactNode;
@@ -77,8 +77,8 @@ export function AuthCard({ title, lead, pitch, children }: AuthCardProps) {
         {/* Form panel */}
         <div className="p-6 md:p-8">
           <BrandStamp tone="light" />
-          <h1 className="mt-6 text-2xl font-semibold tracking-tight">{title}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{lead}</p>
+          {title && <h1 className="mt-6 text-2xl font-semibold tracking-tight">{title}</h1>}
+          {lead && <p className="mt-1 text-sm text-muted-foreground">{lead}</p>}
           <div className="mt-6">{children}</div>
         </div>
 

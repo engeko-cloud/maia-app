@@ -91,14 +91,16 @@ export default function LoginPage() {
 
   return (
     <AuthCard
-      title={mode === "magic" ? "Link de acesso" : "Entrar"}
+      title={magicSent ? undefined : mode === "magic" ? "Link de acesso" : "Entrar"}
       lead={
-        mode === "magic"
+        magicSent
+          ? undefined
+          : mode === "magic"
           ? "Enviaremos um link para você entrar sem precisar de senha."
           : "Acesse sua conta para gerenciar afastamentos e ocorrências."
       }
       pitch={{
-        headingWords: ["Saúde", "ocupacional,", "sem", "fricção."],
+        headingWords: ["Saúde", "ocupacional,", "sem", "atrito."],
         accentIndex: 1,
         sub: "Aprovações, investigações e relatórios em um único painel — feito para a equipe de SST da ENGEKO.",
       }}

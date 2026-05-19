@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   const parsed = Body.safeParse(await req.json());
   if (!parsed.success) return NextResponse.json({ ok: true });
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL ?? "";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL ?? process.env.APP_URL ?? "https://maia-app-five.vercel.app";
   const admin = getSupabaseAdmin();
 
   const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
