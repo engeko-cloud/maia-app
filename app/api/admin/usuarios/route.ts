@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireAdminUser } from "@/lib/admin-auth";
+import { sendMail } from "@/lib/mail/send";
 
 export async function GET() {
   if (!await requireAdminUser()) return NextResponse.json({ error: "forbidden" }, { status: 403 });
@@ -27,26 +28,44 @@ export async function POST(req: NextRequest) {
 
   const admin = getSupabaseAdmin();
 
-  // Envia convite Supabase (cria auth.users e dispara email).
-  const { data: invite, error: invErr } = await admin.auth.admin.inviteUserByEmail(parsed.data.email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_BASE_URL}/update-password`,
+  const { data: created, error: createErr } = await admin.auth.admin.createUser({
+    email: parsed.data.email,
+    password: "Mudar123",
+    email_confirm: true,
   });
-  if (invErr) return NextResponse.json({ error: invErr.message }, { status: 500 });
+  if (createErr) return NextResponse.json({ error: createErr.message }, { status: 500 });
 
   const { error: insErr } = await admin.from("usuarios").upsert({
-    id: invite.user.id,
+    id: created.user.id,
     email: parsed.data.email,
     nome: parsed.data.nome,
     sobrenome: parsed.data.sobrenome,
     administrador: parsed.data.administrador ?? false,
     criado_por: me.id,
-  }, { onConflict: "id" });
+    primeiro_acesso: true,
+  } as any, { onConflict: "id" });
 
-  // Se o insert falhar, remove o auth.user órfão.
   if (insErr) {
-    await admin.auth.admin.deleteUser(invite.user.id).catch(() => {});
+    await admin.auth.admin.deleteUser(created.user.id).catch(() => {});
     return NextResponse.json({ error: insErr.message }, { status: 500 });
   }
 
-  return NextResponse.json({ id: invite.user.id });
+  const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL ?? "";
+  try {
+    await sendMail({
+      template: "user-invite",
+      to: parsed.data.email,
+      data: {
+        u: {
+          nome: parsed.data.nome,
+          email: parsed.data.email,
+          loginUrl: `${baseUrl}/login`,
+        },
+      },
+    });
+  } catch {
+    // Email failure is non-fatal — user was created.
+  }
+
+  return NextResponse.json({ id: created.user.id });
 }
