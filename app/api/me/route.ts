@@ -10,7 +10,7 @@ export async function GET() {
 
   const { data: usuario } = await supabase
     .from("usuarios")
-    .select("id, nome, sobrenome, email, administrador, ativo")
+    .select("id, nome, sobrenome, email, administrador, ativo, avatar_url, primeiro_acesso")
     .eq("id", user.id)
     .single();
 
@@ -23,7 +23,7 @@ export async function GET() {
 
   const equipes = (memberships ?? []).flatMap((m: any) => m.equipes?.codigo ? [m.equipes.codigo] : []);
 
-  return NextResponse.json({ ...usuario, equipes });
+  return NextResponse.json({ ...(usuario as any), equipes });
 }
 
 const PatchBody = z.object({
