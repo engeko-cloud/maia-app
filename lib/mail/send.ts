@@ -90,8 +90,8 @@ export async function sendMail(opts: { template: TemplateKey; to: string | strin
   const t = TEMPLATES[opts.template];
   const subject = (t.subject as (d: any) => string)(opts.data);
   const html = (t.render as (d: any) => string)(opts.data);
-  const resend = new Resend(process.env.RESEND_TEST_API_KEY!);
-  const from   = "Maia <maia@fapptory.me>";
+  const resend = new Resend(process.env.RESEND_API_KEY!);
+  const from   = `${process.env.RESEND_FROM_NAME} <${process.env.RESEND_FROM_EMAIL}>`;
   const override = process.env.NODE_ENV !== "production" && t.toUser;
   const realTo = Array.isArray(opts.to) ? opts.to.join(", ") : opts.to;
   const to = override ? DEV_RECIPIENT : opts.to;
