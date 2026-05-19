@@ -15,12 +15,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AuthCard } from "@/components/auth/auth-card";
-import { getSupabaseBrowser } from "@/lib/supabase/client";
 import {
   forgotPasswordSchema,
   type ForgotPasswordInput,
 } from "@/lib/auth-schemas";
-import { translateAuthError } from "@/lib/auth-errors";
 
 export default function ForgotPasswordPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -32,12 +30,13 @@ export default function ForgotPasswordPage() {
 
   async function onSubmit(values: ForgotPasswordInput) {
     setErrorMessage(null);
-    const supabase = getSupabaseBrowser();
-    const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_BASE_URL ?? window.location.origin}/update-password`,
+    const res = await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: values.email }),
     });
-    if (error) {
-      setErrorMessage(translateAuthError(error));
+    if (!res.ok) {
+      setErrorMessage("Erro ao enviar. Tente novamente.");
       return;
     }
     setSubmittedEmail(values.email);
