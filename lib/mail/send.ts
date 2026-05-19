@@ -12,6 +12,7 @@ import { investigacaoEmAprovacao, type InvestigacaoEmAprovacaoEmail } from "@/em
 import { investigacaoAprovada, type InvestigacaoAprovadaEmail } from "@/emails/investigacao-aprovada";
 import { investigacaoRejeitada, type InvestigacaoRejeitadaEmail } from "@/emails/investigacao-rejeitada";
 import { passwordReset, type PasswordResetEmail } from "@/emails/password-reset";
+import { magicLink, type MagicLinkEmail } from "@/emails/magic-link";
 
 // Identificador humano para o subject: usa serial_id quando disponível,
 // senão omite. Email subject é o principal canal de "tracking" para o autor.
@@ -87,6 +88,11 @@ const TEMPLATES = {
   "password-reset": {
     subject: () => "Redefinir sua senha no MAIA",
     render:  (data: { p: PasswordResetEmail }) => passwordReset(data),
+    toUser:  true,
+  },
+  "magic-link": {
+    subject: () => "Seu link de acesso ao MAIA",
+    render:  (data: { m: MagicLinkEmail }) => magicLink(data),
     toUser:  true,
   },
 } as const;
