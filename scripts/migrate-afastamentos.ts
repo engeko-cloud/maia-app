@@ -40,7 +40,7 @@ export interface LookupMaps {
   userMap:    Map<string, string>;  // legacy auth uuid → new usuarios uuid
 }
 
-interface NewAfastamento {
+export interface NewAfastamento {
   serial_id:         number;
   situacao:          string;
   tipo_id:           string;
