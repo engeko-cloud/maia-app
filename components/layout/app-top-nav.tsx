@@ -23,9 +23,9 @@ export async function AppTopNav() {
 
   const { data: row } = await supabase
     .from("usuarios")
-    .select("nome, administrador")
+    .select("nome, administrador, avatar_url")
     .eq("id", authUser.id)
-    .single();
+    .single() as any;
 
   const nome = row?.nome?.trim() ?? "";
   const firstName = nome ? nome.split(/\s+/)[0]! : "Usuário";
@@ -50,7 +50,7 @@ export async function AppTopNav() {
 
         <div className="ml-auto flex items-center gap-2">
           <AppNotificationBell />
-          <AppUserPill firstName={firstName} initials={initials} />
+          <AppUserPill firstName={firstName} initials={initials} avatarUrl={row?.avatar_url} />
         </div>
 
         <span
