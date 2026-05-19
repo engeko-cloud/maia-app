@@ -295,11 +295,14 @@ async function main(): Promise<void> {
   const dryRun = process.argv.includes("--dry-run");
   if (dryRun) console.log("[DRY RUN] Building maps and previewing transform only.\n");
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars");
+  }
+
   const legacyClient = createClient(LEGACY_URL, LEGACY_SERVICE_KEY);
-  const newClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const newClient = createClient(supabaseUrl, serviceKey);
 
   console.log("Building lookup maps...");
   const [tipoMap, empresaMap, unidadeMap, userMap] = await Promise.all([
