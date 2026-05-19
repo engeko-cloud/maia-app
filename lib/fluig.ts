@@ -12,6 +12,11 @@ export type FluigPushPayload = {
   data_fim: string | null;
   duracao: number | null;
   cid: string | null;
+  cid_descricao: string | null;
+  hora_inicio: string | null;
+  hora_fim: string | null;
+  emissor: { tipo: string; nome: string; numero: string; uf: string } | null;
+  unidade_nome: string;
   arquivo_url: string | null;
 };
 

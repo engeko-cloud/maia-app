@@ -26,6 +26,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     .from("afastamentos")
     .select(`id, serial_id, token_edicao, situacao, cpf, colaborador_nome, colaborador_codigo_soc,
              data_inicio, data_fim, duracao, cid, arquivo_url, tipo_id, email_remetente,
+             hora_inicio, hora_fim, emissor,
              empresas!inner(nome, codigo_fluig),
              unidades!inner(nome),
              afastamento_tipos!inner(codigo, rotulo, requer_aprovacao)`)
@@ -111,11 +112,16 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
           colaborador_nome:       full.colaborador_nome ?? "",
           colaborador_codigo_soc: full.colaborador_codigo_soc,
           empresa_codigo_fluig:   (full.empresas as any).codigo_fluig ?? "",
-          data_inicio: full.data_inicio,
-          data_fim:    full.data_fim,
-          duracao:     full.duracao,
-          cid:         full.cid,
-          arquivo_url: full.arquivo_url,
+          data_inicio:    full.data_inicio,
+          data_fim:       full.data_fim,
+          duracao:        full.duracao,
+          cid:            full.cid,
+          cid_descricao:  full.cid,  // no cid_list table; pass code as description
+          hora_inicio:    full.hora_inicio ?? null,
+          hora_fim:       full.hora_fim ?? null,
+          emissor:        full.emissor as { tipo: string; nome: string; numero: string; uf: string } | null,
+          unidade_nome:   (full.unidades as any).nome ?? "",
+          arquivo_url:    full.arquivo_url,
         });
         if (result?.ok) {
           await admin.from("afastamentos").update({ enviado_fluig_em: new Date().toISOString() }).eq("id", id);
