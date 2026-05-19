@@ -117,7 +117,12 @@ export function transformRow(
     cid:               nullIfEmpty(row.cid),
     arquivo_url:       nullIfEmpty(row.arquivo_url),
     email_remetente:   row.responsavel,
-    decidido_por:      row.aprovado_por ? (maps.userMap.get(row.aprovado_por) ?? null) : null,
+    decidido_por:      (() => {
+      if (!row.aprovado_por) return null;
+      const mapped = maps.userMap.get(row.aprovado_por);
+      if (!mapped) console.warn(`[WARN] id=${row.id}: aprovado_por "${row.aprovado_por}" not in userMap, setting decidido_por=null`);
+      return mapped ?? null;
+    })(),
     decidido_em:       row.aprovado_em ?? null,
     criado_em:         row.criado_em,
     emissor:           row.emissor ?? null,
