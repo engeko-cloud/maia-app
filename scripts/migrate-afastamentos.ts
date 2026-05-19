@@ -173,12 +173,14 @@ async function buildUnidadeMap(
     ]);
   if (e1) throw e1;
   if (e2) throw e2;
+  if (!legacyUnidades) throw new Error("legacyClient unidades query returned null data");
+  if (!newUnidades) throw new Error("newClient unidades query returned null data");
 
   const newByCodigo = new Map(
-    (newUnidades ?? []).map((u) => [u.codigo as string, u.id as string])
+    newUnidades.map((u) => [u.codigo as string, u.id as string])
   );
   const map = new Map<number, string>();
-  for (const lu of legacyUnidades ?? []) {
+  for (const lu of legacyUnidades) {
     const newId = newByCodigo.get(lu.codigo as string);
     if (newId) {
       map.set(lu.id as number, newId);
@@ -202,9 +204,11 @@ async function buildUserMap(
     ]);
   if (e1) throw e1;
   if (e2) throw e2;
+  if (!authData) throw new Error("listUsers returned no data");
+  if (!newUsers) throw new Error("newClient usuarios query returned null data");
 
   const newByEmail = new Map(
-    (newUsers ?? []).map((u) => [u.email as string, u.id as string])
+    newUsers.map((u) => [u.email as string, u.id as string])
   );
   const map = new Map<string, string>();
   for (const lu of authData.users) {
