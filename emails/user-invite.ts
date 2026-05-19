@@ -1,18 +1,25 @@
-// Template usado apenas para gerar HTML (em scripts/output/user-invite.html)
-// e colar no Supabase Dashboard → Auth → Email Templates → Invite user.
-// Não é despachado via lib/mail/send.ts: o envio é feito pelo Supabase quando
-// admin.auth.admin.inviteUserByEmail() é chamado em app/api/admin/usuarios/route.ts.
 import { layout } from "./_layout";
 import { EMAIL_COLORS } from "./tokens";
 import { escapeHtml } from "./_escape";
 
-export function userInvite(data: { inviteUrl: string; nome: string }): string {
-  const { inviteUrl, nome } = data;
+export type UserInviteEmail = {
+  nome: string;
+  email: string;
+  loginUrl: string;
+};
+
+export function userInvite(data: { u: UserInviteEmail }): string {
+  const { nome, email, loginUrl } = data.u;
   const body = `
-    <p style="margin:16px 0;">Olá ${escapeHtml(nome)}, sua conta no MAIA foi criada. Clique no botão abaixo para definir sua senha.</p>
+    <p style="margin:16px 0;">Olá ${escapeHtml(nome)}, sua conta no MAIA foi criada.</p>
+    <p style="margin:16px 0;">
+      Acesse com o email <strong>${escapeHtml(email)}</strong> e a senha temporária <strong>Mudar123</strong>.<br/>
+      Na primeira entrada, o sistema pedirá que você defina sua própria senha.
+    </p>
     <div style="margin-top:16px;">
-      <a href="${escapeHtml(inviteUrl)}" style="display:inline-block;background:${EMAIL_COLORS.primary};color:${EMAIL_COLORS.primaryFg};padding:10px 16px;border-radius:6px;text-decoration:none;">Definir senha</a>
+      <a href="${escapeHtml(loginUrl)}" style="display:inline-block;background:${EMAIL_COLORS.primary};color:${EMAIL_COLORS.primaryFg};padding:10px 16px;border-radius:6px;text-decoration:none;">Acessar o MAIA</a>
     </div>
+    <p style="margin-top:16px;font-size:13px;color:${EMAIL_COLORS.muted};">Se não reconhece este email, ignore esta mensagem.</p>
   `;
-  return layout("Acesso ao MAIA", body);
+  return layout("Sua conta no MAIA foi criada", body);
 }

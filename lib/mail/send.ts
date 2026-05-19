@@ -7,6 +7,7 @@ import { folhaApprovedMedical } from "@/emails/folha-approved-medical";
 import { ocorrenciaReceipt, type OcorrenciaEmail } from "@/emails/ocorrencia-receipt";
 import { ocorrenciaNovaParaSafety, type OcorrenciaParaSafetyEmail } from "@/emails/ocorrencia-nova-para-safety";
 import { portalOtp } from "@/emails/portal-otp";
+import { userInvite, type UserInviteEmail } from "@/emails/user-invite";
 import { investigacaoEmAprovacao, type InvestigacaoEmAprovacaoEmail } from "@/emails/investigacao-em-aprovacao";
 import { investigacaoAprovada, type InvestigacaoAprovadaEmail } from "@/emails/investigacao-aprovada";
 import { investigacaoRejeitada, type InvestigacaoRejeitadaEmail } from "@/emails/investigacao-rejeitada";
@@ -76,6 +77,11 @@ const TEMPLATES = {
     subject: () => "Seu código de acesso — MAIA",
     render:  (data: { code: string }) => portalOtp(data),
     toUser:  false,
+  },
+  "user-invite": {
+    subject: () => "Sua conta no MAIA foi criada",
+    render:  (data: { u: UserInviteEmail }) => userInvite(data),
+    toUser:  true,
   },
 } as const;
 
