@@ -31,13 +31,25 @@ export default function LoginPage() {
   async function onSubmit(values: LoginInput) {
     setErrorMessage(null);
     const supabase = getSupabaseBrowser();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: values.email,
       password: values.password,
     });
     if (error) {
       setErrorMessage(translateAuthError(error));
       return;
+    }
+    const userId = data.user?.id;
+    if (userId) {
+      const { data: me } = await supabase
+        .from("usuarios")
+        .select("primeiro_acesso")
+        .eq("id", userId)
+        .single();
+      if ((me as any)?.primeiro_acesso) {
+        router.push("/update-password?first=1");
+        return;
+      }
     }
     router.push("/app/painel");
     router.refresh();
