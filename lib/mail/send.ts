@@ -11,6 +11,7 @@ import { userInvite, type UserInviteEmail } from "@/emails/user-invite";
 import { investigacaoEmAprovacao, type InvestigacaoEmAprovacaoEmail } from "@/emails/investigacao-em-aprovacao";
 import { investigacaoAprovada, type InvestigacaoAprovadaEmail } from "@/emails/investigacao-aprovada";
 import { investigacaoRejeitada, type InvestigacaoRejeitadaEmail } from "@/emails/investigacao-rejeitada";
+import { passwordReset, type PasswordResetEmail } from "@/emails/password-reset";
 
 // Identificador humano para o subject: usa serial_id quando disponível,
 // senão omite. Email subject é o principal canal de "tracking" para o autor.
@@ -81,6 +82,11 @@ const TEMPLATES = {
   "user-invite": {
     subject: () => "Sua conta no MAIA foi criada",
     render:  (data: { u: UserInviteEmail }) => userInvite(data),
+    toUser:  true,
+  },
+  "password-reset": {
+    subject: () => "Redefinir sua senha no MAIA",
+    render:  (data: { p: PasswordResetEmail }) => passwordReset(data),
     toUser:  true,
   },
 } as const;
