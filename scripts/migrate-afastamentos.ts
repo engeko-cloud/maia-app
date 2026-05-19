@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 // ── Legacy types ──────────────────────────────────────────────────────────────
 
@@ -140,50 +140,51 @@ export function transformRow(
 // ── Map builders ─────────────────────────────────────────────────────────────
 
 async function buildTipoMap(
-  newClient: ReturnType<typeof createClient>
+  newClient: SupabaseClient
 ): Promise<Map<string, string>> {
-  const { data, error } = await newClient
+  const { data: raw, error } = await newClient
     .from("afastamento_tipos")
     .select("id, codigo");
   if (error) throw error;
-  return new Map(data.map((r) => [r.codigo as string, r.id as string]));
+  const data = (raw ?? []) as Array<{ id: string; codigo: string }>;
+  return new Map(data.map((r) => [r.codigo, r.id]));
 }
 
 async function buildEmpresaMap(
-  newClient: ReturnType<typeof createClient>
+  newClient: SupabaseClient
 ): Promise<Map<string, string>> {
-  const { data, error } = await newClient
+  const { data: raw, error } = await newClient
     .from("empresas")
     .select("id, codigo_fluig")
     .not("codigo_fluig", "is", null);
   if (error) throw error;
-  return new Map(
-    data.map((r) => [r.codigo_fluig as string, r.id as string])
-  );
+  const data = (raw ?? []) as Array<{ id: string; codigo_fluig: string }>;
+  return new Map(data.map((r) => [r.codigo_fluig, r.id]));
 }
 
 async function buildUnidadeMap(
-  legacyClient: ReturnType<typeof createClient>,
-  newClient: ReturnType<typeof createClient>
+  legacyClient: SupabaseClient,
+  newClient: SupabaseClient
 ): Promise<Map<number, string>> {
-  const [{ data: legacyUnidades, error: e1 }, { data: newUnidades, error: e2 }] =
+  const [{ data: rawLegacy, error: e1 }, { data: rawNew, error: e2 }] =
     await Promise.all([
       legacyClient.from("unidades").select("id, codigo"),
       newClient.from("unidades").select("id, codigo"),
     ]);
   if (e1) throw e1;
   if (e2) throw e2;
-  if (!legacyUnidades) throw new Error("legacyClient unidades query returned null data");
-  if (!newUnidades) throw new Error("newClient unidades query returned null data");
+  if (!rawLegacy) throw new Error("legacyClient unidades query returned null data");
+  if (!rawNew) throw new Error("newClient unidades query returned null data");
 
-  const newByCodigo = new Map(
-    newUnidades.map((u) => [u.codigo as string, u.id as string])
-  );
+  const legacyUnidades = rawLegacy as Array<{ id: number; codigo: string }>;
+  const newUnidades = rawNew as Array<{ id: string; codigo: string }>;
+
+  const newByCodigo = new Map(newUnidades.map((u) => [u.codigo, u.id]));
   const map = new Map<number, string>();
   for (const lu of legacyUnidades) {
-    const newId = newByCodigo.get(lu.codigo as string);
+    const newId = newByCodigo.get(lu.codigo);
     if (newId) {
-      map.set(lu.id as number, newId);
+      map.set(lu.id, newId);
     } else {
       console.warn(
         `[WARN] Legacy unidade id=${lu.id} codigo="${lu.codigo}" not found in new DB`
@@ -194,10 +195,10 @@ async function buildUnidadeMap(
 }
 
 async function buildUserMap(
-  legacyClient: ReturnType<typeof createClient>,
-  newClient: ReturnType<typeof createClient>
+  legacyClient: SupabaseClient,
+  newClient: SupabaseClient
 ): Promise<Map<string, string>> {
-  const [{ data: authData, error: e1 }, { data: newUsers, error: e2 }] =
+  const [{ data: authData, error: e1 }, { data: rawUsers, error: e2 }] =
     await Promise.all([
       legacyClient.auth.admin.listUsers({ perPage: 1000 }),
       newClient.from("usuarios").select("id, email"),
@@ -205,11 +206,10 @@ async function buildUserMap(
   if (e1) throw e1;
   if (e2) throw e2;
   if (!authData) throw new Error("listUsers returned no data");
-  if (!newUsers) throw new Error("newClient usuarios query returned null data");
+  if (!rawUsers) throw new Error("newClient usuarios query returned null data");
 
-  const newByEmail = new Map(
-    newUsers.map((u) => [u.email as string, u.id as string])
-  );
+  const newUsers = rawUsers as Array<{ id: string; email: string }>;
+  const newByEmail = new Map(newUsers.map((u) => [u.email, u.id]));
   const map = new Map<string, string>();
   for (const lu of authData.users) {
     if (!lu.email) continue;
@@ -233,8 +233,8 @@ const LEGACY_SERVICE_KEY = "PASTE_LEGACY_SERVICE_KEY_HERE";
 const PAGE_SIZE = 500;
 
 async function runMigration(
-  legacyClient: ReturnType<typeof createClient>,
-  newClient: ReturnType<typeof createClient>,
+  legacyClient: SupabaseClient,
+  newClient: SupabaseClient,
   maps: LookupMaps,
   dryRun: boolean
 ): Promise<void> {
