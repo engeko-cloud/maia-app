@@ -57,15 +57,16 @@ export default function PerfilPage() {
     defaultValues: { password: "", confirm: "" },
   });
 
+  const resetRef = React.useRef(profileForm.reset);
   React.useEffect(() => {
     fetch("/api/me")
       .then((r) => r.json())
       .then((data: Me) => {
         setMe(data);
-        profileForm.reset({ nome: data.nome ?? "", sobrenome: data.sobrenome ?? "" });
+        resetRef.current({ nome: data.nome ?? "", sobrenome: data.sobrenome ?? "" });
       })
       .catch(() => toast.error("Erro ao carregar perfil."));
-  }, [profileForm]);
+  }, []);
 
   async function onProfileSubmit(values: ProfileInput) {
     const r = await fetch("/api/me", {
