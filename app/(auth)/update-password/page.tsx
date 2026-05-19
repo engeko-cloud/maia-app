@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,6 +29,8 @@ const SESSION_EXPIRED_MESSAGE = "Sua sessão expirou. Solicite um novo link.";
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isFirstAccess = searchParams.get("first") === "1";
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const form = useForm<UpdatePasswordInput>({
     resolver: zodResolver(updatePasswordSchema),
@@ -45,6 +47,13 @@ export default function UpdatePasswordPage() {
       setErrorMessage(translateAuthError(error));
       return;
     }
+    if (isFirstAccess) {
+      await fetch("/api/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ primeiro_acesso: false }),
+      }).catch(() => {});
+    }
     toast.success("Senha atualizada.");
     router.push("/app/painel");
   }
@@ -53,8 +62,12 @@ export default function UpdatePasswordPage() {
 
   return (
     <AuthCard
-      title="Nova senha"
-      lead="Defina uma senha que só você conhece."
+      title={isFirstAccess ? "Crie sua senha de acesso" : "Nova senha"}
+      lead={
+        isFirstAccess
+          ? "Escolha uma senha pessoal para substituir a senha temporária."
+          : "Defina uma senha que só você conhece."
+      }
       pitch={{
         headingWords: ["Senhas", "fortes,", "dados", "protegidos."],
         accentIndex: 1,
@@ -72,10 +85,7 @@ export default function UpdatePasswordPage() {
               {sessionExpired && (
                 <>
                   {" "}
-                  <Link
-                    href="/forgot-password"
-                    className="underline underline-offset-2"
-                  >
+                  <Link href="/forgot-password" className="underline underline-offset-2">
                     Solicitar novo link
                   </Link>
                 </>
@@ -89,11 +99,7 @@ export default function UpdatePasswordPage() {
               <FormItem>
                 <FormLabel>Nova senha</FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
-                    autoComplete="new-password"
-                    {...field}
-                  />
+                  <Input type="password" autoComplete="new-password" {...field} />
                 </FormControl>
                 <FormDescription>Mínimo de 8 caracteres.</FormDescription>
                 <FormMessage />
@@ -107,11 +113,7 @@ export default function UpdatePasswordPage() {
               <FormItem>
                 <FormLabel>Confirmar senha</FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
-                    autoComplete="new-password"
-                    {...field}
-                  />
+                  <Input type="password" autoComplete="new-password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
