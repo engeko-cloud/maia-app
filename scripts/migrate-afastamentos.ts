@@ -222,3 +222,103 @@ async function buildUserMap(
   }
   return map;
 }
+
+// ── Legacy credentials (delete this file after migration) ────────────────────
+
+const LEGACY_URL = "https://zgdemniuryzfohgxdafu.supabase.co";
+const LEGACY_SERVICE_KEY = "PASTE_LEGACY_SERVICE_KEY_HERE";
+
+// ── Migration runner ──────────────────────────────────────────────────────────
+
+const PAGE_SIZE = 500;
+
+async function runMigration(
+  legacyClient: ReturnType<typeof createClient>,
+  newClient: ReturnType<typeof createClient>,
+  maps: LookupMaps,
+  dryRun: boolean
+): Promise<void> {
+  const { count, error: countError } = await legacyClient
+    .from("afastamentos")
+    .select("*", { count: "exact", head: true });
+  if (countError) throw countError;
+
+  const total = count ?? 0;
+  console.log(`Total legacy records: ${total}`);
+
+  let offset = 0;
+  let migrated = 0;
+  let skipped = 0;
+
+  while (offset < total) {
+    const { data: rows, error } = await legacyClient
+      .from("afastamentos")
+      .select("*")
+      .order("id", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!rows || rows.length === 0) break;
+
+    const transformed = rows
+      .map((r) => transformRow(r as LegacyAfastamento, maps))
+      .filter((r): r is NonNullable<typeof r> => r !== null);
+
+    skipped += rows.length - transformed.length;
+
+    if (dryRun) {
+      if (offset === 0) {
+        console.log("\n[DRY RUN] First 5 transformed rows:");
+        console.log(JSON.stringify(transformed.slice(0, 5), null, 2));
+        console.log("\n[DRY RUN] No data written. Exiting.");
+      }
+      break;
+    }
+
+    const { error: upsertError } = await newClient
+      .from("afastamentos")
+      .upsert(transformed as never[], { onConflict: "serial_id" });
+    if (upsertError) throw upsertError;
+
+    migrated += transformed.length;
+    offset += rows.length;
+    console.log(`[${offset}/${total}] migrated=${migrated} skipped=${skipped}`);
+  }
+
+  if (!dryRun) {
+    console.log(`\nMigration complete. migrated=${migrated} skipped=${skipped}`);
+  }
+}
+
+// ── Entry point ───────────────────────────────────────────────────────────────
+
+async function main(): Promise<void> {
+  const dryRun = process.argv.includes("--dry-run");
+  if (dryRun) console.log("[DRY RUN] Building maps and previewing transform only.\n");
+
+  const legacyClient = createClient(LEGACY_URL, LEGACY_SERVICE_KEY);
+  const newClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  console.log("Building lookup maps...");
+  const [tipoMap, empresaMap, unidadeMap, userMap] = await Promise.all([
+    buildTipoMap(newClient),
+    buildEmpresaMap(newClient),
+    buildUnidadeMap(legacyClient, newClient),
+    buildUserMap(legacyClient, newClient),
+  ]);
+
+  console.log(
+    `Maps ready — tipos:${tipoMap.size} empresas:${empresaMap.size} unidades:${unidadeMap.size} users:${userMap.size}`
+  );
+
+  await runMigration(legacyClient, newClient, { tipoMap, empresaMap, unidadeMap, userMap }, dryRun);
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
