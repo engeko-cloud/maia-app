@@ -136,3 +136,85 @@ export function transformRow(
     enviado_fluig_em:  null,
   };
 }
+
+// ── Map builders ─────────────────────────────────────────────────────────────
+
+async function buildTipoMap(
+  newClient: ReturnType<typeof createClient>
+): Promise<Map<string, string>> {
+  const { data, error } = await newClient
+    .from("afastamento_tipos")
+    .select("id, codigo");
+  if (error) throw error;
+  return new Map(data.map((r) => [r.codigo as string, r.id as string]));
+}
+
+async function buildEmpresaMap(
+  newClient: ReturnType<typeof createClient>
+): Promise<Map<string, string>> {
+  const { data, error } = await newClient
+    .from("empresas")
+    .select("id, codigo_fluig")
+    .not("codigo_fluig", "is", null);
+  if (error) throw error;
+  return new Map(
+    data.map((r) => [r.codigo_fluig as string, r.id as string])
+  );
+}
+
+async function buildUnidadeMap(
+  legacyClient: ReturnType<typeof createClient>,
+  newClient: ReturnType<typeof createClient>
+): Promise<Map<number, string>> {
+  const [{ data: legacyUnidades, error: e1 }, { data: newUnidades, error: e2 }] =
+    await Promise.all([
+      legacyClient.from("unidades").select("id, codigo"),
+      newClient.from("unidades").select("id, codigo"),
+    ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+
+  const newByCodigo = new Map(
+    (newUnidades ?? []).map((u) => [u.codigo as string, u.id as string])
+  );
+  const map = new Map<number, string>();
+  for (const lu of legacyUnidades ?? []) {
+    const newId = newByCodigo.get(lu.codigo as string);
+    if (newId) {
+      map.set(lu.id as number, newId);
+    } else {
+      console.warn(
+        `[WARN] Legacy unidade id=${lu.id} codigo="${lu.codigo}" not found in new DB`
+      );
+    }
+  }
+  return map;
+}
+
+async function buildUserMap(
+  legacyClient: ReturnType<typeof createClient>,
+  newClient: ReturnType<typeof createClient>
+): Promise<Map<string, string>> {
+  const [{ data: authData, error: e1 }, { data: newUsers, error: e2 }] =
+    await Promise.all([
+      legacyClient.auth.admin.listUsers({ perPage: 1000 }),
+      newClient.from("usuarios").select("id, email"),
+    ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+
+  const newByEmail = new Map(
+    (newUsers ?? []).map((u) => [u.email as string, u.id as string])
+  );
+  const map = new Map<string, string>();
+  for (const lu of authData.users) {
+    if (!lu.email) continue;
+    const newId = newByEmail.get(lu.email);
+    if (newId) {
+      map.set(lu.id, newId);
+    } else {
+      console.warn(`[WARN] Legacy user ${lu.email} not found in new DB`);
+    }
+  }
+  return map;
+}
