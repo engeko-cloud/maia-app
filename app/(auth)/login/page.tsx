@@ -119,7 +119,7 @@ export default function LoginPage() {
           </button>
         </div>
       ) : mode === "magic" ? (
-        <Form {...magicForm}>
+        <Form key="magic" {...magicForm}>
           <form onSubmit={magicForm.handleSubmit(onMagicSubmit)} className="space-y-4">
             {errorMessage && (
               <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
@@ -156,7 +156,7 @@ export default function LoginPage() {
           </form>
         </Form>
       ) : (
-        <Form {...passwordForm}>
+        <Form key="senha" {...passwordForm}>
           <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
             {errorMessage && (
               <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
