@@ -114,9 +114,12 @@ export function transformRow(
 
   return {
     serial_id:         row.id,
-    situacao:          tipoKey === "consulta_medica"
-                         ? "finalizado"
-                         : ({ aprovado: "finalizado", reprovado: "rejeitado", recebido: "pendente" } as Record<string, string>)[row.status] ?? row.status,
+    situacao:          (() => {
+      const SITUACAO_MAP: Record<string, string> = { aprovado: "finalizado", reprovado: "rejeitado", recebido: "pendente" };
+      const mapped = SITUACAO_MAP[row.status] ?? row.status;
+      const allowsPending = ["doenca", "prev_31", "prev_91"].includes(tipoKey);
+      return (!allowsPending && mapped !== "rejeitado") ? "finalizado" : mapped;
+    })(),
     tipo_id:           tipoId,
     empresa_id:        empresaId,
     unidade_id:        unidadeId,
