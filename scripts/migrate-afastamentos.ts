@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { fetchSocColaborador } from "@/lib/soc";
 
 // ── Legacy types ──────────────────────────────────────────────────────────────
 
@@ -299,25 +300,89 @@ async function runMigration(
   }
 }
 
+// ── SOC enrichment ────────────────────────────────────────────────────────────
+
+const SOC_CONCURRENCY = 10;
+
+async function runSocEnrichment(newClient: SupabaseClient): Promise<void> {
+  const { data: empresas, error: e1 } = await newClient
+    .from("empresas")
+    .select("id, codigo_soc");
+  if (e1) throw e1;
+  if (!empresas) throw new Error("empresas query returned null");
+
+  const codigoSocByEmpresaId = new Map(
+    (empresas as Array<{ id: string; codigo_soc: string | null }>)
+      .filter((e) => e.codigo_soc)
+      .map((e) => [e.id, e.codigo_soc!])
+  );
+
+  const { data: records, error: e2 } = await newClient
+    .from("afastamentos")
+    .select("id, cpf, empresa_id")
+    .is("colaborador_nome", null);
+  if (e2) throw e2;
+  if (!records) throw new Error("afastamentos query returned null");
+
+  const rows = records as Array<{ id: string; cpf: string; empresa_id: string }>;
+  console.log(`SOC enrichment: ${rows.length} records with null colaborador_nome`);
+
+  let enriched = 0;
+  let notFound = 0;
+
+  for (let i = 0; i < rows.length; i += SOC_CONCURRENCY) {
+    const batch = rows.slice(i, i + SOC_CONCURRENCY);
+    await Promise.all(batch.map(async (row) => {
+      const codigoSoc = codigoSocByEmpresaId.get(row.empresa_id);
+      if (!codigoSoc) return;
+
+      const colaborador = await fetchSocColaborador(codigoSoc, row.cpf);
+      if (!colaborador) { notFound++; return; }
+
+      const { error } = await newClient
+        .from("afastamentos")
+        .update({
+          colaborador_nome: colaborador.nome,
+          colaborador_setor: colaborador.setor ?? null,
+          colaborador_cargo: colaborador.cargo ?? null,
+        })
+        .eq("id", row.id);
+      if (error) console.warn(`[WARN] SOC update failed for id=${row.id}: ${error.message}`);
+      else enriched++;
+    }));
+
+    console.log(`[${Math.min(i + SOC_CONCURRENCY, rows.length)}/${rows.length}] enriched=${enriched} not_found=${notFound}`);
+  }
+
+  console.log(`\nSOC enrichment complete. enriched=${enriched} not_found=${notFound}`);
+}
+
 // ── Entry point ───────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
   const dryRun = process.argv.includes("--dry-run");
+  const enrichSoc = process.argv.includes("--enrich-soc");
   if (dryRun) console.log("[DRY RUN] Building maps and previewing transform only.\n");
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const legacyUrl = process.env.LEGACY_SUPABASE_URL;
-  const legacyKey = process.env.LEGACY_SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceKey) {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars");
   }
+
+  const newClient = createClient(supabaseUrl, serviceKey);
+
+  if (enrichSoc) {
+    await runSocEnrichment(newClient);
+    return;
+  }
+
+  const legacyUrl = process.env.LEGACY_SUPABASE_URL;
+  const legacyKey = process.env.LEGACY_SUPABASE_SERVICE_ROLE_KEY;
   if (!legacyUrl || !legacyKey) {
     throw new Error("Missing LEGACY_SUPABASE_URL or LEGACY_SUPABASE_SERVICE_ROLE_KEY env vars");
   }
-
   const legacyClient = createClient(legacyUrl, legacyKey);
-  const newClient = createClient(supabaseUrl, serviceKey);
 
   console.log("Building lookup maps...");
   const [tipoMap, empresaMap, unidadeMap, userMap] = await Promise.all([
