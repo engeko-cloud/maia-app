@@ -16,7 +16,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   const parsed = Body.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: "validation", issues: parsed.error.issues }, { status: 400 });
+  if (!parsed.success) {
+    const first = parsed.error.issues[0];
+    const where = first?.path.join(".") || "dados";
+    return NextResponse.json(
+      { error: `Validação falhou em ${where}: ${first?.message ?? "inválido"}`, issues: parsed.error.issues },
+      { status: 400 },
+    );
+  }
 
   const admin = getSupabaseAdmin();
 

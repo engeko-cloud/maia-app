@@ -14,6 +14,7 @@ import { FotoUploader } from "./foto-uploader";
 import { DecisionActionBar } from "./decision-action-bar";
 import {
   InvestigacaoDadosSchema,
+  sanitizeInvestigacaoDados,
   type InvestigacaoDados,
 } from "@/lib/investigacao-dados";
 import { gatePassesUpTo } from "@/lib/investigacao-step-gates";
@@ -68,14 +69,7 @@ export function InvestigacaoForm({
   async function persist(situacao: "em_andamento") {
     setBusy(true);
     try {
-      const dados = form.getValues();
-      // Strip ishikawa branches with no causes (they're "empty" slots)
-      const cleanDados: InvestigacaoDados = {
-        ...dados,
-        ishikawa: dados.ishikawa
-          .map((b) => ({ ...b, causas: b.causas.filter((c) => c.descricao.trim().length > 0) }))
-          .filter((b) => b.causas.length > 0),
-      };
+      const cleanDados = sanitizeInvestigacaoDados(form.getValues());
       const res = await fetch(`/api/ocorrencias/${ocorrenciaId}/investigacao`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

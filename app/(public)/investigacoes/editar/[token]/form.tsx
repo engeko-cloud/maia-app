@@ -13,6 +13,7 @@ import { ParticipanteList } from "@/components/investigacoes/participante-list";
 import { FotoUploader } from "@/components/investigacoes/foto-uploader";
 import {
   InvestigacaoDadosSchema,
+  sanitizeInvestigacaoDados,
   type InvestigacaoDados,
 } from "@/lib/investigacao-dados";
 import { STEP_GATES, gatePassesUpTo } from "@/lib/investigacao-step-gates";
@@ -95,15 +96,7 @@ export function PublicInvestigacaoForm({
     const sub = form.watch((value) => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
-        // Strip empty ishikawa branches before persisting (matches admin form).
-        const cleaned: InvestigacaoDados = {
-          ...(value as InvestigacaoDados),
-          ishikawa: ((value.ishikawa ?? []) as InvestigacaoDados["ishikawa"]).map((b) => ({
-            ...b,
-            causas: (b.causas ?? []).filter((c) => c.descricao.trim().length > 0),
-          })).filter((b) => b.causas.length > 0),
-        };
-        void flushSave(cleaned);
+        void flushSave(sanitizeInvestigacaoDados(value as InvestigacaoDados));
       }, 800);
     });
     return () => {
@@ -123,7 +116,7 @@ export function PublicInvestigacaoForm({
       const res = await fetch(`/api/public/investigacoes/${token}/submeter`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dados: form.getValues() }),
+        body: JSON.stringify({ dados: sanitizeInvestigacaoDados(form.getValues()) }),
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));

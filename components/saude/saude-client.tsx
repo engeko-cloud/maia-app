@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { MetricCard, type MetricTone } from "@/components/saude/metric-card";
+import { FluigErrorSheet } from "@/components/saude/fluig-error-sheet";
 import type { SaudeMetrics, FailedItem } from "@/lib/dashboard/queries";
 
 function useInterval(callback: () => void, delay: number) {
@@ -20,7 +21,15 @@ function formatHoras(h: number | null): string {
   return `${h.toFixed(1)} h`;
 }
 
-function FailedList({ items, total }: { items: FailedItem[]; total: number }) {
+interface FailedListProps {
+  items: FailedItem[];
+  total: number;
+  /** When set, "ver" opens the FluigErrorSheet with details + retry. */
+  variant?: "default" | "fluig";
+  onRetried?: () => void;
+}
+
+function FailedList({ items, total, variant = "default", onRetried }: FailedListProps) {
   return (
     <ul className="space-y-1">
       {items.map((item) => (
@@ -28,12 +37,16 @@ function FailedList({ items, total }: { items: FailedItem[]; total: number }) {
           <span className="truncate text-[var(--color-fg-muted)]">
             {item.colaborador_nome} · {item.tipo}
           </span>
-          <Link
-            href={`/app/afastamentos/${item.id}`}
-            className="ml-2 shrink-0 text-red-600 underline hover:text-red-800"
-          >
-            ver →
-          </Link>
+          {variant === "fluig" ? (
+            <FluigErrorSheet item={item} onRetried={onRetried} />
+          ) : (
+            <Link
+              href={`/app/afastamentos/${item.id}`}
+              className="ml-2 shrink-0 text-red-600 underline hover:text-red-800"
+            >
+              ver →
+            </Link>
+          )}
         </li>
       ))}
       {total > items.length && (
@@ -102,7 +115,12 @@ export function SaudeClient({ initial }: SaudeClientProps) {
             delta={data.fluig_falhados.count === 0 ? "Tudo enviado" : undefined}
           >
             {data.fluig_falhados.count > 0 && (
-              <FailedList items={data.fluig_falhados.items} total={data.fluig_falhados.count} />
+              <FailedList
+                items={data.fluig_falhados.items}
+                total={data.fluig_falhados.count}
+                variant="fluig"
+                onRetried={refresh}
+              />
             )}
           </MetricCard>
         </div>

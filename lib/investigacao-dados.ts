@@ -47,6 +47,18 @@ export const InvestigacaoDadosSchema = z.object({
 
 export type InvestigacaoDados = z.infer<typeof InvestigacaoDadosSchema>;
 
+/** Drops ishikawa causas with empty descricao and branches that end up with no
+ *  causas. Apply before save/submit so partially-populated rows from the editor
+ *  don't fail schema validation (descricao.min(1), causas.min(1)). */
+export function sanitizeInvestigacaoDados(dados: InvestigacaoDados): InvestigacaoDados {
+  return {
+    ...dados,
+    ishikawa: dados.ishikawa
+      .map((b) => ({ ...b, causas: b.causas.filter((c) => c.descricao.trim().length > 0) }))
+      .filter((b) => b.causas.length > 0),
+  };
+}
+
 /** Throws if the dados shape is not ready to finalize.
  *  Rules per spec §3.3:
  *  - dados.ishikawa.length >= 1

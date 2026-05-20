@@ -479,11 +479,14 @@ export function AfastamentoForm({
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label>Data fim</Label>
+              <Label htmlFor="data_fim">Data fim</Label>
               <Input
+                id="data_fim"
+                type="date"
                 value={dataFimDerivada ?? ""}
                 readOnly
                 tabIndex={-1}
+                placeholder="Calculada"
                 className="bg-muted/40 text-muted-foreground"
               />
             </div>

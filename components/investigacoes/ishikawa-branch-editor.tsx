@@ -2,7 +2,6 @@
 import * as React from "react";
 import { Trash2Icon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -27,12 +26,23 @@ interface Props {
 export function IshikawaBranchEditor({
   branch, categoriaRotulo, graus, causas, onChange, readOnly, readOnlyLabel,
 }: Props) {
+  const grauLabel = React.useCallback(
+    (id: string | null) => (id ? graus.find((g) => g.id === id)?.rotulo ?? null : null),
+    [graus],
+  );
+  const causaLabel = React.useCallback(
+    (id: string | undefined) => (id ? causas.find((c) => c.id === id)?.texto ?? null : null),
+    [causas],
+  );
+
   function setGrau(id: string) {
     onChange({ ...branch, grau_id: id || null });
   }
-  function setCausa(idx: number, text: string) {
+  function setCausa(idx: number, libraryId: string) {
+    const lib = causas.find((c) => c.id === libraryId);
+    if (!lib) return;
     const next = [...branch.causas];
-    next[idx] = { descricao: text };
+    next[idx] = { causa_id: lib.id, descricao: lib.texto };
     onChange({ ...branch, causas: next });
   }
   function addCausa() {
@@ -61,7 +71,9 @@ export function IshikawaBranchEditor({
           disabled={readOnly}
         >
           <SelectTrigger id={`grau-${branch.categoria_id}`} className="w-full">
-            <SelectValue placeholder="Selecionar grau" />
+            <SelectValue placeholder="Selecionar grau">
+              {(value: string | null) => grauLabel(value) ?? "Selecionar grau"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {graus.map((g) => (
@@ -73,46 +85,34 @@ export function IshikawaBranchEditor({
 
       <ul className="flex flex-col gap-3">
         {branch.causas.map((c, idx) => (
-          <li key={idx} className="flex flex-col gap-2 rounded-md border border-[var(--color-border)] p-3">
-            <div className="flex items-center gap-2">
-              <Select
-                value={c.causa_id ?? ""}
-                onValueChange={(libraryId) => {
-                  const lib = causas.find((x) => x.id === libraryId);
-                  if (!lib) return;
-                  const next = [...branch.causas];
-                  next[idx] = { causa_id: lib.id, descricao: lib.texto };
-                  onChange({ ...branch, causas: next });
-                }}
-                disabled={readOnly || causas.length === 0}
+          <li key={idx} className="flex items-center gap-2 rounded-md border border-[var(--color-border)] p-3">
+            <Select
+              value={c.causa_id ?? ""}
+              onValueChange={(libraryId) => setCausa(idx, libraryId as string)}
+              disabled={readOnly || causas.length === 0}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={causas.length === 0 ? "Sem causas na biblioteca" : "Selecionar causa…"}>
+                  {(value: string | undefined) => causaLabel(value) ?? (causas.length === 0 ? "Sem causas na biblioteca" : "Selecionar causa…")}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {causas.map((cc) => (
+                  <SelectItem key={cc.id} value={cc.id}>{cc.texto}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!readOnly ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => removeCausa(idx)}
+                aria-label="Remover causa"
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder={causas.length === 0 ? "Sem causas na biblioteca" : "Escolher da biblioteca…"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {causas.map((cc) => (
-                    <SelectItem key={cc.id} value={cc.id}>{cc.texto}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {!readOnly ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeCausa(idx)}
-                  aria-label="Remover causa"
-                >
-                  <Trash2Icon className="size-4" aria-hidden="true" />
-                </Button>
-              ) : null}
-            </div>
-            <Input
-              value={c.descricao}
-              onChange={(e) => setCausa(idx, e.target.value)}
-              placeholder="Ou descreva uma causa personalizada"
-              disabled={readOnly}
-            />
+                <Trash2Icon className="size-4" aria-hidden="true" />
+              </Button>
+            ) : null}
           </li>
         ))}
       </ul>
@@ -123,6 +123,7 @@ export function IshikawaBranchEditor({
           variant="ghost"
           className="mt-3"
           onClick={addCausa}
+          disabled={causas.length === 0}
         >
           <PlusIcon className="size-4" aria-hidden="true" />
           Adicionar causa

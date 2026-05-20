@@ -32,7 +32,21 @@ export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id:
     .single();
   if (fetchError || !user) return NextResponse.json({ error: "Usuário não encontrado." }, { status: 404 });
   if (user.administrador) return NextResponse.json({ error: "Não é possível excluir um administrador." }, { status: 409 });
-  const { error } = await admin.from("usuarios").delete().eq("id", id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Delete public.usuarios first so FK violations from other tables (eventos,
+  // equipe_usuarios, etc.) surface as a clear error before we touch auth.
+  const { error: pubErr } = await admin.from("usuarios").delete().eq("id", id);
+  if (pubErr) return NextResponse.json({ error: pubErr.message }, { status: 500 });
+
+  // Then delete the auth.users row so the email can be reinvited later.
+  // If only the auth delete fails we still return ok (the user is effectively
+  // gone from the app); surface a warning so the admin can clean up.
+  const { error: authErr } = await admin.auth.admin.deleteUser(id);
+  if (authErr) {
+    return NextResponse.json({
+      ok: true,
+      warning: `Usuário removido, mas a conta de autenticação permanece: ${authErr.message}`,
+    });
+  }
   return NextResponse.json({ ok: true });
 }

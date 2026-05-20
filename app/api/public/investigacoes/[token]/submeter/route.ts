@@ -14,7 +14,14 @@ const SUBMITTABLE = new Set(["em_andamento", "rejeitada"]);
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const parsed = Body.safeParse(await req.json());
-  if (!parsed.success) return NextResponse.json({ error: "validation", issues: parsed.error.issues }, { status: 422 });
+  if (!parsed.success) {
+    const first = parsed.error.issues[0];
+    const where = first?.path.join(".") || "dados";
+    return NextResponse.json(
+      { error: `Validação falhou em ${where}: ${first?.message ?? "inválido"}`, issues: parsed.error.issues },
+      { status: 422 },
+    );
+  }
 
   try {
     assertSubmittable(parsed.data.dados);

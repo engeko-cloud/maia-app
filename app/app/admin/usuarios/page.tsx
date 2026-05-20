@@ -95,12 +95,13 @@ export default function UsuariosPage() {
     setBusy(true);
     try {
       const r = await fetch(`/api/admin/usuarios/${confirmDeleteId}`, { method: "DELETE" });
+      const j = await r.json().catch(() => ({})) as { error?: string; warning?: string };
       if (!r.ok) {
-        const j = await r.json().catch(() => ({}));
-        toast.error((j as { error?: string }).error ?? "Erro ao excluir.");
+        toast.error(j.error ?? "Erro ao excluir.");
         return;
       }
-      toast.success("Usuário excluído.");
+      if (j.warning) toast.warning(j.warning);
+      else toast.success("Usuário excluído.");
       setConfirmDeleteId(null);
       await load();
     } catch {

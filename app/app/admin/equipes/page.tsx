@@ -57,7 +57,8 @@ export default function EquipesPage() {
         body: JSON.stringify({ usuario_id: usuarioId }),
       });
       if (!r.ok) {
-        toast.error("Erro ao adicionar.");
+        const j = await r.json().catch(() => ({}));
+        toast.error(j.error ?? "Erro ao adicionar.");
         return;
       }
       load();
@@ -70,7 +71,8 @@ export default function EquipesPage() {
     try {
       const r = await fetch(`/api/admin/equipes/${equipeId}/membros?usuario_id=${usuarioId}`, { method: "DELETE" });
       if (!r.ok) {
-        toast.error("Erro ao remover.");
+        const j = await r.json().catch(() => ({}));
+        toast.error(j.error ?? "Erro ao remover.");
         return;
       }
       load();

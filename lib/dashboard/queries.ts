@@ -4,6 +4,12 @@ export type FailedItem = {
   id: string;
   colaborador_nome: string;
   tipo: string;
+  serial_id?: number | null;
+  ultimo_erro?: string | null;
+  ultimo_erro_status?: number | null;
+  ultimo_erro_raw?: unknown;
+  ocorrido_em?: string | null;
+  tentativas?: number;
 };
 
 export type FailedGroup = { count: number; items: FailedItem[] };
@@ -54,13 +60,36 @@ async function resolveAfastamentoItems(
   if (ids.length === 0) return [];
   const { data } = await admin
     .from("afastamentos")
-    .select("id, colaborador_nome, afastamento_tipos(rotulo)")
+    .select("id, serial_id, colaborador_nome, afastamento_tipos(rotulo)")
     .in("id", ids.slice(0, 5)); // cap at 5 for inline list
   return (data ?? []).map((row: any) => ({
     id: row.id as string,
+    serial_id: (row.serial_id as number | null) ?? null,
     colaborador_nome: (row.colaborador_nome as string) ?? "—",
     tipo: (row.afastamento_tipos?.rotulo as string) ?? "—",
   }));
+}
+
+function extractErrorMessage(dados: unknown): string | null {
+  if (!dados || typeof dados !== "object") return null;
+  const d = dados as Record<string, unknown>;
+  if (typeof d.error === "string") return d.error;
+  if (d.error && typeof d.error === "object") {
+    const inner = (d.error as Record<string, unknown>).message;
+    if (typeof inner === "string") return inner;
+  }
+  if (typeof d.message === "string") return d.message;
+  return null;
+}
+
+function extractErrorStatus(dados: unknown): number | null {
+  if (!dados || typeof dados !== "object") return null;
+  const err = (dados as Record<string, unknown>).error;
+  if (err && typeof err === "object") {
+    const s = (err as Record<string, unknown>).status;
+    if (typeof s === "number") return s;
+  }
+  return null;
 }
 
 export async function getEmailsFalhados(admin: SupabaseClient): Promise<FailedGroup> {
@@ -82,14 +111,44 @@ export async function getEmailsFalhados(admin: SupabaseClient): Promise<FailedGr
 export async function getFluigFalhados(admin: SupabaseClient): Promise<FailedGroup> {
   const { data } = await (admin
     .from("eventos")
-    .select("entidade_id")
+    .select("entidade_id, dados, ocorrido_em")
     .eq("evento", "fluig_erro")
     .eq("tipo_entidade", "afastamento")
-    .gte("ocorrido_em", oneDayAgo()) as any);
+    .gte("ocorrido_em", oneDayAgo())
+    .order("ocorrido_em", { ascending: false }) as any);
 
-  const ids = [...new Set<string>((data ?? []).map((e: any) => e.entidade_id as string))];
+  const events = (data ?? []) as Array<{ entidade_id: string; dados: unknown; ocorrido_em: string }>;
+  // Group by afastamento: latest error + retry count
+  type Meta = {
+    ultimo_erro: string | null;
+    ultimo_erro_status: number | null;
+    ultimo_erro_raw: unknown;
+    ocorrido_em: string;
+    tentativas: number;
+  };
+  const byId = new Map<string, Meta>();
+  for (const ev of events) {
+    const prev = byId.get(ev.entidade_id);
+    if (!prev) {
+      byId.set(ev.entidade_id, {
+        ultimo_erro: extractErrorMessage(ev.dados),
+        ultimo_erro_status: extractErrorStatus(ev.dados),
+        ultimo_erro_raw: ev.dados,
+        ocorrido_em: ev.ocorrido_em,
+        tentativas: 1,
+      });
+    } else {
+      prev.tentativas += 1;
+    }
+  }
+  const ids = [...byId.keys()];
   const items = await resolveAfastamentoItems(admin, ids);
-  return { count: ids.length, items };
+  // Merge error metadata into items
+  const enriched = items.map((it) => {
+    const meta = byId.get(it.id);
+    return meta ? { ...it, ...meta } : it;
+  });
+  return { count: ids.length, items: enriched };
 }
 
 export async function getAprovacaoLatencia(

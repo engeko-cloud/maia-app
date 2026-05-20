@@ -12,6 +12,7 @@ import {
   ColaboradorSummaryCard,
   ColaboradorSummaryCardSkeleton,
 } from "@/components/painel/colaborador-summary-card";
+import { findActiveAfastamento } from "@/lib/portal-status";
 
 type AfastamentoRow = {
   id: string;
@@ -73,10 +74,8 @@ export default async function PortalPainelPage() {
 
   const total = rows?.length ?? 0;
   const last = rows?.[0];
-  const now = new Date();
-  const activeAfastamento = rows?.find(
-    (r) => r.situacao === "aprovado" && r.data_fim != null && new Date(r.data_fim) > now,
-  );
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const activeAfastamento = findActiveAfastamento(rows, todayIso);
   const isAfastado = activeAfastamento != null;
 
   return (
@@ -93,13 +92,17 @@ export default async function PortalPainelPage() {
           />
           <KpiCard
             label="Último afastamento"
-            value={`${fmtDate(last!.data_inicio)} → ${fmtDate(last!.data_fim!)}`}
+            value={
+              last!.data_fim
+                ? `${fmtDate(last!.data_inicio)} → ${fmtDate(last!.data_fim)}`
+                : fmtDate(last!.data_inicio)
+            }
           />
           <KpiCard
             label="Status atual"
             value={isAfastado ? "Afastado" : "Sem afastamento ativo"}
-            delta={isAfastado ? (() => {
-              const [y, m, d] = (activeAfastamento!.data_fim! as string).split("-").map(Number);
+            delta={isAfastado && activeAfastamento!.data_fim ? (() => {
+              const [y, m, d] = activeAfastamento!.data_fim.split("-").map(Number);
               const next = new Date(y, m - 1, d + 1);
               const ry = next.getFullYear();
               const rm = String(next.getMonth() + 1).padStart(2, "0");

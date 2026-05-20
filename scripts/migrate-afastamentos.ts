@@ -223,11 +223,6 @@ async function buildUserMap(
   return map;
 }
 
-// ── Legacy credentials (delete this file after migration) ────────────────────
-
-const LEGACY_URL = "https://zgdemniuryzfohgxdafu.supabase.co";
-const LEGACY_SERVICE_KEY = "PASTE_LEGACY_SERVICE_KEY_HERE";
-
 // ── Migration runner ──────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 500;
@@ -297,11 +292,16 @@ async function main(): Promise<void> {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const legacyUrl = process.env.LEGACY_SUPABASE_URL;
+  const legacyKey = process.env.LEGACY_SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceKey) {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars");
   }
+  if (!legacyUrl || !legacyKey) {
+    throw new Error("Missing LEGACY_SUPABASE_URL or LEGACY_SUPABASE_SERVICE_ROLE_KEY env vars");
+  }
 
-  const legacyClient = createClient(LEGACY_URL, LEGACY_SERVICE_KEY);
+  const legacyClient = createClient(legacyUrl, legacyKey);
   const newClient = createClient(supabaseUrl, serviceKey);
 
   console.log("Building lookup maps...");
