@@ -76,6 +76,13 @@ export function nullIfEmpty(s: string | null | undefined): string | null {
   return s;
 }
 
+export function normalizeTime(s: string | null | undefined): string | null {
+  if (!s || s.trim() === "") return null;
+  // Bare hour like "7" or "07" → "07:00"
+  if (/^\d{1,2}$/.test(s.trim())) return s.trim().padStart(2, "0") + ":00";
+  return s;
+}
+
 export function transformRow(
   row: LegacyAfastamento,
   maps: LookupMaps
@@ -113,8 +120,8 @@ export function transformRow(
     cpf:               row.cpf,
     data_inicio:       row.data_inicio,
     data_fim:          row.data_fim ?? null,
-    hora_inicio:       nullIfEmpty(row.hora_inicio),
-    hora_fim:          nullIfEmpty(row.hora_fim),
+    hora_inicio:       normalizeTime(row.hora_inicio),
+    hora_fim:          normalizeTime(row.hora_fim),
     duracao:           row.duracao !== null ? Number(row.duracao) : null,
     cid:               nullIfEmpty(row.cid),
     arquivo_url:       nullIfEmpty(row.arquivo_url),
