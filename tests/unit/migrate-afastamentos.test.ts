@@ -50,7 +50,7 @@ describe("transformRow", () => {
     const result = transformRow(BASE_ROW, MAPS);
     expect(result).not.toBeNull();
     expect(result!.serial_id).toBe(17217);
-    expect(result!.situacao).toBe("aprovado");
+    expect(result!.situacao).toBe("finalizado");
     expect(result!.tipo_id).toBe("tipo-uuid-1");
     expect(result!.empresa_id).toBe("emp-uuid-1");
     expect(result!.unidade_id).toBe("uni-uuid-3");
