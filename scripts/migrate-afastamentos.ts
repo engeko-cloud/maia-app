@@ -147,7 +147,13 @@ async function buildTipoMap(
     .select("id, codigo");
   if (error) throw error;
   const data = (raw ?? []) as Array<{ id: string; codigo: string }>;
-  return new Map(data.map((r) => [r.codigo, r.id]));
+  const map = new Map(data.map((r) => [r.codigo, r.id]));
+  // Legacy label aliases
+  const doencaId = map.get("doenca");
+  const prev31Id = map.get("prev_31");
+  if (doencaId) map.set("Simples", doencaId);
+  if (prev31Id) map.set("INSS", prev31Id);
+  return map;
 }
 
 async function buildEmpresaMap(
