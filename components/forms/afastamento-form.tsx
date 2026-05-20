@@ -59,6 +59,10 @@ const EMISSOR_TIPOS = [
   { value: "CRM", label: "CRM" },
   { value: "CRO", label: "CRO" },
 ];
+const CATEGORIA_ITEMS = [
+  { value: "atestado", label: "Atestado médico" },
+  { value: "declaracao", label: "Declaração" },
+];
 
 export function AfastamentoForm({
   lookups,
@@ -80,6 +84,10 @@ export function AfastamentoForm({
     } as AfastamentoInput,
   });
   const [arquivoUrl, setArquivoUrl] = React.useState<string | undefined>(initial?.arquivo_url);
+  const [categoria, setCategoria] = React.useState<"atestado" | "declaracao">(() => {
+    const cod = lookups.tipos.find((t) => t.id === initial?.tipo_id)?.codigo;
+    return tipoGrupo(cod) === "medico" ? "atestado" : "declaracao";
+  });
 
   const empresaId = form.watch("empresa_id");
   const unidadeId = form.watch("unidade_id");
@@ -103,8 +111,12 @@ export function AfastamentoForm({
     () =>
       lookups.tipos
         .filter((t) => !CALCULATED_TIPO_CODIGOS.has(t.codigo) || t.id === tipoId)
+        .filter((t) => {
+          const g = tipoGrupo(t.codigo);
+          return categoria === "atestado" ? g === "medico" : g !== "medico";
+        })
         .map((t) => ({ value: t.id, label: t.rotulo })),
-    [lookups.tipos, tipoId],
+    [lookups.tipos, tipoId, categoria],
   );
 
   const unidadeNome = React.useMemo(
@@ -172,6 +184,34 @@ export function AfastamentoForm({
     return duracao;
   }, [grupo, fixa, duracao]);
 
+  function handleTipoChange(tipoIdValue: string) {
+    form.setValue("tipo_id", tipoIdValue, { shouldValidate: true });
+    const newCodigo = lookups.tipos.find((t) => t.id === tipoIdValue)?.codigo;
+    const newGrupo = tipoGrupo(newCodigo);
+    if (newGrupo !== "medico") {
+      form.setValue("emissor", undefined as any);
+      form.setValue("cid", undefined);
+      form.setValue("internacao", undefined);
+      form.setValue("ocorrencia_id", undefined);
+      form.setValue("duracao", undefined);
+    }
+    if (newGrupo !== "declaracao_hora") {
+      form.setValue("hora_inicio", undefined);
+      form.setValue("hora_fim", undefined);
+    }
+  }
+
+  function handleCategoriaChange(v: string) {
+    const newCategoria = v as "atestado" | "declaracao";
+    setCategoria(newCategoria);
+    const firstTipo = lookups.tipos.find((t) => {
+      if (CALCULATED_TIPO_CODIGOS.has(t.codigo)) return false;
+      const g = tipoGrupo(t.codigo);
+      return newCategoria === "atestado" ? g === "medico" : g !== "medico";
+    });
+    if (firstTipo) handleTipoChange(firstTipo.id);
+  }
+
   async function onSubmit(values: AfastamentoInput) {
     if (!arquivoUrl) {
       form.setError("arquivo_url", {
@@ -182,6 +222,14 @@ export function AfastamentoForm({
       return;
     }
     const codigo = lookups.tipos.find((t) => t.id === values.tipo_id)?.codigo;
+    if (codigo === "acidente" && ocorrenciaItems.length > 0 && !values.ocorrencia_id) {
+      form.setError("ocorrencia_id", {
+        type: "required",
+        message: "Selecione a ocorrência vinculada ao acidente de trabalho.",
+      });
+      toast.error("Verifique os campos destacados.");
+      return;
+    }
     const g = tipoGrupo(codigo);
 
     let finalDuracao = values.duracao;
@@ -301,11 +349,31 @@ export function AfastamentoForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
+        <Label>Tipo de documento</Label>
+        <Select
+          items={CATEGORIA_ITEMS}
+          value={categoria}
+          onValueChange={(v) => v && handleCategoriaChange(v)}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Selecione" />
+          </SelectTrigger>
+          <SelectContent>
+            {CATEGORIA_ITEMS.map((c) => (
+              <SelectItem key={c.value} value={c.value}>
+                {c.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
         <Label htmlFor="tipo_id">Tipo de afastamento</Label>
         <Select
           items={tipoItems}
           value={tipoId ?? ""}
-          onValueChange={(v) => form.setValue("tipo_id", v as string, { shouldValidate: true })}
+          onValueChange={(v) => handleTipoChange(v as string)}
         >
           <SelectTrigger id="tipo_id" className="w-full">
             <SelectValue placeholder="Selecione" />
@@ -403,12 +471,21 @@ export function AfastamentoForm({
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="emissor_uf">UF</Label>
-                <Input
-                  id="emissor_uf"
-                  maxLength={2}
-                  className="uppercase"
-                  {...form.register("emissor.uf")}
-                />
+                {(() => {
+                  const ufField = form.register("emissor.uf");
+                  return (
+                    <Input
+                      id="emissor_uf"
+                      maxLength={2}
+                      className="uppercase"
+                      {...ufField}
+                      onChange={(e) => {
+                        e.target.value = e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase();
+                        ufField.onChange(e);
+                      }}
+                    />
+                  );
+                })()}
               </div>
             </div>
           </fieldset>
