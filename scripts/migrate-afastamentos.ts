@@ -336,7 +336,13 @@ async function runSocEnrichment(newClient: SupabaseClient): Promise<void> {
       const codigoSoc = codigoSocByEmpresaId.get(row.empresa_id);
       if (!codigoSoc) return;
 
-      const colaborador = await fetchSocColaborador(codigoSoc, row.cpf);
+      let colaborador;
+      try {
+        colaborador = await fetchSocColaborador(codigoSoc, row.cpf);
+      } catch {
+        notFound++;
+        return;
+      }
       if (!colaborador) { notFound++; return; }
 
       const { error } = await newClient
