@@ -80,7 +80,9 @@ export function transformRow(
   row: LegacyAfastamento,
   maps: LookupMaps
 ): NewAfastamento | null {
-  const tipoId = maps.tipoMap.get(row.tipo);
+  const TIPO_ALIASES: Record<string, string> = { Simples: "doenca", INSS: "prev_31" };
+  const tipoKey = TIPO_ALIASES[row.tipo] ?? row.tipo;
+  const tipoId = maps.tipoMap.get(tipoKey);
   if (!tipoId) {
     console.warn(`[SKIP] id=${row.id}: unknown tipo "${row.tipo}"`);
     return null;
@@ -147,13 +149,7 @@ async function buildTipoMap(
     .select("id, codigo");
   if (error) throw error;
   const data = (raw ?? []) as Array<{ id: string; codigo: string }>;
-  const map = new Map(data.map((r) => [r.codigo, r.id]));
-  // Legacy label aliases
-  const doencaId = map.get("doenca");
-  const prev31Id = map.get("prev_31");
-  if (doencaId) map.set("Simples", doencaId);
-  if (prev31Id) map.set("INSS", prev31Id);
-  return map;
+  return new Map(data.map((r) => [r.codigo, r.id]));
 }
 
 async function buildEmpresaMap(
