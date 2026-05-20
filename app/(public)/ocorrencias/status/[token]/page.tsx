@@ -71,7 +71,7 @@ export default async function StatusPage({ params }: { params: Promise<{ token: 
   const grausById = Object.fromEntries(
     (grausData ?? []).map((g) => [g.id, { rotulo: g.rotulo }]),
   );
-  const storagePublicBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/attachments/`;
+  const storagePublicBase = "/api/public/investigacoes/preview?path=";
 
   const idLabel = o.serial_id != null ? `#${o.serial_id}` : "—";
   const tone = SITUACAO_TONE[o.situacao] ?? SITUACAO_TONE.aberta;

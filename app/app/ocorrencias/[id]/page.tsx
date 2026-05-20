@@ -72,7 +72,7 @@ export default async function OcorrenciaDetailPage({
   const grausById = Object.fromEntries(
     (grausData ?? []).map((g) => [g.id, { rotulo: g.rotulo }]),
   );
-  const storagePublicBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/attachments/`;
+  const storagePublicBase = "/api/public/investigacoes/preview?path=";
 
   const inv = invData
     ? {

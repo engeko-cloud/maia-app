@@ -54,7 +54,6 @@ export default async function RelatorioPage({
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_BASE_URL ?? process.env.APP_URL ?? "";
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const o = inv.ocorrencias;
 
   return (
@@ -95,7 +94,7 @@ export default async function RelatorioPage({
         categoriasById={categoriasById}
         grausById={grausById}
         publicReportUrl={`${baseUrl}/ocorrencias/relatorio/${inv.token_publico}`}
-        storagePublicBase={`${supabaseUrl}/storage/v1/object/public/attachments/`}
+        storagePublicBase="/api/public/investigacoes/preview?path="
       />
     </div>
   );

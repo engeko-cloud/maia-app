@@ -137,7 +137,7 @@ export default async function AfastamentoDetailPage({
             Anexo
           </h2>
           <AttachmentChip
-            href={`/api/public/afastamentos/upload/preview?path=${encodeURIComponent(row.arquivo_url)}`}
+            href={`/api/private/anexos/preview?path=${encodeURIComponent(row.arquivo_url)}`}
             filename={row.arquivo_url.split("/").pop() ?? "anexo"}
           />
         </section>
