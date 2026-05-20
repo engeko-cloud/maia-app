@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CID_REGEX } from "@/lib/cid-mask";
 
 export const OcorrenciaInputSchema = z.object({
   empresa_id:             z.string().uuid(),
@@ -31,7 +32,10 @@ export const OcorrenciaInputSchema = z.object({
   afastamento:            z.boolean().optional(),
   duracao_afastamento:    z.number().int().min(0).optional(),
   internacao:             z.boolean().optional(),
-  cid:                    z.string().optional(),
+  cid:                    z.string().optional().refine(
+    (v) => !v || CID_REGEX.test(v),
+    { message: "CID deve ter formato X00 (letra + 2 dígitos)." },
+  ),
   emissor:                z.object({
     tipo: z.enum(["CRM","CRO"]),
     no:   z.string().min(1),

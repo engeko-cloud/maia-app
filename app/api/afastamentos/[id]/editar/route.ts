@@ -4,13 +4,14 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { writeEvento } from "@/lib/eventos";
 import { calcDataFim } from "@/lib/afastamento-date";
+import { CID_REGEX } from "@/lib/cid-mask";
 
 const EditSchema = z.object({
   tipo_id:     z.string().uuid(),
   unidade_id:  z.string().uuid().nullable(),
   data_inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   duracao:     z.number().int().positive(),
-  cid:         z.string().nullable(),
+  cid:         z.string().regex(CID_REGEX, "CID deve ter formato X00 (letra + 2 dígitos).").nullable(),
   emissor:     z.object({
     tipo: z.string().min(1),
     no:   z.string().min(1),

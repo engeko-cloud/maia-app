@@ -23,6 +23,7 @@ import TIPOS from "@/lib/data/ocorrencia_tipos.json";
 import { FileUpload } from "./file-upload";
 import { CpfLookup } from "./cpf-lookup";
 import { FormErrors } from "./form-errors";
+import { maskCid } from "@/lib/cid-mask";
 
 const FIELD_LABELS: Record<string, string> = {
   empresa_id:       "Empresa",
@@ -476,13 +477,24 @@ export function OcorrenciaForm({ lookups }: { lookups: Lookups }) {
 
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="cid">CID</Label>
-                <Input
-                  id="cid"
-                  placeholder="X00"
-                  maxLength={3}
-                  className="font-mono uppercase"
-                  {...form.register("cid")}
-                />
+                {(() => {
+                  const cidField = form.register("cid");
+                  return (
+                    <Input
+                      id="cid"
+                      placeholder="X00"
+                      maxLength={3}
+                      inputMode="text"
+                      autoCapitalize="characters"
+                      className="font-mono uppercase"
+                      {...cidField}
+                      onChange={(e) => {
+                        e.target.value = maskCid(e.target.value);
+                        cidField.onChange(e);
+                      }}
+                    />
+                  );
+                })()}
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

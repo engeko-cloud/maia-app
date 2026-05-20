@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { calcDataFim } from "@/lib/afastamento-date";
+import { maskCid, CID_REGEX } from "@/lib/cid-mask";
 
 export interface AfastamentoEditDialogProps {
   afastamentoId: string;
@@ -74,6 +75,11 @@ export function AfastamentoEditDialog({
     const d = parseInt(duracao);
     if (!tipoId || !dataInicio || !Number.isFinite(d) || d < 1) {
       toast.error("Tipo, data de início e duração são obrigatórios.");
+      return;
+    }
+    const cidTrim = cid.trim();
+    if (cidTrim && !CID_REGEX.test(cidTrim)) {
+      toast.error("CID deve ter formato X00 (letra + 2 dígitos).");
       return;
     }
 
@@ -204,8 +210,13 @@ export function AfastamentoEditDialog({
             <Input
               id="edit-cid"
               type="text"
+              placeholder="X00"
+              maxLength={3}
+              inputMode="text"
+              autoCapitalize="characters"
+              className="font-mono uppercase"
               value={cid}
-              onChange={(e) => setCid(e.target.value)}
+              onChange={(e) => setCid(maskCid(e.target.value))}
             />
           </div>
 

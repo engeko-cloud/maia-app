@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CID_REGEX } from "@/lib/cid-mask";
 
 export const AfastamentoInputSchema = z.object({
   empresa_id:  z.string().uuid(),
@@ -14,7 +15,10 @@ export const AfastamentoInputSchema = z.object({
   data_fim:    z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   hora_fim:    z.string().optional(),
   duracao:     z.number().int().min(0).optional(),
-  cid:         z.string().optional(),
+  cid:         z.string().optional().refine(
+    (v) => !v || CID_REGEX.test(v),
+    { message: "CID deve ter formato X00 (letra + 2 dígitos)." },
+  ),
   emissor:     z.object({
     tipo: z.enum(["CRM", "CRO"]),
     no:   z.string().min(1),
