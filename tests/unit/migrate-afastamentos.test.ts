@@ -121,9 +121,9 @@ describe("transformRow", () => {
     expect(result!.internacao).toBe(false);
   });
 
-  it("coerces empty cid to null", () => {
+  it("defaults empty cid to Z00", () => {
     const result = transformRow({ ...BASE_ROW, cid: "" }, MAPS);
-    expect(result!.cid).toBeNull();
+    expect(result!.cid).toBe("Z00");
   });
 
   it("handles null unidade_id by returning null", () => {

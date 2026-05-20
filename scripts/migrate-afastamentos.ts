@@ -114,7 +114,9 @@ export function transformRow(
 
   return {
     serial_id:         row.id,
-    situacao:          ({ aprovado: "finalizado", reprovado: "rejeitado", recebido: "pendente" } as Record<string, string>)[row.status] ?? row.status,
+    situacao:          tipoKey === "consulta_medica"
+                         ? "finalizado"
+                         : ({ aprovado: "finalizado", reprovado: "rejeitado", recebido: "pendente" } as Record<string, string>)[row.status] ?? row.status,
     tipo_id:           tipoId,
     empresa_id:        empresaId,
     unidade_id:        unidadeId,
@@ -124,7 +126,7 @@ export function transformRow(
     hora_inicio:       normalizeTime(row.hora_inicio),
     hora_fim:          normalizeTime(row.hora_fim),
     duracao:           row.duracao !== null ? Number(row.duracao) : null,
-    cid:               nullIfEmpty(row.cid),
+    cid:               nullIfEmpty(row.cid) ?? "Z00",
     arquivo_url:       nullIfEmpty(row.arquivo_url),
     email_remetente:   row.responsavel,
     decidido_por:      (() => {
