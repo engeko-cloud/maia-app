@@ -317,14 +317,21 @@ async function runSocEnrichment(newClient: SupabaseClient): Promise<void> {
       .map((e) => [e.id, e.codigo_soc!])
   );
 
-  const { data: records, error: e2 } = await newClient
-    .from("afastamentos")
-    .select("id, cpf, empresa_id")
-    .or("colaborador_nome.is.null,colaborador_nome.eq.");
-  if (e2) throw e2;
-  if (!records) throw new Error("afastamentos query returned null");
-
-  const rows = records as Array<{ id: string; cpf: string; empresa_id: string }>;
+  const rows: Array<{ id: string; cpf: string; empresa_id: string }> = [];
+  const FETCH_SIZE = 1000;
+  let from = 0;
+  while (true) {
+    const { data, error: e2 } = await newClient
+      .from("afastamentos")
+      .select("id, cpf, empresa_id")
+      .or("colaborador_nome.is.null,colaborador_nome.eq.")
+      .range(from, from + FETCH_SIZE - 1);
+    if (e2) throw e2;
+    if (!data || data.length === 0) break;
+    rows.push(...(data as Array<{ id: string; cpf: string; empresa_id: string }>));
+    if (data.length < FETCH_SIZE) break;
+    from += FETCH_SIZE;
+  }
   console.log(`SOC enrichment: ${rows.length} records with null colaborador_nome`);
 
   let enriched = 0;
