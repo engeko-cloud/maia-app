@@ -85,7 +85,8 @@ export function AfastamentoForm({
   });
   const [arquivoUrl, setArquivoUrl] = React.useState<string | undefined>(initial?.arquivo_url);
   const [categoria, setCategoria] = React.useState<"atestado" | "declaracao">(() => {
-    const cod = lookups.tipos.find((t) => t.id === initial?.tipo_id)?.codigo;
+    if (!initial?.tipo_id) return "atestado";
+    const cod = lookups.tipos.find((t) => t.id === initial.tipo_id)?.codigo;
     return tipoGrupo(cod) === "medico" ? "atestado" : "declaracao";
   });
 
