@@ -120,7 +120,7 @@ export function transformRow(
       const mapped = SITUACAO_MAP[row.status] ?? "finalizado";
       const isMedical = ["doenca", "prev_31", "prev_91"].includes(tipoKey);
       if (mapped === "rejeitado") return "rejeitado";
-      if (mapped === "pendente") return isMedical ? "finalizado" : "pendente";
+      if (mapped === "pendente") return isMedical ? "pendente" : "finalizado";
       return "finalizado";
     })(),
     tipo_id:           tipoId,
