@@ -11,9 +11,9 @@ export const AfastamentoInputSchema = z.object({
   colaborador_cargo:      z.string().optional(),
   colaborador_codigo_soc: z.string().optional(),
   data_inicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data de início inválida."),
-  hora_inicio: z.string().optional(),
+  hora_inicio: z.string().optional().transform((v) => v || undefined),
   data_fim:    z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data fim inválida.").optional(),
-  hora_fim:    z.string().optional(),
+  hora_fim:    z.string().optional().transform((v) => v || undefined),
   duracao:     z.number().int().min(0, "A duração não pode ser negativa.").optional(),
   cid:         z.string().optional().refine(
     (v) => !v || CID_REGEX.test(v),
