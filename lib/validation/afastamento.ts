@@ -14,7 +14,7 @@ export const AfastamentoInputSchema = z.object({
   hora_inicio: z.string().optional(),
   data_fim:    z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data fim inválida.").optional(),
   hora_fim:    z.string().optional(),
-  duracao:     z.number().int().min(1, "A duração deve ser de pelo menos 1 dia.").optional(),
+  duracao:     z.number().int().min(0, "A duração não pode ser negativa.").optional(),
   cid:         z.string().optional().refine(
     (v) => !v || CID_REGEX.test(v),
     { message: "CID deve ter formato X00 (letra + 2 dígitos)." },
