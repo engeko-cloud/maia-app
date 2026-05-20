@@ -80,7 +80,7 @@ export function transformRow(
   row: LegacyAfastamento,
   maps: LookupMaps
 ): NewAfastamento | null {
-  const TIPO_ALIASES: Record<string, string> = { Simples: "doenca", INSS: "prev_31" };
+  const TIPO_ALIASES: Record<string, string> = { Simples: "doenca", SIMPLES: "doenca", INSS: "prev_31", INTERNACAO: "doenca" };
   const tipoKey = TIPO_ALIASES[row.tipo] ?? row.tipo;
   const tipoId = maps.tipoMap.get(tipoKey);
   if (!tipoId) {
@@ -106,7 +106,7 @@ export function transformRow(
 
   return {
     serial_id:         row.id,
-    situacao:          ({ aprovado: "finalizado", reprovado: "rejeitado" } as Record<string, string>)[row.status] ?? row.status,
+    situacao:          ({ aprovado: "finalizado", reprovado: "rejeitado", recebido: "pendente" } as Record<string, string>)[row.status] ?? row.status,
     tipo_id:           tipoId,
     empresa_id:        empresaId,
     unidade_id:        unidadeId,
