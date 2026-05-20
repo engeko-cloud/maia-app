@@ -106,7 +106,7 @@ export function transformRow(
 
   return {
     serial_id:         row.id,
-    situacao:          row.status,
+    situacao:          ({ aprovado: "finalizado", reprovado: "rejeitado" } as Record<string, string>)[row.status] ?? row.status,
     tipo_id:           tipoId,
     empresa_id:        empresaId,
     unidade_id:        unidadeId,
