@@ -95,7 +95,8 @@ export function transformRow(
     return null;
   }
 
-  const empresaId = maps.empresaMap.get(String(row.empresa_id));
+  const empresaKey = row.empresa_id === 3 ? "1" : String(row.empresa_id);
+  const empresaId = maps.empresaMap.get(empresaKey);
   if (!empresaId) {
     console.warn(`[SKIP] id=${row.id}: unknown empresa_id ${row.empresa_id}`);
     return null;
