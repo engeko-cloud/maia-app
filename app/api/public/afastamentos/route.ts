@@ -6,6 +6,8 @@ import { sendMail } from "@/lib/mail/send";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
+  if (body.hora_inicio === "") body.hora_inicio = undefined;
+  if (body.hora_fim === "") body.hora_fim = undefined;
   const parsed = AfastamentoInputSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "validation", issues: parsed.error.issues }, { status: 400 });

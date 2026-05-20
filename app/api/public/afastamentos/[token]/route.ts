@@ -22,6 +22,8 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ token:
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const body = await req.json();
+  if (body.hora_inicio === "") body.hora_inicio = undefined;
+  if (body.hora_fim === "") body.hora_fim = undefined;
   const parsed = AfastamentoInputSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "validation", issues: parsed.error.issues }, { status: 400 });
 
