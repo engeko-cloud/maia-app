@@ -320,7 +320,7 @@ async function runSocEnrichment(newClient: SupabaseClient): Promise<void> {
   const { data: records, error: e2 } = await newClient
     .from("afastamentos")
     .select("id, cpf, empresa_id")
-    .is("colaborador_nome", null);
+    .or("colaborador_nome.is.null,colaborador_nome.eq.");
   if (e2) throw e2;
   if (!records) throw new Error("afastamentos query returned null");
 
