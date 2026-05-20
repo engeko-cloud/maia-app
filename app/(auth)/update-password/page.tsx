@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -28,6 +28,14 @@ import { translateAuthError } from "@/lib/auth-errors";
 const SESSION_EXPIRED_MESSAGE = "Sua sessão expirou. Solicite um novo link.";
 
 export default function UpdatePasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <UpdatePasswordForm />
+    </Suspense>
+  );
+}
+
+function UpdatePasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isFirstAccess = searchParams.get("first") === "1";
