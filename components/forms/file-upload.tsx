@@ -4,6 +4,10 @@ import * as React from "react";
 import { toast } from "sonner";
 import { UploadIcon } from "lucide-react";
 
+const MAX_SIZE = 4 * 1024 * 1024;
+const MAX_SIZE_LABEL = "4 MB";
+const ALLOWED_MIMES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+
 export function FileUpload({ onUploaded }: { onUploaded: (url: string) => void }) {
   const [uploading, setUploading] = React.useState(false);
   const [filename, setFilename] = React.useState<string | null>(null);
@@ -11,6 +15,18 @@ export function FileUpload({ onUploaded }: { onUploaded: (url: string) => void }
   async function handle(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_SIZE) {
+      toast.error(`Arquivo excede o limite de ${MAX_SIZE_LABEL}. Comprima ou reduza a resolução e tente novamente.`);
+      e.target.value = "";
+      return;
+    }
+    if (!ALLOWED_MIMES.has(file.type)) {
+      toast.error("Formato não aceito. Use PDF, JPG, PNG ou WEBP.");
+      e.target.value = "";
+      return;
+    }
+
     setUploading(true);
     setFilename(file.name);
     try {
@@ -18,7 +34,7 @@ export function FileUpload({ onUploaded }: { onUploaded: (url: string) => void }
       fd.append("file", file);
       const res = await fetch("/api/public/afastamentos/upload", { method: "POST", body: fd });
       if (!res.ok) {
-        toast.error("Erro no upload");
+        toast.error(await errorMessageFor(res));
         setFilename(null);
         return;
       }
@@ -39,7 +55,7 @@ export function FileUpload({ onUploaded }: { onUploaded: (url: string) => void }
         <span className="font-medium text-foreground">
           {uploading ? "Enviando…" : filename ?? "Selecionar anexo"}
         </span>
-        <span className="text-xs text-[var(--color-fg-muted)]">PDF / JPG / PNG, até 10MB</span>
+        <span className="text-xs text-[var(--color-fg-muted)]">PDF / JPG / PNG, até {MAX_SIZE_LABEL}</span>
       </span>
       <input
         type="file"
@@ -50,4 +66,25 @@ export function FileUpload({ onUploaded }: { onUploaded: (url: string) => void }
       />
     </label>
   );
+}
+
+async function errorMessageFor(res: Response): Promise<string> {
+  if (res.status === 413) {
+    return `Arquivo excede o limite de ${MAX_SIZE_LABEL}. Comprima ou reduza a resolução e tente novamente.`;
+  }
+  if (res.status === 415) {
+    return "Formato não aceito. Use PDF, JPG, PNG ou WEBP.";
+  }
+  let detail = "";
+  try {
+    const body = (await res.clone().json()) as { error?: string };
+    detail = body?.error ?? "";
+  } catch {
+    try {
+      detail = (await res.text()).slice(0, 200);
+    } catch {
+      detail = "";
+    }
+  }
+  return detail ? `Erro no upload: ${detail}` : "Erro no upload.";
 }

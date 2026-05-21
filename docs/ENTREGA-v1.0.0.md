@@ -1,4 +1,15 @@
-# Termo de Entrega — MAIA v1.0.0
+---
+title: Termo de Entrega — MAIA ENGEKO v1.0.0
+subtitle: Sistema de Saúde Ocupacional e Segurança do Trabalho
+doc_type: Termo de Entrega
+version: 1.0.0
+date: 2026-05-19
+client: ENGEKO ENGENHARIA E CONSTRUÇÃO LTDA.
+back_cover: true
+language: pt-BR
+---
+
+# Termo de Entrega — MAIA ENGEKO v1.0.0
 
 **Sistema de Saúde Ocupacional e Segurança do Trabalho**
 
@@ -223,7 +234,21 @@ Esta entrega é fornecida na modalidade **"as-is"** (no estado em que se encontr
 
 ---
 
-## 8. Itens **não incluídos** nesta entrega
+## 8. Migrações e operações de dados pós-entrega
+
+Após a entrega do sistema, foram realizadas operações de **migração de dados do sistema legado (mix de multiplas plataformas que evoluíram ao longo do tempo)** para garantir a integridade e acessibilidade dos registros históricos. Essas operações incluíram:
+
+- Migração de ~16.000 registros de afastamentos com `arquivo_url` armazenado como URL externa completa para o padrão de caminho relativo no bucket `attachments` do Supabase atual.
+- Recuperação de anexos a partir de múltiplas origens: ClickUp, Fillout, bucket legado Supabase e arquivos de backup local.
+- **~10.400 anexos recuperados** e migrados com sucesso. Um total de ~3.024 arquivos foram identificados como irrecuperáveis (links expirados sem backup disponível), situação aceita em casos de migrações repetitivas entre diferentes plataformas ao longo de anos.
+
+O detalhamento técnico completo dessas operações — incluindo scripts utilizados, fases de execução, critérios de decisão e justificativa para os registros irrecuperáveis — está documentado no repositório `maia-app` no GitHub do `engeko-cloud`, em`/docs/DOCUMENTACAO.md`  →  Seção 18: Migração de anexos legados (2026-05)
+
+Essas atividades foram executadas **após** o encerramento formal do escopo de desenvolvimento v1.0.0 e não alteram o objeto contratual descrito nas seções anteriores.
+
+---
+
+## 10. Itens **não incluídos** nesta entrega
 
 Para clareza contratual, ficam explicitamente fora do escopo desta entrega:
 
@@ -239,7 +264,7 @@ Qualquer item da lista acima, se necessário, deverá ser objeto de **proposta e
 
 ---
 
-## 9. Nota Fiscal e condições financeiras
+## 11. Nota Fiscal e condições financeiras
 
 | Descrição | Valor |
 | --------- | ----: |
@@ -252,7 +277,7 @@ Qualquer item da lista acima, se necessário, deverá ser objeto de **proposta e
 
 ---
 
-## 10. Aceitação e encerramento
+## 12. Aceitação e encerramento
 
 Mediante a assinatura deste termo pelas partes, fica formalizado:
 
@@ -264,32 +289,22 @@ Mediante a assinatura deste termo pelas partes, fica formalizado:
 
 ---
 
-## 11. Assinaturas
+\newpage
 
-**São Paulo, _____ de _______________ de 2026.**
+## 13. Assinaturas
 
-<br>
+**São Paulo, 20 de Maio de 2026.**
+
 
 | **Pela Fapptory (HEIZEN TECNOLOGIA LTDA.)** | **Pela ENGEKO** |
-| :-----------------------------------------: | :-------------: |
-|                                             |                 |
-|                                             |                 |
-| ___________________________________         | ___________________________________ |
-| Nome:                                       | Nome:           |
-| Cargo:                                      | Cargo:          |
-| CPF:                                        | CPF:            |
+| --- | --- |
+| &nbsp; | &nbsp; |
+| _____________________________________ | _____________________________________ |
+| Nome: | Nome: |
+| Cargo: | Cargo: |
+| CPF: | CPF: |
 
-<br>
-
-**Testemunhas:**
-
-| **Testemunha 1** | **Testemunha 2** |
-| :--------------: | :--------------: |
-|                  |                  |
-| _______________________________ | _______________________________ |
-| Nome:            | Nome:            |
-| CPF:             | CPF:             |
 
 ---
 
-_Documento gerado em 19 de maio de 2026 — versão final para assinatura._
+_Documento gerado em 20 de maio de 2026 — versão final para assinatura._

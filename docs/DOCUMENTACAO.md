@@ -1,3 +1,14 @@
+---
+title: MAIA — Documentação Técnica
+subtitle: Sistema single-tenant de saúde ocupacional e segurança do trabalho
+doc_type: Documentação Técnica
+version: 1.0.0
+date: 2026-05-19
+client: ENGEKO ENGENHARIA E CONSTRUÇÃO LTDA.
+back_cover: true
+language: pt-BR
+---
+
 # MAIA — Documentação Técnica
 
 > Sistema single-tenant de saúde ocupacional e segurança do trabalho da **ENGEKO**, distribuído em dois repositórios (`maia-db` para o backend Supabase, `maia-app` para o frontend Next.js). Esta documentação cobre o sistema como um todo na versão **v1.0.0** (entregue em 2026-05-19).
@@ -1368,3 +1379,31 @@ Comando: `psql "$(supabase status -o env | grep DB_URL | cut -d= -f2-)" -f supab
 ---
 
 > Esta documentação reflete o estado do sistema na entrega **v1.0.0** em **2026-05-19**. Atualizar quando schema, fluxos ou integrações mudarem.
+
+---
+
+## 18. Migração de anexos legados (2026-05)
+
+### Contexto
+
+O sistema anterior armazenava anexos de afastamentos em múltiplas origens: bucket Supabase do projeto legado (`zgdemniuryzfohgxdafu`), links públicos de ClickUp/Fillout, e arquivos que foram baixados manualmente em zips quando o storage excedia a cota permitida. Com a migração para o maia-app, os registros foram importados mantendo o campo `arquivo_url` com a URL completa original (`https://...`) em vez de um caminho relativo ao bucket atual.
+
+### Problema
+
+O proxy de preview privado (`/api/private/anexos/preview`) e o proxy público de investigações (`/api/public/investigacoes/preview`) esperam caminhos relativos ao bucket `attachments` (ex.: `afastamentos/staging/...`). URLs completas externas causavam erro `bad_path` ao tentar visualizar qualquer anexo nesses ~16k registros.
+
+### Solução aplicada
+
+Três fases de migração executadas em ordem, todas idempotentes (re-executáveis sem risco de duplicação):
+
+1. **Fase `external`** — download direto das URLs ClickUp/Fillout ainda acessíveis via HTTP, upload para `attachments/afastamentos/legacy/<filename>`, atualização do `arquivo_url` no banco. Resultado: ~4.239 arquivos recuperados; ~1.773 com 403 (links expirados, irrecuperáveis).
+
+2. **Fase `pool`** — upload a partir de pasta local (`scripts/attachment-pool/`) populada com os zips de backup e com download do bucket legado via `scripts/download-legacy-bucket.ts`. Resultado: ~6.161 arquivos recuperados.
+
+3. **Fase `supabase`** — tentativa de fetch das URLs legadas ainda vivas no bucket público do projeto antigo. Descontinuada em favor de popular o pool com os arquivos do bucket legado e re-rodar a fase `pool`.
+
+**Total recuperado:** ~10.400 anexos. Os ~3.024 restantes (links expirados sem backup disponível) foram aceitos como perda irreversível — situação comum em migrações com múltiplas mudanças de plataforma ao longo do tempo.
+
+### Estrutura atual
+
+Todos os novos anexos de afastamentos são salvos como caminhos relativos (`afastamentos/<env>/<slug>`) no bucket `attachments` do projeto atual, servidos exclusivamente via proxy autenticado. O script `scripts/migrate-attachments.ts` permanece no repositório para uso futuro caso novos lotes de URLs legadas sejam identificados.

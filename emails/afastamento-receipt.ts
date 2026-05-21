@@ -15,6 +15,7 @@ export type AfastamentoEmail = {
   situacao: string;
   cid?: string | null;
   status_url?: string;
+  mensagem?: string | null;
 };
 
 export function afastamentoReceipt(data: { a: AfastamentoEmail }): string {

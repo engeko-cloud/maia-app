@@ -47,3 +47,6 @@ next-env.d.ts
 # superpowers brainstorm artifacts
 .superpowers/
 docs/superpowers/
+
+# local one-off scripts, migration logs, PII inputs (CSV with CPFs etc.)
+scripts/

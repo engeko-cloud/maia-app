@@ -13,6 +13,7 @@ import {
   AfastamentoHistoryCardSkeleton,
 } from "@/components/afastamentos/afastamento-history-card";
 import { ComentariosCard, type Comentario } from "@/components/afastamentos/comentarios-card";
+import { SendFinalizadoEmailCard } from "@/components/afastamentos/send-finalizado-email-card";
 
 async function userCanApprove(userId: string): Promise<boolean> {
   const supabase = await getSupabaseServer();
@@ -52,6 +53,7 @@ export default async function AfastamentoDetailPage({
     { data: tiposData },
     { data: unidadesData },
     { data: comentariosData },
+    { data: configRow },
   ] = await Promise.all([
     supabase
       .from("afastamentos")
@@ -81,6 +83,11 @@ export default async function AfastamentoDetailPage({
       .eq("afastamento_id", id)
       .order("criado_em", { ascending: false })
       .returns<Comentario[]>(),
+    supabase
+      .from("configuracoes")
+      .select("email_folha")
+      .eq("id", 1)
+      .single(),
   ]);
   if (!rawRow) notFound();
   const row = rawRow as unknown as AfastamentoFull;
@@ -141,6 +148,13 @@ export default async function AfastamentoDetailPage({
             filename={row.arquivo_url.split("/").pop() ?? "anexo"}
           />
         </section>
+      )}
+
+      {row.situacao === "finalizado" && (
+        <SendFinalizadoEmailCard
+          afastamentoId={row.id}
+          defaultEmail={configRow?.email_folha ?? null}
+        />
       )}
 
       <Suspense fallback={<AfastamentoHistoryCardSkeleton />}>

@@ -1,5 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+// Some `fluig_enviado` events from before the edge-function patch carry a
+// Fluig business-level error inside `dados.response` (e.g. login failure):
+//   <result><item><item>ERROR</item><item>{message}</item></item></result>
+// SQL-side we narrow with a coarse LIKE; JS-side we re-confirm with the
+// precise regex before treating the row as a failure.
+const FLUIG_BIZ_ERROR_REGEX =
+  /<item>\s*<item>\s*ERROR\s*<\/item>\s*<item>([^<]*)<\/item>/;
+const FLUIG_BIZ_ERROR_LIKE = "*<item>ERROR</item>*";
+
 export type FluigEventVariant = "enviado" | "erro";
 
 export type FluigEventRow = {
@@ -69,19 +78,39 @@ function extractResponse(dados: unknown): unknown {
   return (dados as Record<string, unknown>).response ?? null;
 }
 
+function extractMisclassifiedMessage(dados: unknown): string | null {
+  if (!dados || typeof dados !== "object") return null;
+  const response = (dados as Record<string, unknown>).response;
+  if (typeof response !== "string") return null;
+  const m = response.match(FLUIG_BIZ_ERROR_REGEX);
+  return m ? m[1].trim() : null;
+}
+
+function applyEventFilter<T>(q: T, status: FluigEventosFilters["status"]): T {
+  const qx = q as unknown as {
+    eq: (k: string, v: string) => T;
+    in: (k: string, v: string[]) => T;
+    or: (s: string) => T;
+  };
+  if (status === "enviado") {
+    return (qx.eq("evento", "fluig_enviado") as unknown as {
+      or: (s: string) => T;
+    }).or(`dados->>response.is.null,dados->>response.not.ilike.${FLUIG_BIZ_ERROR_LIKE}`);
+  }
+  if (status === "erro" || status === "pending") {
+    return qx.or(
+      `evento.eq.fluig_erro,and(evento.eq.fluig_enviado,dados->>response.ilike.${FLUIG_BIZ_ERROR_LIKE})`,
+    );
+  }
+  return qx.in("evento", ["fluig_enviado", "fluig_erro"]);
+}
+
 export async function getFluigEventos(
   admin: SupabaseClient,
   filters: FluigEventosFilters,
   page: number,
   pageSize: number,
 ): Promise<FluigEventosPage> {
-  const eventos: Array<"fluig_enviado" | "fluig_erro"> =
-    filters.status === "enviado"
-      ? ["fluig_enviado"]
-      : filters.status === "erro" || filters.status === "pending"
-      ? ["fluig_erro"]
-      : ["fluig_enviado", "fluig_erro"];
-
   // <input type="date"> returns YYYY-MM-DD. Treat `to` as end-of-day so the
   // upper bound includes events that happened later on the chosen day.
   const fromTs = filters.from || null;
@@ -110,8 +139,8 @@ export async function getFluigEventos(
   let countQuery = (admin
     .from("eventos")
     .select("id", { count: "exact", head: true })
-    .in("evento", eventos)
     .eq("tipo_entidade", "afastamento") as any);
+  countQuery = applyEventFilter(countQuery, filters.status);
   if (fromTs) countQuery = countQuery.gte("ocorrido_em", fromTs);
   if (toTs) countQuery = countQuery.lte("ocorrido_em", toTs);
   if (matchingAfastamentoIds) countQuery = countQuery.in("entidade_id", matchingAfastamentoIds);
@@ -127,10 +156,10 @@ export async function getFluigEventos(
       `id, evento, ocorrido_em, dados, entidade_id,
        autor:usuarios!eventos_autor_id_fkey(nome, sobrenome)`,
     )
-    .in("evento", eventos)
     .eq("tipo_entidade", "afastamento")
     .order("ocorrido_em", { ascending: false })
     .range(offset, offset + pageSize - 1) as any);
+  q = applyEventFilter(q, filters.status);
   if (fromTs) q = q.gte("ocorrido_em", fromTs);
   if (toTs) q = q.lte("ocorrido_em", toTs);
   if (matchingAfastamentoIds) q = q.in("entidade_id", matchingAfastamentoIds);
@@ -184,21 +213,31 @@ export async function getFluigEventos(
     } | null;
   }>;
 
-  // Step 3: for fluig_erro rows, mark which were resolved by a later
-  // fluig_enviado for the same afastamento.
-  const erroAfastamentoIds = [...new Set(
-    rows.filter((r) => r.evento === "fluig_erro").map((r) => r.entidade_id),
+  // Step 3: for failure rows (real or misclassified), mark which were resolved
+  // by a later REAL fluig_enviado for the same afastamento. A misclassified
+  // success is NOT a resolution.
+  const failureAfastamentoIds = [...new Set(
+    rows
+      .filter((r) => r.evento === "fluig_erro" || extractMisclassifiedMessage(r.dados) !== null)
+      .map((r) => r.entidade_id),
   )];
   const latestSuccessByAfastamento = new Map<string, string>();
-  if (erroAfastamentoIds.length > 0) {
+  if (failureAfastamentoIds.length > 0) {
     const { data: successes } = await (admin
       .from("eventos")
-      .select("entidade_id, ocorrido_em")
+      .select("entidade_id, ocorrido_em, dados")
       .eq("evento", "fluig_enviado")
       .eq("tipo_entidade", "afastamento")
-      .in("entidade_id", erroAfastamentoIds)
+      .in("entidade_id", failureAfastamentoIds)
+      .or(`dados->>response.is.null,dados->>response.not.ilike.${FLUIG_BIZ_ERROR_LIKE}`)
       .order("ocorrido_em", { ascending: false }) as any);
-    for (const s of (successes ?? []) as Array<{ entidade_id: string; ocorrido_em: string }>) {
+    for (const s of (successes ?? []) as Array<{
+      entidade_id: string;
+      ocorrido_em: string;
+      dados: unknown;
+    }>) {
+      // Defensive: drop any straggler whose payload still matches the precise regex.
+      if (extractMisclassifiedMessage(s.dados) !== null) continue;
       if (!latestSuccessByAfastamento.has(s.entidade_id)) {
         latestSuccessByAfastamento.set(s.entidade_id, s.ocorrido_em);
       }
@@ -210,8 +249,16 @@ export async function getFluigEventos(
       r.autor && (r.autor.nome || r.autor.sobrenome)
         ? `${r.autor.nome ?? ""} ${r.autor.sobrenome ?? ""}`.trim()
         : null;
-    const latestSuccess =
-      r.evento === "fluig_erro" ? latestSuccessByAfastamento.get(r.entidade_id) : undefined;
+
+    const misclassifiedMsg =
+      r.evento === "fluig_enviado" ? extractMisclassifiedMessage(r.dados) : null;
+    const effectiveEvento: "fluig_enviado" | "fluig_erro" =
+      misclassifiedMsg !== null ? "fluig_erro" : r.evento;
+    const isErrorRow = effectiveEvento === "fluig_erro";
+
+    const latestSuccess = isErrorRow
+      ? latestSuccessByAfastamento.get(r.entidade_id)
+      : undefined;
     const resolvedAt =
       latestSuccess && new Date(latestSuccess).getTime() > new Date(r.ocorrido_em).getTime()
         ? latestSuccess
@@ -219,7 +266,7 @@ export async function getFluigEventos(
 
     return {
       evento_id: r.id,
-      evento: r.evento,
+      evento: effectiveEvento,
       ocorrido_em: r.ocorrido_em,
       retry: extractRetry(r.dados),
       autor_nome: autor,
@@ -227,15 +274,14 @@ export async function getFluigEventos(
       afastamento_serial_id: r.afastamento?.serial_id ?? null,
       colaborador_nome: r.afastamento?.colaborador_nome ?? "—",
       tipo: r.afastamento?.tipo ?? "—",
-      erro:
-        r.evento === "fluig_erro"
-          ? {
-              message: extractErrorMessage(r.dados),
-              status: extractErrorStatus(r.dados),
-              raw: r.dados,
-            }
-          : null,
-      response: r.evento === "fluig_enviado" ? extractResponse(r.dados) : null,
+      erro: isErrorRow
+        ? {
+            message: misclassifiedMsg ?? extractErrorMessage(r.dados),
+            status: misclassifiedMsg !== null ? null : extractErrorStatus(r.dados),
+            raw: r.dados,
+          }
+        : null,
+      response: !isErrorRow ? extractResponse(r.dados) : null,
       resolved_at: resolvedAt,
     };
   });

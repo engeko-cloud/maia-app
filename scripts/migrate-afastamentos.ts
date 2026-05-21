@@ -304,9 +304,12 @@ async function runMigration(
 
 // ── SOC enrichment ────────────────────────────────────────────────────────────
 
-const SOC_CONCURRENCY = 10;
+const SOC_CONCURRENCY = 3;
+const SOC_BATCH_DELAY_MS = 500;
+const SOC_FETCH_SIZE = 1000;
 
-async function runSocEnrichment(newClient: SupabaseClient): Promise<void> {
+async function runSocEnrichment(newClient: SupabaseClient, dryRun: boolean): Promise<void> {
+  // Build empresa_id → codigo_soc map from new DB
   const { data: empresas, error: e1 } = await newClient
     .from("empresas")
     .select("id, codigo_soc");
@@ -319,37 +322,62 @@ async function runSocEnrichment(newClient: SupabaseClient): Promise<void> {
       .map((e) => [e.id, e.codigo_soc!])
   );
 
-  const rows: Array<{ id: string; cpf: string; empresa_id: string }> = [];
-  const FETCH_SIZE = 1000;
+  // Fetch all afastamentos with null/empty colaborador_nome, ordered by serial_id DESC
+  const rows: Array<{ id: string; serial_id: number; cpf: string; empresa_id: string }> = [];
   let from = 0;
   while (true) {
     const { data, error: e2 } = await newClient
       .from("afastamentos")
-      .select("id, cpf, empresa_id")
+      .select("id, serial_id, cpf, empresa_id")
       .or("colaborador_nome.is.null,colaborador_nome.eq.")
-      .range(from, from + FETCH_SIZE - 1);
+      .order("serial_id", { ascending: false })
+      .range(from, from + SOC_FETCH_SIZE - 1);
     if (e2) throw e2;
     if (!data || data.length === 0) break;
-    rows.push(...(data as Array<{ id: string; cpf: string; empresa_id: string }>));
-    if (data.length < FETCH_SIZE) break;
-    from += FETCH_SIZE;
+    rows.push(...(data as Array<{ id: string; serial_id: number; cpf: string; empresa_id: string }>));
+    if (data.length < SOC_FETCH_SIZE) break;
+    from += SOC_FETCH_SIZE;
   }
-  console.log(`SOC enrichment: ${rows.length} records with null colaborador_nome`);
+  console.log(`SOC enrichment: ${rows.length} records with null/empty colaborador_nome`);
+
+  if (dryRun) {
+    console.log("\n[DRY RUN] First 5 candidates — fetching SOC responses:");
+    for (const r of rows.slice(0, 5)) {
+      const codigoSoc = codigoSocByEmpresaId.get(r.empresa_id);
+      console.log(`\n  serial_id=${r.serial_id} cpf=${r.cpf} empresa_id=${r.empresa_id} codigo_soc=${codigoSoc ?? "(no codigo_soc)"}`);
+      if (!codigoSoc) { console.log("  → SKIP (no codigo_soc for this empresa)"); continue; }
+      try {
+        const colaborador = await fetchSocColaborador(codigoSoc, r.cpf);
+        if (!colaborador) {
+          console.log("  → NOT FOUND in SOC");
+        } else {
+          console.log("  → SOC response:", JSON.stringify(colaborador, null, 4).replace(/\n/g, "\n  "));
+        }
+      } catch (err) {
+        console.log(`  → SOC error: ${err}`);
+      }
+    }
+    console.log("\n[DRY RUN] No data written. Exiting.");
+    return;
+  }
 
   let enriched = 0;
   let notFound = 0;
+  let apiErrors = 0;
+  let noCodigoSoc = 0;
 
   for (let i = 0; i < rows.length; i += SOC_CONCURRENCY) {
     const batch = rows.slice(i, i + SOC_CONCURRENCY);
     await Promise.all(batch.map(async (row) => {
       const codigoSoc = codigoSocByEmpresaId.get(row.empresa_id);
-      if (!codigoSoc) return;
+      if (!codigoSoc) { noCodigoSoc++; return; }
 
       let colaborador;
       try {
         colaborador = await fetchSocColaborador(codigoSoc, row.cpf);
-      } catch {
-        notFound++;
+      } catch (err) {
+        apiErrors++;
+        if (apiErrors <= 3) console.warn(`[WARN] SOC API error for serial_id=${row.serial_id}: ${err}`);
         return;
       }
       if (!colaborador) { notFound++; return; }
@@ -357,19 +385,21 @@ async function runSocEnrichment(newClient: SupabaseClient): Promise<void> {
       const { error } = await newClient
         .from("afastamentos")
         .update({
-          colaborador_nome: colaborador.nome,
-          colaborador_setor: colaborador.setor ?? null,
-          colaborador_cargo: colaborador.cargo ?? null,
+          colaborador_nome:       colaborador.nome,
+          colaborador_setor:      colaborador.setor ?? null,
+          colaborador_cargo:      colaborador.cargo ?? null,
+          colaborador_codigo_soc: colaborador.codigo_soc ?? null,
         })
         .eq("id", row.id);
-      if (error) console.warn(`[WARN] SOC update failed for id=${row.id}: ${error.message}`);
+      if (error) console.warn(`[WARN] DB update failed for serial_id=${row.serial_id}: ${error.message}`);
       else enriched++;
     }));
 
-    console.log(`[${Math.min(i + SOC_CONCURRENCY, rows.length)}/${rows.length}] enriched=${enriched} not_found=${notFound}`);
+    if (SOC_BATCH_DELAY_MS > 0) await new Promise((r) => setTimeout(r, SOC_BATCH_DELAY_MS));
+    console.log(`[${Math.min(i + SOC_CONCURRENCY, rows.length)}/${rows.length}] enriched=${enriched} not_found=${notFound} api_errors=${apiErrors} no_codigo_soc=${noCodigoSoc}`);
   }
 
-  console.log(`\nSOC enrichment complete. enriched=${enriched} not_found=${notFound}`);
+  console.log(`\nSOC enrichment complete. enriched=${enriched} not_found=${notFound} api_errors=${apiErrors} no_codigo_soc=${noCodigoSoc}`);
 }
 
 // ── Entry point ───────────────────────────────────────────────────────────────
@@ -388,7 +418,7 @@ async function main(): Promise<void> {
   const newClient = createClient(supabaseUrl, serviceKey);
 
   if (enrichSoc) {
-    await runSocEnrichment(newClient);
+    await runSocEnrichment(newClient, dryRun);
     return;
   }
 
