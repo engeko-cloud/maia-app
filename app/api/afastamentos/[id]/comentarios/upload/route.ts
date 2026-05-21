@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { sanitizeStorageKey } from "@/lib/sanitize-storage-key";
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
@@ -31,7 +32,7 @@ export async function POST(
   if (!ALLOWED.has(file.type)) return NextResponse.json({ error: "bad_mime" }, { status: 415 });
 
   const admin = getSupabaseAdmin();
-  const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+  const safeName = sanitizeStorageKey(file.name);
   const path = `afastamentos/comentarios/${id}/${crypto.randomUUID()}-${safeName}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { randomUUID } from "node:crypto";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { sanitizeStorageKey } from "@/lib/sanitize-storage-key";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_FOTOS_PER_INVESTIGACAO = 10;
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     return NextResponse.json({ error: "max_fotos_reached", max: MAX_FOTOS_PER_INVESTIGACAO }, { status: 409 });
   }
 
-  const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+  const safeName = sanitizeStorageKey(file.name);
   const path = `investigacoes/${inv.ocorrencia_id}/${randomUUID()}-${safeName}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   const { error: uploadErr } = await admin.storage

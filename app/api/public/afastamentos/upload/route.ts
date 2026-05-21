@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { sanitizeStorageKey } from "@/lib/sanitize-storage-key";
 
 // Vercel serverless functions reject request bodies >4.5 MB at the edge
 // (returns HTML 413 before the function runs). We cap below that to leave
@@ -16,7 +17,8 @@ export async function POST(request: NextRequest) {
     if (!ALLOWED.has(file.type)) return NextResponse.json({ error: "bad_mime" }, { status: 415 });
 
     const supabase = getSupabaseAdmin();
-    const path = `afastamentos/staging/${crypto.randomUUID()}-${file.name}`;
+    const safeName = sanitizeStorageKey(file.name);
+    const path = `afastamentos/staging/${crypto.randomUUID()}-${safeName}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const { error } = await supabase.storage.from("attachments").upload(path, buffer, {
