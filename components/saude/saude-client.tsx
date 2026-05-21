@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { MetricCard, type MetricTone } from "@/components/saude/metric-card";
-import { FluigErrorSheet } from "@/components/saude/fluig-error-sheet";
+import { FluigEventSheet } from "@/components/saude/fluig-event-sheet";
 import type { SaudeMetrics, FailedItem } from "@/lib/dashboard/queries";
 
 function useInterval(callback: () => void, delay: number) {
@@ -24,7 +24,7 @@ function formatHoras(h: number | null): string {
 interface FailedListProps {
   items: FailedItem[];
   total: number;
-  /** When set, "ver" opens the FluigErrorSheet with details + retry. */
+  /** When set, the whole row opens the FluigEventSheet with details + retry. */
   variant?: "default" | "fluig";
   onRetried?: () => void;
 }
@@ -32,23 +32,56 @@ interface FailedListProps {
 function FailedList({ items, total, variant = "default", onRetried }: FailedListProps) {
   return (
     <ul className="space-y-1">
-      {items.map((item) => (
-        <li key={item.id} className="flex items-center justify-between text-xs">
-          <span className="truncate text-[var(--color-fg-muted)]">
-            {item.colaborador_nome} · {item.tipo}
-          </span>
-          {variant === "fluig" ? (
-            <FluigErrorSheet item={item} onRetried={onRetried} />
-          ) : (
+      {items.map((item) => {
+        if (variant === "fluig") {
+          return (
+            <li key={item.id}>
+              <FluigEventSheet
+                data={{
+                  variant: "erro",
+                  afastamento_id: item.id,
+                  afastamento_serial_id: item.serial_id ?? null,
+                  colaborador_nome: item.colaborador_nome,
+                  tipo: item.tipo,
+                  ocorrido_em: item.ocorrido_em ?? null,
+                  tentativas: item.tentativas,
+                  erro: {
+                    message: item.ultimo_erro ?? null,
+                    status: item.ultimo_erro_status ?? null,
+                    raw: item.ultimo_erro_raw,
+                  },
+                }}
+                onRetried={onRetried}
+              >
+                <button
+                  type="button"
+                  className="-mx-2 flex w-full items-center justify-between rounded-sm px-2 py-1 text-left text-xs hover:bg-[var(--color-bg-subtle)]"
+                >
+                  <span className="truncate text-[var(--color-fg-muted)]">
+                    {item.colaborador_nome} · {item.tipo}
+                  </span>
+                  <span className="ml-2 shrink-0 text-red-600 underline">
+                    ver →
+                  </span>
+                </button>
+              </FluigEventSheet>
+            </li>
+          );
+        }
+        return (
+          <li key={item.id} className="flex items-center justify-between text-xs">
+            <span className="truncate text-[var(--color-fg-muted)]">
+              {item.colaborador_nome} · {item.tipo}
+            </span>
             <Link
               href={`/app/afastamentos/${item.id}`}
               className="ml-2 shrink-0 text-red-600 underline hover:text-red-800"
             >
               ver →
             </Link>
-          )}
-        </li>
-      ))}
+          </li>
+        );
+      })}
       {total > items.length && (
         <li className="text-xs text-[var(--color-fg-muted)]">
           + {total - items.length} outros
@@ -122,6 +155,12 @@ export function SaudeClient({ initial }: SaudeClientProps) {
                 onRetried={refresh}
               />
             )}
+            <Link
+              href="/app/painel/saude/fluig"
+              className="mt-2 inline-block text-xs text-[var(--color-fg-muted)] hover:text-foreground hover:underline"
+            >
+              Histórico de eventos Fluig →
+            </Link>
           </MetricCard>
         </div>
       </section>

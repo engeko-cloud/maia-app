@@ -141,7 +141,26 @@ export async function getFluigFalhados(admin: SupabaseClient): Promise<FailedGro
       prev.tentativas += 1;
     }
   }
-  const ids = [...byId.keys()];
+  const candidateIds = [...byId.keys()];
+  if (candidateIds.length === 0) return { count: 0, items: [] };
+
+  // Exclude afastamentos that were successfully (re)sent after the latest error.
+  // enviado_fluig_em is set on every successful push (including retries), so an
+  // id whose enviado_fluig_em > latest fluig_erro.ocorrido_em has been resolved.
+  const { data: rows } = await admin
+    .from("afastamentos")
+    .select("id, enviado_fluig_em")
+    .in("id", candidateIds);
+  const enviadoMap = new Map<string, string | null>(
+    (rows ?? []).map((r: any) => [r.id as string, (r.enviado_fluig_em as string | null) ?? null]),
+  );
+  const ids = candidateIds.filter((id) => {
+    const meta = byId.get(id)!;
+    const enviadoEm = enviadoMap.get(id);
+    if (!enviadoEm) return true;
+    return new Date(enviadoEm).getTime() <= new Date(meta.ocorrido_em).getTime();
+  });
+
   const items = await resolveAfastamentoItems(admin, ids);
   // Merge error metadata into items
   const enriched = items.map((it) => {
