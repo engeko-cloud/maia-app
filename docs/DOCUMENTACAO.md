@@ -638,6 +638,10 @@ COLAB/RH                                MAIA                              SOC   
 Tipos com `requer_aprovacao = true` (Doença, Acidente, INSS etc.) entram como **pendente** e vão para a inbox da SO.
 Tipos com `requer_aprovacao = false` (Casamento, Óbito, Maternidade etc.) entram direto como **finalizado** e disparam um e-mail à folha.
 
+**Upload de anexo**: o cliente faz `POST /api/public/afastamentos/upload` (multipart) com pré-checagem client-side de tamanho/MIME. O cap é **4 MB** — abaixo do limite de 4,5 MB que a Vercel impõe no edge para o corpo de funções serverless (independe do plano). Arquivos maiores que 4 MB são barrados client-side antes do roundtrip; respostas do servidor (413/415/500) viram toasts específicos em PT-BR via leitura do JSON da resposta.
+
+**Consulta pós-submissão**: `/afastamentos/status/[token]` renderiza a situação atual, o motivo de rejeição (se houver) e o anexo enviado — clicar abre uma signed URL gerada por `GET /api/public/afastamentos/[token]/anexo` (path derivado da row pelo token, não vem de query param, então o token não pode sondar caminhos arbitrários do storage).
+
 ### 7.2 Aprovação OH (com retry manual em caso de falha)
 
 ```
@@ -682,6 +686,8 @@ OH                                MAIA                                 FLUIG    
 - Permissão é verificada **antes** de qualquer uso do service-role.
 - Aprovação **prossegue mesmo se Fluig falhar** — registra `fluig_erro` em `eventos` e admin pode retentar depois pelo painel de saúde.
 - Falhas de e-mail são engolidas (try/catch) e registradas como eventos `email_enviado` com `dados.error`.
+
+**Reenvio de e-mail "finalizado" (`SendFinalizadoEmailCard`)**: no detalhe de um afastamento `finalizado`, a página renderiza um card que permite reenviar a notificação à folha (ou a outros destinatários ad-hoc) com uma mensagem opcional. O card faz `POST /api/afastamentos/[id]/notificar-folha` com `{ emails, mensagem }`. O servidor (admin OU equipe `oh`) parseia o input por `,`/`;`/whitespace (dedup, até 50 destinatários, valida cada um com zod email), escolhe o template `folha-approved-medical` (tipos `requer_aprovacao=true`) ou `folha-auto-accept` (tipos auto-aceitos) e injeta a mensagem via o partial compartilhado `emails/_mensagem-block.ts`. Registra um `email_enviado` em `eventos` com `dados.manual = true`, `to = recipients[]` e `mensagem_len` (não armazena o texto). Em caso de falha do Resend, devolve 502 e ainda grava o evento com `dados.error`.
 
 ### 7.3 Rejeição com link de edição
 
@@ -807,7 +813,8 @@ A foto do upload de investigação (público) tem endpoint dedicado: `GET /api/p
 `/app/painel/saude` (admin-gated) consome `GET /api/saude` → `getSaudeMetrics()` em `lib/dashboard/queries.ts`. Retorna:
 
 - **E-mails falhados (24h)**: agrupa eventos `email_enviado` com `dados.error` por `entidade_id`; lista até 5.
-- **Fluig falhados (24h)**: agrupa eventos `fluig_erro` por `entidade_id`; conta `tentativas`, captura `ultimo_erro`, `ultimo_erro_status`, `ultimo_erro_raw` (JSON da edge function). Cada item abre uma `FluigErrorSheet` com botão **"Retentar agora"** (admin-only).
+- **Fluig falhados (24h)**: agrupa eventos `fluig_erro` por `entidade_id`; conta `tentativas`, captura `ultimo_erro`, `ultimo_erro_status`, `ultimo_erro_raw` (JSON da edge function). Cada item abre uma `FluigErrorSheet` com botão **"Retentar agora"** (admin-only). Falhas já resolvidas por um `fluig_enviado` posterior (vide §8.2 sobre _misclassified success_) ficam fora dessa lista — apenas pendentes aparecem.
+- **Histórico completo de eventos Fluig** (`/app/painel/saude/fluig`): página dedicada com filtros por status (`Todos` / `Falhas pendentes` / `Falhas (incl. resolvidas)` / `Sucessos`), busca por nome do colaborador **ou** `#serial_id`, e janela de datas. O server component recebe os filtros via `searchParams` e re-renderiza a cada navegação (`router.push` + `router.refresh()` para retries) — sem estado local de dados no cliente, sem cache divergente. A query (`lib/dashboard/fluig-eventos.ts`) reclassifica linhas `fluig_enviado` cujo `dados.response` contém o marcador `<item>ERROR</item>` (vide §8.2) como falhas e cruza com sucessos posteriores para anotar `resolved_at`.
 - **Latência de aprovação (30d)**: p50 e p95 (em horas) entre `criado` e `aprovado` por afastamento.
 - **Ocorrências por situação**: contagem por `situacao`.
 - **Afastamentos por tipo (mês corrente)**: top 8 + "Outros".
@@ -849,6 +856,7 @@ Sino no topo da navegação (`AppNotificationBell`) lê `GET /api/notificacoes` 
 - **Segurança XML**: campos dinâmicos passam por `xmlEscape()`.
 - **Wrapper no app** (`lib/fluig.ts`): converte `FunctionsHttpError` em `{ ok:false, error:{ message, body, status } }` — **nunca lança**, para não derrubar a aprovação.
 - **Segredos** (Supabase Secrets): `FLUIG_BASE_URL`, `FLUIG_USERNAME`, `FLUIG_PASSWORD`, `FLUIG_PARENT_DOC_ID`, `FLUIG_PROCESS_ID`.
+- **"Sucesso" com erro de negócio** (`fluig_enviado` mal classificado): em algumas falhas (notadamente _login failure_ do Fluig), o endpoint responde **HTTP 200** com um envelope SOAP cujo corpo é `<result><item><item>ERROR</item><item>{mensagem}</item></item></result>`. A edge function pré-patch gravava esses casos como `fluig_enviado`. Como rebobinar histórico não é viável, o app trata isso na leitura: `lib/dashboard/fluig-eventos.ts` reconhece o padrão pelo regex `FLUIG_BIZ_ERROR_REGEX` (e por um `ilike` coarse no SQL) e reclassifica a linha como falha — tanto no `FluigErrorSheet` (24h) quanto na página `/app/painel/saude/fluig`. Sucessos reais (sem o marcador) que aconteçam depois resolvem a falha e exibem badge "falha resolvida".
 
 ### 8.3 Resend (e-mail)
 
@@ -916,6 +924,7 @@ Sino no topo da navegação (`AppNotificationBell`) lê `GET /api/notificacoes` 
 | -------------------------------------- | --------------- | -------------------------------------------------------- |
 | `/app/painel`                          | autenticado     | Contadores + atividade recente                           |
 | `/app/painel/saude`                    | admin           | Painel de saúde da operação (métricas + retry Fluig)     |
+| `/app/painel/saude/fluig`              | admin           | Histórico completo de eventos Fluig com filtros          |
 | `/app/perfil`                          | autenticado     | Nome, troca de senha, avatar                             |
 | `/app/afastamentos`                    | autenticado     | Lista com filter rail + exportação CSV                   |
 | `/app/afastamentos/ativos`             | autenticado     | Filtro pronto: finalizados em curso                      |
@@ -944,12 +953,13 @@ Sino no topo da navegação (`AppNotificationBell`) lê `GET /api/notificacoes` 
 | Método  | Endpoint                                                | Resumo                                                   |
 | ------- | ------------------------------------------------------- | -------------------------------------------------------- |
 | POST    | `/api/public/afastamentos`                              | Submete afastamento, dispara recibo + folha-auto-accept  |
-| POST    | `/api/public/afastamentos/upload`                       | Upload do anexo (pdf/jpg/png/webp, ≤10 MB)               |
+| POST    | `/api/public/afastamentos/upload`                       | Upload do anexo (pdf/jpg/png/webp, ≤4 MB — limite imposto pelo edge da Vercel) |
 | GET     | `/api/public/afastamentos/upload/preview`               | Signed URL de preview do anexo recém-enviado             |
 | POST    | `/api/public/afastamentos/lookup-cpf`                   | Invoca soc-lookup + cruza com empresas/unidades          |
 | GET     | `/api/public/afastamentos/ocorrencias-disponiveis`      | Lista ocorrências do CPF para bind opcional               |
 | GET     | `/api/public/afastamentos/[token]`                      | Carrega afastamento por token de edição                  |
 | PATCH   | `/api/public/afastamentos/[token]`                      | Resubmissão (gate `isEditAllowed`)                       |
+| GET     | `/api/public/afastamentos/[token]/anexo`                | Redirect com signed URL do anexo (token-gated, 60 s TTL) |
 | POST    | `/api/public/ocorrencias`                               | Registra ocorrência + recibo + notifica safety           |
 | GET     | `/api/public/investigacoes/[token]`                     | Carrega investigação por token público                   |
 | POST    | `/api/public/investigacoes/[token]/submeter`            | Salva/finaliza investigação                              |
@@ -979,6 +989,7 @@ Sino no topo da navegação (`AppNotificationBell`) lê `GET /api/notificacoes` 
 | POST    | `/api/afastamentos/[id]/cancelar`                       | Admin only; pendente/rejeitado → cancelado              |
 | PATCH   | `/api/afastamentos/[id]/editar`                         | Admin OU oh; edição administrativa pontual              |
 | POST    | `/api/afastamentos/[id]/fluig/retry`                    | Admin only; retenta push Fluig após erro                |
+| POST    | `/api/afastamentos/[id]/notificar-folha`                | Reenvia e-mail "finalizado" para destinatários informados + mensagem opcional |
 | GET     | `/api/afastamentos/[id]/comentarios`                    | Lista comentários                                       |
 | POST    | `/api/afastamentos/[id]/comentarios`                    | Cria comentário (texto + anexos)                        |
 | PATCH   | `/api/afastamentos/[id]/comentarios/[comentarioId]`     | Edita (autor only)                                      |
@@ -1077,7 +1088,7 @@ A tabela `eventos` é a única fonte de auditoria. Cada Route Handler que muda e
 | `resubmetido`                               | Autor reenvia via link de edição                                       |
 | `cancelado`                                 | Admin cancela afastamento (ou investigação)                            |
 | `editado`                                   | Edição administrativa pontual (PATCH `/api/afastamentos/[id]/editar`)  |
-| `fluig_enviado`                             | Push Fluig retorna `ok: true`                                          |
+| `fluig_enviado`                             | Push Fluig retorna `ok: true`. **Nota**: linhas legadas podem trazer um erro de negócio no `dados.response` (ver §8.2) — a leitura reclassifica como falha. |
 | `fluig_erro`                                | Push Fluig falha; payload contém `error.message`, `error.body`, `error.status`, `retry: bool` |
 | `email_enviado`                             | Qualquer template (sucesso ou erro — `dados.error` diferencia)         |
 | `investigacao_iniciada`                     | Primeira escrita em `investigacoes` (upsert quando entra `em_andamento`)|

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { PublicFormShell } from "@/components/forms/public-form-shell";
+import { AttachmentChip } from "@/components/detail/attachment-chip";
 import { fmtDate } from "@/lib/fmt-date";
 
 const SITUACAO_LABEL: Record<string, string> = {
@@ -26,7 +27,7 @@ export default async function StatusPage({ params }: { params: Promise<{ token: 
     .from("afastamentos")
     .select(`
       serial_id, situacao, motivo_rejeicao,
-      colaborador_nome, cpf, data_inicio, data_fim, duracao, cid,
+      colaborador_nome, cpf, data_inicio, data_fim, duracao, cid, arquivo_url,
       empresas!inner(nome),
       unidades!inner(nome),
       afastamento_tipos!inner(rotulo)
@@ -70,6 +71,18 @@ export default async function StatusPage({ params }: { params: Promise<{ token: 
         <dt className="text-[var(--color-fg-muted)]">Unidade</dt>
         <dd>{(a.unidades as { nome: string }).nome}</dd>
       </dl>
+
+      {a.arquivo_url ? (
+        <div className="mt-6">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-fg-muted)]">
+            Anexo
+          </h2>
+          <AttachmentChip
+            href={`/api/public/afastamentos/${token}/anexo`}
+            filename={a.arquivo_url.split("/").pop() ?? "anexo"}
+          />
+        </div>
+      ) : null}
 
       {a.situacao === "rejeitado" ? (
         <div className="mt-6">

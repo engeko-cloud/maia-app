@@ -50,3 +50,6 @@ docs/superpowers/
 
 # local one-off scripts, migration logs, PII inputs (CSV with CPFs etc.)
 scripts/
+
+# delivery snapshots (versionados por release, não pelo git)
+docs/delivery/

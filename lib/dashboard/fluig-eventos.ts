@@ -121,15 +121,37 @@ export async function getFluigEventos(
 
   // When searching, first resolve matching afastamento ids — PostgREST can
   // filter on embedded columns but does not narrow the parent row set.
+  // A purely numeric query (with optional `#` prefix) also matches serial_id.
   let matchingAfastamentoIds: string[] | null = null;
   if (filters.q) {
-    const safe = filters.q.replace(/[%_,]/g, "");
-    const { data: matched } = await (admin
-      .from("afastamentos")
-      .select("id")
-      .ilike("colaborador_nome", `%${safe}%`)
-      .limit(2000) as any);
-    matchingAfastamentoIds = ((matched ?? []) as Array<{ id: string }>).map((r) => r.id);
+    const safe = filters.q.replace(/[%_,]/g, "").trim();
+    const numericRaw = safe.replace(/^#/, "");
+    const isNumeric = /^\d+$/.test(numericRaw);
+
+    const lookups: Array<Promise<{ data: Array<{ id: string }> | null }>> = [
+      (admin
+        .from("afastamentos")
+        .select("id")
+        .ilike("colaborador_nome", `%${safe}%`)
+        .limit(2000) as any),
+    ];
+    if (isNumeric) {
+      lookups.push(
+        (admin
+          .from("afastamentos")
+          .select("id")
+          .eq("serial_id", Number(numericRaw))
+          .limit(2000) as any),
+      );
+    }
+    const results = await Promise.all(lookups);
+    const ids = new Set<string>();
+    for (const r of results) {
+      for (const row of (r.data ?? []) as Array<{ id: string }>) {
+        ids.add(row.id);
+      }
+    }
+    matchingAfastamentoIds = [...ids];
     if (matchingAfastamentoIds.length === 0) {
       return { items: [], page, page_size: pageSize, total: 0 };
     }

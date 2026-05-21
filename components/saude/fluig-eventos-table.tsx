@@ -38,8 +38,7 @@ function buildHref(
 export function FluigEventosTable({ initial, initialFilters }: Props) {
   const router = useRouter();
   const sp = useSearchParams();
-  const [data, setData] = React.useState<FluigEventosPage>(initial);
-  const [loading, setLoading] = React.useState(false);
+  const [isPending, startTransition] = React.useTransition();
   const [draftQ, setDraftQ] = React.useState(initialFilters.q);
 
   const current = React.useMemo(
@@ -57,38 +56,10 @@ export function FluigEventosTable({ initial, initialFilters }: Props) {
     setDraftQ(current.q);
   }, [current.q]);
 
-  const refresh = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const usp = new URLSearchParams();
-      if (current.status !== "all") usp.set("status", current.status);
-      if (current.q) usp.set("q", current.q);
-      if (current.from) usp.set("from", current.from);
-      if (current.to) usp.set("to", current.to);
-      if (current.page > 1) usp.set("page", String(current.page));
-      const res = await fetch(`/api/saude/fluig?${usp.toString()}`);
-      if (res.ok) setData(await res.json());
-    } finally {
-      setLoading(false);
-    }
-  }, [current]);
-
-  React.useEffect(() => {
-    // Refresh when filters change (page already has initial data on first load)
-    if (
-      current.status === initialFilters.status &&
-      current.q === initialFilters.q &&
-      current.from === (initialFilters.from ?? "") &&
-      current.to === (initialFilters.to ?? "") &&
-      current.page === 1
-    ) {
-      return;
-    }
-    void refresh();
-  }, [current, refresh, initialFilters]);
-
   function commit(patch: Partial<{ status: string; q: string; from: string; to: string; page: number }>) {
-    router.push(buildHref(current, { ...patch, page: patch.page ?? 1 }));
+    startTransition(() => {
+      router.push(buildHref(current, { ...patch, page: patch.page ?? 1 }));
+    });
   }
 
   function onSearchSubmit(e: React.FormEvent) {
@@ -96,6 +67,12 @@ export function FluigEventosTable({ initial, initialFilters }: Props) {
     commit({ q: draftQ });
   }
 
+  const refresh = React.useCallback(() => {
+    startTransition(() => router.refresh());
+  }, [router]);
+
+  const data = initial;
+  const loading = isPending;
   const totalPages = Math.max(1, Math.ceil(data.total / data.page_size));
   const rangeStart = data.items.length === 0 ? 0 : (current.page - 1) * data.page_size + 1;
   const rangeEnd = rangeStart + data.items.length - 1;
@@ -112,7 +89,7 @@ export function FluigEventosTable({ initial, initialFilters }: Props) {
             type="search"
             value={draftQ}
             onChange={(e) => setDraftQ(e.target.value)}
-            placeholder="Buscar por nome do colaborador…"
+            placeholder="Buscar por nome ou #identificador…"
             className="w-full rounded-md border border-[var(--color-border)] bg-white py-1.5 pl-9 pr-3 text-sm placeholder:text-[var(--color-fg-subtle)] focus:border-[var(--brand-primary-600)] focus:outline-none"
           />
         </form>
