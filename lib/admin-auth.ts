@@ -1,5 +1,11 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
 
+export async function requireAuthenticatedUser() {
+  const supabase = await getSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user ?? null;
+}
+
 export async function requireAdminUser() {
   const supabase = await getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();

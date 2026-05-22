@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { Resend } from "resend";
-import { requireSafetyOrAdmin } from "@/lib/admin-auth";
+import { requireAuthenticatedUser } from "@/lib/admin-auth";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { toCsvFile } from "@/lib/relatorio/csv";
 import {
@@ -11,7 +11,7 @@ import {
 import { relatorioPronto } from "@/emails/relatorio-pronto";
 
 export async function POST(req: NextRequest) {
-  const user = await requireSafetyOrAdmin();
+  const user = await requireAuthenticatedUser();
   if (!user) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const body = (await req.json()) as {
@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
     .select(
       "serial_id, cpf, colaborador_nome, colaborador_cargo, colaborador_setor, data_inicio, data_fim, duracao, situacao, acidente, inss, internacao, cid, afastamento_tipos!inner(rotulo), empresas!inner(nome), unidades!inner(nome)",
     )
-    .order("data_inicio", { ascending: false });
+    .order("data_inicio", { ascending: false })
+    .limit(1000000);
 
   if (body.empresa_id) q = q.eq("empresa_id", body.empresa_id);
   if (body.unidade_id) q = q.eq("unidade_id", body.unidade_id);
