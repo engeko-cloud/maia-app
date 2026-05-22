@@ -44,7 +44,7 @@ export function ApprovalBar({ afastamentoId, editProps }: ApprovalBarProps) {
       return;
     }
     toast.success("Aprovado.");
-    router.refresh();
+    router.push("/app/afastamentos/aprovacoes");
   }
 
   async function rejeitar() {
