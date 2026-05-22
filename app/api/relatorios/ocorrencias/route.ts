@@ -67,9 +67,9 @@ export async function POST(req: NextRequest) {
   const to = isDevOverride ? DEV_RECIPIENT : user.email!;
   const baseSubject = `Relatório de ocorrências — ${today}`;
   const subject = isDevOverride ? `[DEV → ${user.email}] ${baseSubject}` : baseSubject;
-  const resend = new Resend(process.env.RESEND_TEST_API_KEY!);
+  const resend = new Resend(process.env.RESEND_API_KEY!);
   const { error: mailError } = await resend.emails.send({
-    from: "Maia <maia@fapptory.me>",
+    from: `${process.env.RESEND_FROM_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
     to,
     subject,
     html,

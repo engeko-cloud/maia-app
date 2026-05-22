@@ -16,7 +16,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 
 export type EmpresaOption = { id: string; nome: string };
@@ -28,10 +27,19 @@ interface ExportDialogProps {
   unidades: UnidadeOption[];
 }
 
+type FilterType = "empresa" | "unidade" | "cpf";
+
+const FILTER_LABELS: Record<FilterType, string> = {
+  empresa: "Empresa",
+  unidade: "Unidade",
+  cpf:     "CPF",
+};
+
 const ALL = "__all__";
 
 export function ExportDialog({ domain, empresas, unidades }: ExportDialogProps) {
   const [open, setOpen]           = useState(false);
+  const [filterType, setFilterType] = useState<FilterType>("empresa");
   const [empresaId, setEmpresaId] = useState(ALL);
   const [unidadeId, setUnidadeId] = useState(ALL);
   const [cpf, setCpf]             = useState("");
@@ -45,11 +53,19 @@ export function ExportDialog({ domain, empresas, unidades }: ExportDialogProps) 
   const dateLabel   = domain === "afastamentos" ? "Início" : "Ocorrência";
 
   function resetFilters() {
+    setFilterType("empresa");
     setEmpresaId(ALL);
     setUnidadeId(ALL);
     setCpf("");
     setDataDe("");
     setDataAte("");
+  }
+
+  function handleFilterTypeChange(t: FilterType) {
+    setFilterType(t);
+    setEmpresaId(ALL);
+    setUnidadeId(ALL);
+    setCpf("");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -60,26 +76,31 @@ export function ExportDialog({ domain, empresas, unidades }: ExportDialogProps) 
     const selectedEmpresa = empresas.find((x) => x.id === empresaId);
     const selectedUnidade = unidades.find((x) => x.id === unidadeId);
 
+    const body: Record<string, string | undefined> = {
+      data_de:  dataDe || undefined,
+      data_ate: dataAte || undefined,
+    };
+    if (filterType === "empresa" && empresaId !== ALL) {
+      body.empresa_id   = empresaId;
+      body.empresa_nome = selectedEmpresa?.nome;
+    }
+    if (filterType === "unidade" && unidadeId !== ALL) {
+      body.unidade_id   = unidadeId;
+      body.unidade_nome = selectedUnidade?.nome;
+    }
+    if (filterType === "cpf" && cpf.trim()) {
+      body.cpf = cpf.trim();
+    }
+
     try {
       const res = await fetch(`/api/relatorios/${domain}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          empresa_id:   empresaId !== ALL ? empresaId : undefined,
-          empresa_nome: selectedEmpresa?.nome,
-          unidade_id:   unidadeId !== ALL ? unidadeId : undefined,
-          unidade_nome: selectedUnidade?.nome,
-          cpf:          cpf.trim() || undefined,
-          data_de:      dataDe || undefined,
-          data_ate:     dataAte || undefined,
-        }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         let message = "Erro ao gerar relatório.";
-        try {
-          const json = await res.json();
-          message = json.error ?? message;
-        } catch { /* non-JSON error body */ }
+        try { const json = await res.json(); message = json.error ?? message; } catch { /* non-JSON */ }
         setError(message);
       } else {
         setDone(true);
@@ -93,12 +114,11 @@ export function ExportDialog({ domain, empresas, unidades }: ExportDialogProps) 
 
   function handleOpenChange(v: boolean) {
     setOpen(v);
-    if (!v) {
-      resetFilters();
-      setDone(false);
-      setError("");
-    }
+    if (!v) { resetFilters(); setDone(false); setError(""); }
   }
+
+  const selectedEmpresaNome = empresas.find((e) => e.id === empresaId)?.nome;
+  const selectedUnidadeNome = unidades.find((u) => u.id === unidadeId)?.nome;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -134,51 +154,83 @@ export function ExportDialog({ domain, empresas, unidades }: ExportDialogProps) 
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 pt-2">
+
+            {/* Filter type toggle */}
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`export-empresa-${domain}`}>Empresa</Label>
-              <Select value={empresaId} onValueChange={(v) => setEmpresaId(v ?? ALL)}>
-                <SelectTrigger id={`export-empresa-${domain}`}>
-                  <SelectValue placeholder="Todas as empresas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL}>Todas as empresas</SelectItem>
-                  {empresas.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Filtrar por</Label>
+              <div className="flex rounded-md border border-[var(--color-border)] overflow-hidden">
+                {(["empresa", "unidade", "cpf"] as FilterType[]).map((t, i) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => handleFilterTypeChange(t)}
+                    className={[
+                      "flex-1 py-1.5 text-sm font-medium transition-colors",
+                      i > 0 ? "border-l border-[var(--color-border)]" : "",
+                      filterType === t
+                        ? "bg-[var(--brand-primary-600)] text-white"
+                        : "bg-white text-[var(--color-fg-muted)] hover:text-foreground hover:bg-[var(--color-bg-subtle,#f9fafb)]",
+                    ].join(" ")}
+                  >
+                    {FILTER_LABELS[t]}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`export-unidade-${domain}`}>Unidade</Label>
-              <Select value={unidadeId} onValueChange={(v) => setUnidadeId(v ?? ALL)}>
-                <SelectTrigger id={`export-unidade-${domain}`}>
-                  <SelectValue placeholder="Todas as unidades" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL}>Todas as unidades</SelectItem>
-                  {unidades.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Active filter input */}
+            {filterType === "empresa" && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`export-empresa-${domain}`}>Empresa</Label>
+                <Select value={empresaId} onValueChange={(v) => setEmpresaId(v ?? ALL)}>
+                  <SelectTrigger id={`export-empresa-${domain}`} className="w-full">
+                    <span className={selectedEmpresaNome ? "text-foreground" : "text-muted-foreground"}>
+                      {selectedEmpresaNome ?? "Todas as empresas"}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL}>Todas as empresas</SelectItem>
+                    {empresas.map((e) => (
+                      <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor={`export-cpf-${domain}`}>CPF do colaborador</Label>
-              <Input
-                id={`export-cpf-${domain}`}
-                placeholder="Todos"
-                value={cpf}
-                onChange={(e) => setCpf(e.target.value)}
-                maxLength={11}
-              />
-            </div>
+            {filterType === "unidade" && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`export-unidade-${domain}`}>Unidade</Label>
+                <Select value={unidadeId} onValueChange={(v) => setUnidadeId(v ?? ALL)}>
+                  <SelectTrigger id={`export-unidade-${domain}`} className="w-full">
+                    <span className={selectedUnidadeNome ? "text-foreground" : "text-muted-foreground"}>
+                      {selectedUnidadeNome ?? "Todas as unidades"}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL}>Todas as unidades</SelectItem>
+                    {unidades.map((u) => (
+                      <SelectItem key={u.id} value={u.id}>{u.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
+            {filterType === "cpf" && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`export-cpf-${domain}`}>CPF do colaborador</Label>
+                <Input
+                  id={`export-cpf-${domain}`}
+                  placeholder="Todos"
+                  value={cpf}
+                  onChange={(e) => setCpf(e.target.value)}
+                  maxLength={11}
+                />
+              </div>
+            )}
+
+            {/* Date range — always visible, concurrent with any filter */}
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor={`export-data-de-${domain}`}>{dateLabel} de</Label>
@@ -200,9 +252,7 @@ export function ExportDialog({ domain, empresas, unidades }: ExportDialogProps) 
               </div>
             </div>
 
-            {error && (
-              <p className="text-sm text-red-600">{error}</p>
-            )}
+            {error && <p className="text-sm text-red-600">{error}</p>}
 
             <div className="flex justify-end gap-2 pt-2">
               <button
