@@ -13,7 +13,7 @@ export async function GET() {
   const admin = getSupabaseAdmin();
   const { data, error } = await admin
     .from("colaboradores")
-    .select("cpf, email, auth_id, criado_em")
+    .select("cpf, email, criado_em")
     .order("criado_em", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data ?? []);
