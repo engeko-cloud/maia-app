@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { AfastamentoInputSchema } from "@/lib/validation/afastamento";
 import { writeEvento } from "@/lib/eventos";
 import { sendMail } from "@/lib/mail/send";
+import { pushToFluig } from "@/lib/fluig";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -50,13 +51,13 @@ export async function POST(request: NextRequest) {
     dados:        { situacao_inicial: situacao },
   });
 
-  // Carrega detalhes completos para o email
+  // Carrega detalhes completos para o email + push ao Fluig
   const { data: full } = await supabase
     .from("afastamentos")
     .select(`*,
-      empresas!inner(nome),
+      empresas!inner(nome, codigo_fluig),
       unidades!inner(nome),
-      afastamento_tipos!inner(rotulo)`)
+      afastamento_tipos!inner(codigo, rotulo)`)
     .eq("id", data.id).single();
 
   if (full) {
@@ -97,6 +98,54 @@ export async function POST(request: NextRequest) {
             evento: "email_enviado", dados: { template: "folha-auto-accept", error: err.message } });
         }
       }
+
+      // Tipos auto-finalizados também devem ir para o Fluig (a edge function
+      // ignora silenciosamente tipos não mapeados via mapTipoToFluigCode).
+      // Fire-and-forget: não bloqueia a resposta ao cliente. Mesmo padrão de
+      // logging usado em aprovar/route.ts.
+      const fullId = data.id;
+      const fullForFluig = full;
+      void (async () => {
+        try {
+          const result = await pushToFluig({
+            afastamento_id:         String(fullForFluig.serial_id),
+            tipo_codigo:            (fullForFluig.afastamento_tipos as any).codigo,
+            cpf:                    fullForFluig.cpf,
+            colaborador_nome:       fullForFluig.colaborador_nome ?? "",
+            colaborador_codigo_soc: fullForFluig.colaborador_codigo_soc,
+            empresa_codigo_fluig:   (fullForFluig.empresas as any).codigo_fluig ?? "",
+            data_inicio:    fullForFluig.data_inicio,
+            data_fim:       fullForFluig.data_fim,
+            duracao:        fullForFluig.duracao,
+            cid:            fullForFluig.cid,
+            cid_descricao:  fullForFluig.cid,
+            hora_inicio:    fullForFluig.hora_inicio ?? null,
+            hora_fim:       fullForFluig.hora_fim ?? null,
+            emissor:        fullForFluig.emissor as { tipo: string; nome: string; numero: string; uf: string } | null,
+            unidade_nome:   (fullForFluig.unidades as any).nome ?? "",
+            arquivo_url:    fullForFluig.arquivo_url,
+          });
+          if (result?.ok) {
+            await supabase.from("afastamentos")
+              .update({ enviado_fluig_em: new Date().toISOString() })
+              .eq("id", fullId);
+            await writeEvento(supabase, {
+              tipoEntidade: "afastamento", entidadeId: fullId,
+              evento: "fluig_enviado", dados: { response: result.response, auto: true },
+            });
+          } else if (!result?.skipped) {
+            await writeEvento(supabase, {
+              tipoEntidade: "afastamento", entidadeId: fullId,
+              evento: "fluig_erro", dados: { ...result, auto: true },
+            });
+          }
+        } catch (err: any) {
+          await writeEvento(supabase, {
+            tipoEntidade: "afastamento", entidadeId: fullId,
+            evento: "fluig_erro", dados: { error: err?.message ?? String(err), auto: true },
+          });
+        }
+      })();
     }
   }
 

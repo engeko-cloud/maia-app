@@ -98,13 +98,6 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
   if ((full.afastamento_tipos as any).requer_aprovacao) {
     void (async () => {
       try {
-        if (process.env.NODE_ENV !== "production") {
-          await writeEvento(admin, {
-            tipoEntidade: "afastamento", entidadeId: id,
-            evento: "fluig_enviado", autorId: user.id, dados: { dev_bypass: true },
-          });
-          return;
-        }
         const result = await pushToFluig({
           afastamento_id:         String(full.serial_id),
           tipo_codigo:            (full.afastamento_tipos as any).codigo,
