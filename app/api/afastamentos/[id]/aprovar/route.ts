@@ -106,7 +106,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
           return;
         }
         const result = await pushToFluig({
-          afastamento_id:         id,
+          afastamento_id:         String(full.serial_id),
           tipo_codigo:            (full.afastamento_tipos as any).codigo,
           cpf:                    full.cpf,
           colaborador_nome:       full.colaborador_nome ?? "",

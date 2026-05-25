@@ -13,9 +13,9 @@ const EditSchema = z.object({
   duracao:     z.number().int().positive(),
   cid:         z.string().regex(CID_REGEX, "CID deve ter formato X00 (letra + 2 dígitos).").nullable(),
   emissor:     z.object({
-    tipo: z.string().min(1),
-    no:   z.string().min(1),
-    uf:   z.string().length(2),
+    tipo:   z.string().min(1),
+    numero: z.string().min(1),
+    uf:     z.string().length(2),
   }).nullable(),
 });
 

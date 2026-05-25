@@ -37,9 +37,9 @@ export const OcorrenciaInputSchema = z.object({
     { message: "CID deve ter formato X00 (letra + 2 dígitos)." },
   ),
   emissor:                z.object({
-    tipo: z.enum(["CRM","CRO"]),
-    no:   z.string().min(1),
-    uf:   z.string().length(2),
+    tipo:   z.enum(["CRM","CRO"]),
+    numero: z.string().min(1),
+    uf:     z.string().length(2),
   }).optional(),
   parecer_medico:         z.string().optional(),
   morte:                  z.boolean().optional(),

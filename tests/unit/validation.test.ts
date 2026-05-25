@@ -24,14 +24,14 @@ describe("AfastamentoInputSchema", () => {
   it("accepts emissor jsonb", () => {
     const r = AfastamentoInputSchema.safeParse({
       ...base,
-      emissor: { tipo: "CRM", no: "12345", uf: "SP" },
+      emissor: { tipo: "CRM", numero: "12345", uf: "SP" },
     });
     expect(r.success).toBe(true);
   });
   it("rejects emissor with bad tipo", () => {
     const r = AfastamentoInputSchema.safeParse({
       ...base,
-      emissor: { tipo: "OAB", no: "1", uf: "SP" },
+      emissor: { tipo: "OAB", numero: "1", uf: "SP" },
     });
     expect(r.success).toBe(false);
   });

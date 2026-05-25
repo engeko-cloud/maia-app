@@ -29,7 +29,7 @@ export interface AfastamentoEditDialogProps {
     data_inicio: string;
     duracao: number | null;
     cid: string | null;
-    emissor: { tipo: string; no: string; uf: string } | null;
+    emissor: { tipo: string; numero: string; uf: string } | null;
   };
 }
 
@@ -58,7 +58,7 @@ export function AfastamentoEditDialog({
     initialValues.emissor?.tipo ?? ""
   );
   const [emissorNo, setEmissorNo] = React.useState(
-    initialValues.emissor?.no ?? ""
+    initialValues.emissor?.numero ?? ""
   );
   const [emissorUf, setEmissorUf] = React.useState(
     initialValues.emissor?.uf ?? ""
@@ -93,9 +93,9 @@ export function AfastamentoEditDialog({
       cid: cid.trim() || null,
       emissor: emissorTipo.trim()
         ? {
-            tipo: emissorTipo.trim(),
-            no: emissorNo.trim(),
-            uf: emissorUf.trim().toUpperCase(),
+            tipo:   emissorTipo.trim(),
+            numero: emissorNo.trim(),
+            uf:     emissorUf.trim().toUpperCase(),
           }
         : null,
     };

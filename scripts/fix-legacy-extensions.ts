@@ -20,11 +20,21 @@
  */
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { readFileSync, existsSync } from "node:fs";
 
 const BUCKET = "attachments";
 const PAGE_SIZE = 200;
 const DRY_RUN = process.argv.includes("--dry-run");
 const LIMIT = Number(process.argv.find((a) => a.startsWith("--limit="))?.split("=")[1]);
+// --retry-failures[=<log-path>] — re-attempts EXCEPTION/COPY_FAIL/DB_FAIL rows
+// from a previous run (defaults to /tmp/fix-legacy.log). DOWNLOAD_FAIL (missing
+// object) and UNKNOWN_MIME (empty file) are skipped since retry won't help.
+const RETRY_FLAG = process.argv.find((a) => a.startsWith("--retry-failures"));
+const RETRY_LOG = RETRY_FLAG
+  ? RETRY_FLAG.includes("=")
+    ? RETRY_FLAG.split("=")[1]
+    : "/tmp/fix-legacy.log"
+  : null;
 
 const MIME_TO_EXT: Record<string, string> = {
   "application/pdf": "pdf",
@@ -64,33 +74,93 @@ function makeClient(): SupabaseClient {
   return createClient(url, key);
 }
 
+function parseRetryablePaths(logPath: string): { paths: string[]; ids: string[] } {
+  if (!existsSync(logPath)) throw new Error(`Retry log not found: ${logPath}`);
+  const lines = readFileSync(logPath, "utf-8").split("\n");
+  const paths = new Set<string>();
+  const ids = new Set<string>();
+  // Retry only transient/late-stage failures. Skip DOWNLOAD_FAIL (missing
+  // object) and UNKNOWN_MIME (empty file) — retry can't recover those.
+  // Paths can contain colons (ISO timestamps), so anchor the capture to the
+  // afastamentos/legacy/ prefix and stop at ` -> ` (copy_fail) or `: ` followed
+  // by an error suffix at end-of-line.
+  const pathRe = /\[(?:EXCEPTION|COPY_FAIL)\]\s+(afastamentos\/legacy\/\S.*?)(?:\s+->\s|:\s+[^:].*$)/;
+  const idRe = /\[DB_FAIL\]\s+([0-9a-f-]{36}):/;
+  for (const line of lines) {
+    const pm = line.match(pathRe);
+    if (pm) {
+      paths.add(pm[1]);
+      continue;
+    }
+    const im = line.match(idRe);
+    if (im) ids.add(im[1]);
+  }
+  return { paths: [...paths], ids: [...ids] };
+}
+
 async function main() {
   const supabase = makeClient();
   if (DRY_RUN) console.log("[DRY RUN — no writes]");
 
-  // Step 1: find all legacy-pathed afastamentos
-  const rows: Array<{ id: string; arquivo_url: string }> = [];
-  let from = 0;
-  while (true) {
-    const { data, error } = await supabase
-      .from("afastamentos")
-      .select("id, arquivo_url")
-      .ilike("arquivo_url", "afastamentos/legacy/%")
-      .range(from, from + PAGE_SIZE - 1);
-    if (error) throw error;
-    if (!data || data.length === 0) break;
-    rows.push(...(data as typeof rows));
-    if (data.length < PAGE_SIZE) break;
-    from += PAGE_SIZE;
+  let rows: Array<{ id: string; arquivo_url: string }> = [];
+
+  if (RETRY_LOG) {
+    // Step 1 (retry mode): load failed paths/ids from a previous run's log.
+    const { paths, ids } = parseRetryablePaths(RETRY_LOG);
+    console.log(`Retry mode — log: ${RETRY_LOG}`);
+    console.log(`  retryable by path: ${paths.length}`);
+    console.log(`  retryable by id:   ${ids.length}`);
+    const collected: typeof rows = [];
+    const CHUNK = 200;
+    for (let i = 0; i < paths.length; i += CHUNK) {
+      const chunk = paths.slice(i, i + CHUNK);
+      const { data, error } = await supabase
+        .from("afastamentos")
+        .select("id, arquivo_url")
+        .in("arquivo_url", chunk);
+      if (error) throw error;
+      collected.push(...((data ?? []) as typeof rows));
+    }
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const chunk = ids.slice(i, i + CHUNK);
+      const { data, error } = await supabase
+        .from("afastamentos")
+        .select("id, arquivo_url")
+        .in("id", chunk);
+      if (error) throw error;
+      collected.push(...((data ?? []) as typeof rows));
+    }
+    // Dedupe by id (a row could match both via path and via id).
+    const seen = new Set<string>();
+    rows = collected.filter((r) => {
+      if (seen.has(r.id)) return false;
+      seen.add(r.id);
+      return true;
+    });
+  } else {
+    // Step 1 (normal mode): find all legacy-pathed afastamentos.
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from("afastamentos")
+        .select("id, arquivo_url")
+        .ilike("arquivo_url", "afastamentos/legacy/%")
+        .range(from, from + PAGE_SIZE - 1);
+      if (error) throw error;
+      if (!data || data.length === 0) break;
+      rows.push(...(data as typeof rows));
+      if (data.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
+    }
   }
 
   const allNeedingFix = rows.filter((r) => r.arquivo_url && !hasExtension(r.arquivo_url));
   const needsFix =
     Number.isFinite(LIMIT) && LIMIT > 0 ? allNeedingFix.slice(0, LIMIT) : allNeedingFix;
-  console.log(`Total legacy rows: ${rows.length}`);
-  console.log(`Without extension:  ${allNeedingFix.length}`);
+  console.log(`Total candidate rows: ${rows.length}`);
+  console.log(`Without extension:    ${allNeedingFix.length}`);
   if (needsFix.length !== allNeedingFix.length) {
-    console.log(`Processing (limit):  ${needsFix.length}`);
+    console.log(`Processing (limit):    ${needsFix.length}`);
   }
 
   let ok = 0;

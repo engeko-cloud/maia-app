@@ -11,7 +11,7 @@ export interface AfastamentoFull {
   data_fim: string | null;
   duracao: number | null;
   cid: string | null;
-  emissor: { tipo: string; no: string; uf: string } | null;
+  emissor: { tipo: string; numero: string; uf: string } | null;
   inss: boolean;
   acidente: boolean;
   internacao: boolean;
@@ -45,7 +45,7 @@ export function AfastamentoDetail({ a }: { a: AfastamentoFull }) {
     { label: "Fim",                value: a.data_fim ? fmtDate(a.data_fim) : "—", mono: true },
     { label: "Duração",            value: a.duracao != null ? `${a.duracao} dia(s)` : "—" },
     { label: "CID",                value: a.cid ?? "—", mono: true },
-    { label: "Emissor",            value: a.emissor ? `${a.emissor.tipo} ${a.emissor.no}/${a.emissor.uf}` : "—" },
+    { label: "Emissor",            value: a.emissor ? `${a.emissor.tipo} ${a.emissor.numero}/${a.emissor.uf}` : "—" },
     { label: "Flags",              value: flags || "—" },
     { label: "Email do remetente", value: a.email_remetente, full: true },
   ];

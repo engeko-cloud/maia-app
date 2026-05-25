@@ -41,7 +41,7 @@ const FIELD_LABELS: Record<string, string> = {
   duracao:          "Duração (dias)",
   cid:              "CID",
   "emissor.tipo":   "Emissor (tipo)",
-  "emissor.no":     "Emissor (nº)",
+  "emissor.numero": "Emissor (nº)",
   "emissor.uf":     "Emissor (UF)",
   email_remetente:  "Email para retorno",
   ocorrencia_id:    "Ocorrência vinculada",
@@ -468,7 +468,7 @@ export function AfastamentoForm({
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="emissor_no">Nº</Label>
-                <Input id="emissor_no" {...form.register("emissor.no")} />
+                <Input id="emissor_no" {...form.register("emissor.numero")} />
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="emissor_uf">UF</Label>

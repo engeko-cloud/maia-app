@@ -13,7 +13,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
 
   const { data: full, error: loadErr } = await admin
     .from("afastamentos")
-    .select(`id, situacao, cpf, colaborador_nome, colaborador_codigo_soc,
+    .select(`id, serial_id, situacao, cpf, colaborador_nome, colaborador_codigo_soc,
              data_inicio, data_fim, duracao, cid, arquivo_url, tipo_id,
              hora_inicio, hora_fim, emissor,
              empresas!inner(nome, codigo_fluig),
@@ -38,7 +38,7 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
 
   try {
     const result = await pushToFluig({
-      afastamento_id:         id,
+      afastamento_id:         String(full.serial_id),
       tipo_codigo:            (full.afastamento_tipos as any).codigo,
       cpf:                    full.cpf,
       colaborador_nome:       full.colaborador_nome ?? "",

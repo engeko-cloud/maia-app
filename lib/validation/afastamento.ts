@@ -20,9 +20,9 @@ export const AfastamentoInputSchema = z.object({
     { message: "CID deve ter formato X00 (letra + 2 dígitos)." },
   ),
   emissor:     z.object({
-    tipo: z.enum(["CRM", "CRO"] as const, { error: "Selecione CRM ou CRO." } as any),
-    no:   z.string().min(1, "Informe o número do registro (CRM/CRO)."),
-    uf:   z.string().length(2, "Informe a UF com 2 letras."),
+    tipo:   z.enum(["CRM", "CRO"] as const, { error: "Selecione CRM ou CRO." } as any),
+    numero: z.string().min(1, "Informe o número do registro (CRM/CRO)."),
+    uf:     z.string().length(2, "Informe a UF com 2 letras."),
   }).optional(),
   inss:        z.boolean().optional(),
   acidente:    z.boolean().optional(),
