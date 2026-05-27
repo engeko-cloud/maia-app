@@ -9,6 +9,9 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   if (body.hora_inicio === "") body.hora_inicio = undefined;
   if (body.hora_fim === "") body.hora_fim = undefined;
+  // Empty/omitted CID defaults to "Z00" (ICD-10 generic). Fluig's startProcess
+  // requires non-empty motivoAfastamento + campoChave — both derive from cid.
+  if (!body.cid || typeof body.cid !== "string" || !body.cid.trim()) body.cid = "Z00";
   const parsed = AfastamentoInputSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "validation", issues: parsed.error.issues }, { status: 400 });

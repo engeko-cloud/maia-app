@@ -24,6 +24,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ to
   const body = await req.json();
   if (body.hora_inicio === "") body.hora_inicio = undefined;
   if (body.hora_fim === "") body.hora_fim = undefined;
+  // Empty/omitted CID defaults to "Z00" — see POST handler comment.
+  if (!body.cid || typeof body.cid !== "string" || !body.cid.trim()) body.cid = "Z00";
   const parsed = AfastamentoInputSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "validation", issues: parsed.error.issues }, { status: 400 });
 

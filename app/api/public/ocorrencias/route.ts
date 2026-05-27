@@ -87,6 +87,9 @@ async function createBoundAfastamento(
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
+  // Empty/omitted CID defaults to "Z00" (ICD-10 generic). The bound afastamento
+  // copies this cid downstream, and Fluig rejects empty motivoAfastamento/campoChave.
+  if (!body.cid || typeof body.cid !== "string" || !body.cid.trim()) body.cid = "Z00";
   const parsed = OcorrenciaInputSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "validation", issues: parsed.error.issues }, { status: 400 });
   if (!OCORRENCIA_TIPOS.includes(parsed.data.tipo)) {
