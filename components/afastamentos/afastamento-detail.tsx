@@ -1,5 +1,5 @@
 import { FieldGrid, type Field } from "@/components/detail/field-grid";
-import { fmtDate } from "@/lib/fmt-date";
+import { fmtDateWithHora } from "@/lib/fmt-date";
 
 export interface AfastamentoFull {
   id: string;
@@ -9,6 +9,8 @@ export interface AfastamentoFull {
   colaborador_cargo: string | null;
   data_inicio: string;
   data_fim: string | null;
+  hora_inicio: string | null;
+  hora_fim: string | null;
   duracao: number | null;
   cid: string | null;
   emissor: { tipo: string; numero: string; uf: string } | null;
@@ -41,8 +43,8 @@ export function AfastamentoDetail({ a }: { a: AfastamentoFull }) {
     { label: "Unidade",            value: a.unidades?.nome ?? "—" },
     { label: "Setor",              value: a.colaborador_setor ?? "—" },
     { label: "Cargo",              value: a.colaborador_cargo ?? "—" },
-    { label: "Início",             value: fmtDate(a.data_inicio), mono: true },
-    { label: "Fim",                value: a.data_fim ? fmtDate(a.data_fim) : "—", mono: true },
+    { label: "Início",             value: fmtDateWithHora(a.data_inicio, a.hora_inicio), mono: true },
+    { label: "Fim",                value: a.data_fim ? fmtDateWithHora(a.data_fim, a.hora_fim) : "—", mono: true },
     { label: "Duração",            value: a.duracao != null ? `${a.duracao} dia(s)` : "—" },
     { label: "CID",                value: a.cid ?? "—", mono: true },
     { label: "Emissor",            value: a.emissor ? `${a.emissor.tipo} ${a.emissor.numero}/${a.emissor.uf}` : "—" },

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { PublicFormShell } from "@/components/forms/public-form-shell";
 import { AttachmentChip } from "@/components/detail/attachment-chip";
-import { fmtDate } from "@/lib/fmt-date";
+import { fmtDateWithHora } from "@/lib/fmt-date";
 
 const SITUACAO_LABEL: Record<string, string> = {
   pendente:   "Pendente de aprovação",
@@ -27,7 +27,7 @@ export default async function StatusPage({ params }: { params: Promise<{ token: 
     .from("afastamentos")
     .select(`
       serial_id, situacao, motivo_rejeicao,
-      colaborador_nome, cpf, data_inicio, data_fim, duracao, cid, arquivo_url,
+      colaborador_nome, cpf, data_inicio, data_fim, hora_inicio, hora_fim, duracao, cid, arquivo_url,
       empresas!inner(nome),
       unidades!inner(nome),
       afastamento_tipos!inner(rotulo)
@@ -63,7 +63,7 @@ export default async function StatusPage({ params }: { params: Promise<{ token: 
         <dt className="text-[var(--color-fg-muted)]">Tipo</dt>
         <dd>{(a.afastamento_tipos as { rotulo: string }).rotulo}</dd>
         <dt className="text-[var(--color-fg-muted)]">Período</dt>
-        <dd>{fmtDate(a.data_inicio)} → {a.data_fim ? fmtDate(a.data_fim) : "—"} {a.duracao ? `(${a.duracao} dia${a.duracao > 1 ? "s" : ""})` : ""}</dd>
+        <dd>{fmtDateWithHora(a.data_inicio, a.hora_inicio)} → {a.data_fim ? fmtDateWithHora(a.data_fim, a.hora_fim) : "—"} {a.duracao ? `(${a.duracao} dia${a.duracao > 1 ? "s" : ""})` : ""}</dd>
         <dt className="text-[var(--color-fg-muted)]">CID</dt>
         <dd>{a.cid ?? "—"}</dd>
         <dt className="text-[var(--color-fg-muted)]">Empresa</dt>

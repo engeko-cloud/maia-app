@@ -20,12 +20,22 @@ export async function POST(req: NextRequest) {
     options: { redirectTo: `${baseUrl}/app/painel` },
   });
 
-  if (!linkErr && linkData?.properties?.action_link) {
+  // Build our own confirm URL using hashed_token instead of Supabase's
+  // action_link. Supabase's verify endpoint returns the session in the URL
+  // fragment (implicit flow), which the Next.js server can't see — so cookies
+  // never get set and the user bounces. /auth/confirm calls verifyOtp
+  // server-side, sets the session cookie, then redirects to `next`.
+  if (!linkErr && linkData?.properties?.hashed_token) {
+    const magicUrl =
+      `${baseUrl}/auth/confirm` +
+      `?token_hash=${encodeURIComponent(linkData.properties.hashed_token)}` +
+      `&type=email` +
+      `&next=${encodeURIComponent("/app/painel")}`;
     try {
       await sendMail({
         template: "magic-link",
         to: parsed.data.email,
-        data: { m: { magicUrl: linkData.properties.action_link } },
+        data: { m: { magicUrl } },
       });
     } catch {
       // Non-fatal
